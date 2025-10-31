@@ -1,11 +1,11 @@
-import DOMPurify from "isomorphic-dompurify";
-
 /**
  * Sanitize HTML content to prevent XSS attacks
  * @param dirty - The potentially unsafe HTML string
  * @returns Sanitized HTML string
  */
-export function sanitizeHtml(dirty: string): string {
+export async function sanitizeHtml(dirty: string): Promise<string> {
+  // Lazy import to avoid ES module issues in serverless environment
+  const DOMPurify = (await import("isomorphic-dompurify")).default;
   return DOMPurify.sanitize(dirty, {
     ALLOWED_TAGS: ["b", "i", "em", "strong", "p", "br", "ul", "ol", "li"],
     ALLOWED_ATTR: [],

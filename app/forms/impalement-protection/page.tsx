@@ -143,6 +143,29 @@ export default function ImpalementProtectionForm() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleTestAutofill = () => {
+    setFormData({
+      date: getTodayDate(),
+      jobNumber: "TEST-2025-001",
+      submittedBy: "Test User",
+      submittedByEmail: "test@deacon.com",
+      submittedByCompany: "Deacon Construction",
+      startTime: "08:00",
+      endTime: "08:15",
+      location: "Building A, 3rd Floor, North Wing",
+      hazardDescription: "Exposed rebar on concrete slab near north stairwell. Multiple vertical rebars without protective caps.",
+      correctiveMeasures: "Installed protective rebar caps on all exposed vertical rebars. Posted warning signs around the area.",
+      creatingEmployer: "ABC Concrete Co.",
+      supervisor: "John Smith",
+    });
+    setEmailOptions({
+      recipientEmail: "curt.mills@deacon.com",
+      emailSubject: "TEST - Impalement Protection Form - Job #TEST-2025-001",
+    });
+    setCurrentStep(3);
+    alert("Form autofilled with test data! Click 'Submit & Email Form' to test.");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -261,12 +284,20 @@ export default function ImpalementProtectionForm() {
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-lg mb-6 overflow-hidden">
           <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 sm:px-8 py-6">
-            <button
-              onClick={() => router.push("/")}
-              className="text-orange-100 hover:text-white mb-4 text-sm font-medium inline-flex items-center transition-colors"
-            >
-              ← Back to Home
-            </button>
+            <div className="flex justify-between items-start mb-4">
+              <button
+                onClick={() => router.push("/")}
+                className="text-orange-100 hover:text-white text-sm font-medium inline-flex items-center transition-colors"
+              >
+                ← Back to Home
+              </button>
+              <button
+                onClick={handleTestAutofill}
+                className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 px-4 py-2 rounded-lg text-sm font-bold transition-colors"
+              >
+                🧪 TEST AUTOFILL
+              </button>
+            </div>
             <h1 className="text-3xl sm:text-4xl font-bold text-white">
               Impalement Protection
             </h1>
