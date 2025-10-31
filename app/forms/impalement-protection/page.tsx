@@ -310,7 +310,7 @@ export default function ImpalementProtectionForm() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="p-6 sm:p-8 lg:p-10">
+          <form onSubmit={handleSubmit} noValidate className="p-6 sm:p-8 lg:p-10">
 
             {/* Step 1: Basic Information Section */}
             <div className={`mb-8 ${currentStep === 1 ? 'block' : 'hidden'}`}>
