@@ -221,9 +221,8 @@ export async function POST(request: NextRequest) {
           submissionTime: new Date().toLocaleString(),
         });
 
-        // Try hardcoded email first
-        const hardcodedFrom = "onboarding@resend.dev";
-        const fromEmail = hardcodedFrom; // Ignore env var for now
+        // Use env var now that newline is fixed
+        const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
         console.log("=== EMAIL DEBUG ===");
         console.log("ENV RESEND_FROM_EMAIL:", process.env.RESEND_FROM_EMAIL);
