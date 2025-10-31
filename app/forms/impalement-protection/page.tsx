@@ -203,7 +203,7 @@ export default function ImpalementProtectionForm() {
                       value={formData.jobNumber}
                       onChange={(e) => setFormData({ ...formData, jobNumber: e.target.value })}
                       placeholder="e.g., 2025-001"
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
                     />
                   </div>
                 </div>
@@ -218,7 +218,7 @@ export default function ImpalementProtectionForm() {
                     value={formData.submittedBy}
                     onChange={(e) => setFormData({ ...formData, submittedBy: e.target.value })}
                     placeholder="John Doe"
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
                   />
                 </div>
 
@@ -232,7 +232,7 @@ export default function ImpalementProtectionForm() {
                     value={formData.submittedByEmail}
                     onChange={(e) => setFormData({ ...formData, submittedByEmail: e.target.value })}
                     placeholder="john@company.com"
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
                   />
                 </div>
 
@@ -246,7 +246,7 @@ export default function ImpalementProtectionForm() {
                     value={formData.submittedByCompany}
                     onChange={(e) => setFormData({ ...formData, submittedByCompany: e.target.value })}
                     placeholder="Company Name"
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
                   />
                 </div>
               </div>
@@ -294,7 +294,7 @@ export default function ImpalementProtectionForm() {
                       value={formData.location}
                       onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                       placeholder="e.g., Building A, 3rd Floor, North Wing"
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
                     />
                   </div>
 
@@ -308,7 +308,7 @@ export default function ImpalementProtectionForm() {
                       value={formData.hazardDescription}
                       onChange={(e) => setFormData({ ...formData, hazardDescription: e.target.value })}
                       placeholder="Describe the hazard in detail..."
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900"
                     />
                   </div>
 
@@ -322,7 +322,7 @@ export default function ImpalementProtectionForm() {
                       value={formData.correctiveMeasures}
                       onChange={(e) => setFormData({ ...formData, correctiveMeasures: e.target.value })}
                       placeholder="Describe what actions were taken to address the hazard..."
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900"
                     />
                   </div>
 
@@ -336,7 +336,7 @@ export default function ImpalementProtectionForm() {
                       value={formData.creatingEmployer}
                       onChange={(e) => setFormData({ ...formData, creatingEmployer: e.target.value })}
                       placeholder="Company name(s)"
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
                     />
                   </div>
 
@@ -350,7 +350,7 @@ export default function ImpalementProtectionForm() {
                       value={formData.supervisor}
                       onChange={(e) => setFormData({ ...formData, supervisor: e.target.value })}
                       placeholder="Supervisor name"
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
                     />
                   </div>
                 </div>
@@ -426,7 +426,7 @@ export default function ImpalementProtectionForm() {
                         value={emailOptions.recipientEmail}
                         onChange={(e) => setEmailOptions({ ...emailOptions, recipientEmail: e.target.value })}
                         placeholder="superintendent@example.com"
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-gray-900"
                       />
                     </div>
                     <div>
@@ -438,7 +438,7 @@ export default function ImpalementProtectionForm() {
                         value={emailOptions.emailSubject}
                         onChange={(e) => setEmailOptions({ ...emailOptions, emailSubject: e.target.value })}
                         placeholder={`Impalement Protection Form - Job #${formData.jobNumber || '...'}`}
-                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-gray-900"
                       />
                     </div>
                   </div>
