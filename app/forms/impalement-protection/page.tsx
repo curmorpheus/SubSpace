@@ -167,6 +167,9 @@ export default function ImpalementProtectionForm() {
       correctiveMeasures: "Installed protective rebar caps on all exposed vertical rebars. Posted warning signs around the area.",
       creatingEmployer: "ABC Concrete Co.",
       supervisor: "John Smith",
+      locationPhotos: [],
+      hazardPhotos: [],
+      measuresPhotos: [],
     });
     setEmailOptions({
       recipientEmail: "curt.mills@deacon.com",
