@@ -95,120 +95,210 @@ export function generateImpalementProtectionPDF(
   const doc = new jsPDF();
 
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
   const contentWidth = pageWidth - 2 * margin;
   let yPosition = 20;
 
-  // Title
-  doc.setFontSize(18);
-  doc.setFont("helvetica", "bold");
-  doc.text("IMPALEMENT PROTECTION INSPECTION FORM", pageWidth / 2, yPosition, {
-    align: "center",
-  });
-  yPosition += 15;
+  // Helper function to add a section header with background
+  const addSectionHeader = (text: string, y: number): number => {
+    // Draw orange background
+    doc.setFillColor(249, 115, 22); // Orange-500
+    doc.roundedRect(margin, y - 6, contentWidth, 12, 2, 2, "F");
 
-  // Header Information
+    // Add white text
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text(text, margin + 4, y + 2);
+
+    // Reset text color
+    doc.setTextColor(0, 0, 0);
+
+    return y + 15;
+  };
+
+  // Helper function to add a field with label
+  const addField = (label: string, value: string, y: number, bold: boolean = false): number => {
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont("helvetica", "bold");
+    doc.text(label, margin, y);
+
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("helvetica", bold ? "bold" : "normal");
+    doc.setFontSize(10);
+    const lines = doc.splitTextToSize(value, contentWidth - 5);
+    doc.text(lines, margin, y + 4);
+
+    return y + (lines.length * 5) + 6;
+  };
+
+  // Title Banner
+  doc.setFillColor(249, 115, 22); // Orange-500
+  doc.rect(0, 0, pageWidth, 35, "F");
+
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(20);
+  doc.setFont("helvetica", "bold");
+  doc.text("IMPALEMENT PROTECTION", pageWidth / 2, 15, { align: "center" });
+
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "normal");
+  doc.text("Safety Inspection Form", pageWidth / 2, 25, { align: "center" });
+
+  doc.setTextColor(0, 0, 0);
+  yPosition = 45;
+
+  // Form Information Section
+  yPosition = addSectionHeader("FORM INFORMATION", yPosition);
+
+  // Two-column layout for basic info
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont("helvetica", "bold");
+
+  const col1X = margin;
+  const col2X = pageWidth / 2 + 5;
+  let infoY = yPosition;
+
+  // Column 1
+  doc.text("Job Number:", col1X, infoY);
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.text(submissionInfo.jobNumber, col1X, infoY + 5);
+
+  // Column 2
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont("helvetica", "bold");
+  doc.text("Inspection Date:", col2X, infoY);
+  doc.setTextColor(0, 0, 0);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
+  doc.text(formData.date, col2X, infoY + 5);
 
-  doc.text(`Date: ${formData.date}`, margin, yPosition);
-  doc.text(`Job #: ${submissionInfo.jobNumber}`, pageWidth / 2, yPosition);
-  yPosition += 7;
+  infoY += 12;
 
-  doc.text(`Submitted by: ${submissionInfo.submittedBy}`, margin, yPosition);
-  yPosition += 7;
-  doc.text(`Email: ${submissionInfo.submittedByEmail}`, margin, yPosition);
-  yPosition += 7;
-  doc.text(`Company: ${submissionInfo.submittedByCompany}`, margin, yPosition);
-  yPosition += 10;
+  // Submitted by
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont("helvetica", "bold");
+  doc.text("Submitted By:", col1X, infoY);
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(submissionInfo.submittedBy, col1X, infoY + 5);
 
-  // Draw line
-  doc.setDrawColor(200, 200, 200);
-  doc.line(margin, yPosition, pageWidth - margin, yPosition);
-  yPosition += 10;
+  // Email
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont("helvetica", "bold");
+  doc.text("Email:", col2X, infoY);
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(submissionInfo.submittedByEmail, col2X, infoY + 5);
+
+  infoY += 12;
+
+  // Company
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont("helvetica", "bold");
+  doc.text("Company:", col1X, infoY);
+  doc.setTextColor(0, 0, 0);
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text(submissionInfo.submittedByCompany, col1X, infoY + 5);
+
+  yPosition = infoY + 15;
 
   // Inspections
   formData.inspections.forEach((inspection, index) => {
     // Check if we need a new page
-    if (yPosition > 250) {
+    if (yPosition > 240) {
       doc.addPage();
       yPosition = 20;
     }
 
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text(`Inspection #${index + 1}`, margin, yPosition);
-    yPosition += 8;
+    // Inspection Header
+    yPosition = addSectionHeader(`INSPECTION DETAILS #${index + 1}`, yPosition);
 
+    // Time Information
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.setFont("helvetica", "bold");
+    doc.text("Start Time:", col1X, yPosition);
+    doc.text("End Time:", col2X, yPosition);
+
+    doc.setTextColor(0, 0, 0);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
+    doc.text(inspection.startTime, col1X, yPosition + 4);
+    doc.text(inspection.endTime, col2X, yPosition + 4);
+    yPosition += 12;
 
-    doc.text(`Start Time: ${inspection.startTime}`, margin, yPosition);
-    doc.text(`End Time: ${inspection.endTime}`, pageWidth / 2, yPosition);
-    yPosition += 7;
-
-    doc.text(`Location of inspection:`, margin, yPosition);
-    yPosition += 5;
-    doc.setFont("helvetica", "bold");
-    const locationLines = doc.splitTextToSize(inspection.location, contentWidth);
-    doc.text(locationLines, margin + 5, yPosition);
-    yPosition += locationLines.length * 5 + 3;
+    // Location
+    yPosition = addField("LOCATION OF INSPECTION", inspection.location, yPosition, true);
 
     // Add location photos if available
     if (inspection.locationPhotos && inspection.locationPhotos.length > 0) {
+      if (yPosition > pageHeight - 70) {
+        doc.addPage();
+        yPosition = 20;
+      }
       yPosition = addImagesToPDF(doc, inspection.locationPhotos, yPosition, margin, pageWidth);
     }
 
-    doc.setFont("helvetica", "normal");
-    doc.text(`Description of Impalement Hazard Observed:`, margin, yPosition);
-    yPosition += 5;
-    doc.setFont("helvetica", "bold");
-    const hazardLines = doc.splitTextToSize(
-      inspection.hazardDescription,
-      contentWidth
-    );
-    doc.text(hazardLines, margin + 5, yPosition);
-    yPosition += hazardLines.length * 5 + 3;
+    // Check for new page before hazard section
+    if (yPosition > pageHeight - 40) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    // Hazard Description
+    yPosition = addField("DESCRIPTION OF IMPALEMENT HAZARD OBSERVED", inspection.hazardDescription, yPosition);
 
     // Add hazard photos if available
     if (inspection.hazardPhotos && inspection.hazardPhotos.length > 0) {
+      if (yPosition > pageHeight - 70) {
+        doc.addPage();
+        yPosition = 20;
+      }
       yPosition = addImagesToPDF(doc, inspection.hazardPhotos, yPosition, margin, pageWidth);
     }
 
-    doc.setFont("helvetica", "normal");
-    doc.text(`Corrective Measures Taken:`, margin, yPosition);
-    yPosition += 5;
-    doc.setFont("helvetica", "bold");
-    const measuresLines = doc.splitTextToSize(
-      inspection.correctiveMeasures,
-      contentWidth
-    );
-    doc.text(measuresLines, margin + 5, yPosition);
-    yPosition += measuresLines.length * 5 + 3;
+    // Check for new page before corrective measures
+    if (yPosition > pageHeight - 40) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    // Corrective Measures
+    yPosition = addField("CORRECTIVE MEASURES TAKEN", inspection.correctiveMeasures, yPosition);
 
     // Add corrective measures photos if available
     if (inspection.measuresPhotos && inspection.measuresPhotos.length > 0) {
+      if (yPosition > pageHeight - 70) {
+        doc.addPage();
+        yPosition = 20;
+      }
       yPosition = addImagesToPDF(doc, inspection.measuresPhotos, yPosition, margin, pageWidth);
     }
 
-    doc.setFont("helvetica", "normal");
-    doc.text(`Creating/Exposing Employer(s):`, margin, yPosition);
-    yPosition += 5;
-    doc.setFont("helvetica", "bold");
-    doc.text(inspection.creatingEmployer, margin + 5, yPosition);
-    yPosition += 7;
+    // Check for new page before employer info
+    if (yPosition > pageHeight - 25) {
+      doc.addPage();
+      yPosition = 20;
+    }
 
-    doc.setFont("helvetica", "normal");
-    doc.text(`Supervisor of Creating/Exposing Employer(s):`, margin, yPosition);
-    yPosition += 5;
-    doc.setFont("helvetica", "bold");
-    doc.text(inspection.supervisor, margin + 5, yPosition);
-    yPosition += 10;
+    // Employer Information
+    yPosition = addField("CREATING/EXPOSING EMPLOYER(S)", inspection.creatingEmployer, yPosition);
+    yPosition = addField("SUPERVISOR OF CREATING/EXPOSING EMPLOYER(S)", inspection.supervisor, yPosition);
 
-    // Draw separator line
-    doc.setDrawColor(200, 200, 200);
-    doc.line(margin, yPosition, pageWidth - margin, yPosition);
-    yPosition += 10;
+    yPosition += 5;
   });
 
   // Add signature if available
