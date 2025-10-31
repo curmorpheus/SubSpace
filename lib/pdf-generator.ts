@@ -1,11 +1,21 @@
 import jsPDF from "jspdf";
 
+interface CompressedImage {
+  dataUrl: string;
+  size: number;
+  width: number;
+  height: number;
+}
+
 interface InspectionData {
   startTime: string;
   endTime: string;
   location: string;
+  locationPhotos?: CompressedImage[];
   hazardDescription: string;
+  hazardPhotos?: CompressedImage[];
   correctiveMeasures: string;
+  measuresPhotos?: CompressedImage[];
   creatingEmployer: string;
   supervisor: string;
 }
@@ -22,6 +32,60 @@ interface SubmissionInfo {
   submittedByEmail: string;
   submittedByCompany: string;
   submittedAt?: string;
+}
+
+/**
+ * Helper function to add images to PDF
+ * Returns the new Y position after adding images
+ */
+function addImagesToPDF(
+  doc: jsPDF,
+  images: CompressedImage[],
+  yPosition: number,
+  margin: number,
+  pageWidth: number
+): number {
+  if (!images || images.length === 0) return yPosition;
+
+  const imageWidth = 70; // Width of each image
+  const imageHeight = 50; // Height of each image
+  const imageSpacing = 10; // Space between images
+  const imagesPerRow = 2;
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  let currentY = yPosition;
+
+  for (let i = 0; i < images.length; i++) {
+    const col = i % imagesPerRow;
+    const xPosition = margin + col * (imageWidth + imageSpacing);
+
+    // Check if we need a new page
+    if (currentY + imageHeight > pageHeight - 20) {
+      doc.addPage();
+      currentY = 20;
+    }
+
+    try {
+      // Add the image
+      doc.addImage(images[i].dataUrl, "JPEG", xPosition, currentY, imageWidth, imageHeight);
+
+      // Add image number label
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Photo ${i + 1}`, xPosition, currentY + imageHeight + 4);
+      doc.setTextColor(0, 0, 0);
+    } catch (error) {
+      console.error(`Error adding image ${i + 1} to PDF:`, error);
+    }
+
+    // Move to next row if needed
+    if (col === imagesPerRow - 1 || i === images.length - 1) {
+      currentY += imageHeight + 8;
+    }
+  }
+
+  return currentY + 5; // Add extra spacing after images
 }
 
 export function generateImpalementProtectionPDF(
@@ -90,6 +154,11 @@ export function generateImpalementProtectionPDF(
     doc.text(locationLines, margin + 5, yPosition);
     yPosition += locationLines.length * 5 + 3;
 
+    // Add location photos if available
+    if (inspection.locationPhotos && inspection.locationPhotos.length > 0) {
+      yPosition = addImagesToPDF(doc, inspection.locationPhotos, yPosition, margin, pageWidth);
+    }
+
     doc.setFont("helvetica", "normal");
     doc.text(`Description of Impalement Hazard Observed:`, margin, yPosition);
     yPosition += 5;
@@ -101,6 +170,11 @@ export function generateImpalementProtectionPDF(
     doc.text(hazardLines, margin + 5, yPosition);
     yPosition += hazardLines.length * 5 + 3;
 
+    // Add hazard photos if available
+    if (inspection.hazardPhotos && inspection.hazardPhotos.length > 0) {
+      yPosition = addImagesToPDF(doc, inspection.hazardPhotos, yPosition, margin, pageWidth);
+    }
+
     doc.setFont("helvetica", "normal");
     doc.text(`Corrective Measures Taken:`, margin, yPosition);
     yPosition += 5;
@@ -111,6 +185,11 @@ export function generateImpalementProtectionPDF(
     );
     doc.text(measuresLines, margin + 5, yPosition);
     yPosition += measuresLines.length * 5 + 3;
+
+    // Add corrective measures photos if available
+    if (inspection.measuresPhotos && inspection.measuresPhotos.length > 0) {
+      yPosition = addImagesToPDF(doc, inspection.measuresPhotos, yPosition, margin, pageWidth);
+    }
 
     doc.setFont("helvetica", "normal");
     doc.text(`Creating/Exposing Employer(s):`, margin, yPosition);

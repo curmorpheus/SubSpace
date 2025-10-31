@@ -1,6 +1,19 @@
 import { z } from "zod";
 
 /**
+ * Validation schema for compressed image
+ */
+export const compressedImageSchema = z.object({
+  dataUrl: z.string().refine(
+    (data) => data.startsWith("data:image/"),
+    { message: "Must be a valid image data URL" }
+  ),
+  size: z.number().positive(),
+  width: z.number().positive(),
+  height: z.number().positive(),
+});
+
+/**
  * Validation schema for form submission
  */
 export const formSubmissionSchema = z.object({
@@ -17,14 +30,17 @@ export const formSubmissionSchema = z.object({
         startTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format"),
         endTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format"),
         location: z.string().min(1, "Location is required").max(500),
+        locationPhotos: z.array(compressedImageSchema).optional(),
         hazardDescription: z
           .string()
           .min(1, "Hazard description is required")
           .max(2000),
+        hazardPhotos: z.array(compressedImageSchema).optional(),
         correctiveMeasures: z
           .string()
           .min(1, "Corrective measures are required")
           .max(2000),
+        measuresPhotos: z.array(compressedImageSchema).optional(),
         creatingEmployer: z
           .string()
           .min(1, "Creating employer is required")

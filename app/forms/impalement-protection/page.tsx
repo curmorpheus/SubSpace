@@ -203,8 +203,11 @@ export default function ImpalementProtectionForm() {
             startTime: formData.startTime,
             endTime: formData.endTime,
             location: formData.location,
+            locationPhotos: locationPhotos,
             hazardDescription: formData.hazardDescription,
+            hazardPhotos: hazardPhotos,
             correctiveMeasures: formData.correctiveMeasures,
+            measuresPhotos: measuresPhotos,
             creatingEmployer: formData.creatingEmployer,
             supervisor: formData.supervisor,
           }],
@@ -476,6 +479,16 @@ export default function ImpalementProtectionForm() {
                       placeholder="e.g., Building A, 3rd Floor, North Wing"
                       className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
                     />
+
+                    <div className="mt-3">
+                      <ImageUpload
+                        label="Location Photos (Optional)"
+                        images={locationPhotos}
+                        onChange={setLocationPhotos}
+                        maxImages={3}
+                        maxSizeMB={5}
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -490,6 +503,16 @@ export default function ImpalementProtectionForm() {
                       placeholder="Describe the hazard in detail..."
                       className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900"
                     />
+
+                    <div className="mt-3">
+                      <ImageUpload
+                        label="Hazard Photos (Optional)"
+                        images={hazardPhotos}
+                        onChange={setHazardPhotos}
+                        maxImages={5}
+                        maxSizeMB={8}
+                      />
+                    </div>
                   </div>
 
                   <div>
@@ -504,6 +527,16 @@ export default function ImpalementProtectionForm() {
                       placeholder="Describe what actions were taken to address the hazard..."
                       className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900"
                     />
+
+                    <div className="mt-3">
+                      <ImageUpload
+                        label="After Photos (Optional)"
+                        images={measuresPhotos}
+                        onChange={setMeasuresPhotos}
+                        maxImages={5}
+                        maxSizeMB={8}
+                      />
+                    </div>
                   </div>
 
                   <div>
