@@ -34,21 +34,23 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
       },
     }));
 
-    // Prevent scrolling when touching the signature pad (for mobile)
+    // Prevent page scrolling when touching the signature canvas (for mobile)
     useEffect(() => {
-      const container = containerRef.current;
-      if (!container) return;
+      const canvas = sigCanvas.current?.getCanvas();
+      if (!canvas) return;
 
       const preventScroll = (e: TouchEvent) => {
-        e.preventDefault();
+        // Only prevent default to stop page scrolling, but let touch events through to canvas
+        if (e.cancelable) {
+          e.preventDefault();
+        }
       };
 
-      container.addEventListener('touchstart', preventScroll, { passive: false });
-      container.addEventListener('touchmove', preventScroll, { passive: false });
+      // Prevent scrolling only during touch move (allows tap/touch to work)
+      canvas.addEventListener('touchmove', preventScroll, { passive: false });
 
       return () => {
-        container.removeEventListener('touchstart', preventScroll);
-        container.removeEventListener('touchmove', preventScroll);
+        canvas.removeEventListener('touchmove', preventScroll);
       };
     }, []);
 
@@ -100,17 +102,14 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         <div
           ref={containerRef}
           className="relative bg-white border-3 border-dashed border-purple-200 rounded-xl overflow-hidden shadow-inner"
-          style={{ touchAction: "none" }}
         >
           <SignatureCanvas
             ref={sigCanvas}
             canvasProps={{
-              className: "w-full h-48 cursor-crosshair",
+              className: "w-full h-48",
               style: {
                 touchAction: "none",
-                msTouchAction: "none",
-                WebkitUserSelect: "none",
-                userSelect: "none"
+                cursor: "crosshair"
               } as React.CSSProperties,
             }}
             backgroundColor="white"
