@@ -17,6 +17,10 @@ import {
   logValidationError,
 } from "@/lib/security-logger";
 
+// Configure runtime for this route
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
 // Lazy-initialize Resend to avoid build-time validation errors
 let resend: Resend | null = null;
 function getResendClient() {
@@ -24,18 +28,6 @@ function getResendClient() {
     resend = new Resend(process.env.RESEND_API_KEY);
   }
   return resend;
-}
-
-// Handle CORS preflight requests
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 204,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
-  });
 }
 
 export async function POST(request: NextRequest) {
