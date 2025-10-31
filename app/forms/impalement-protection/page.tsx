@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import DatePicker from "@/components/DatePicker";
 import TimePicker from "@/components/TimePicker";
 import ImageUpload from "@/components/ImageUpload";
@@ -9,8 +9,9 @@ import type { CompressedImage } from "@/lib/image-compression";
 
 const CACHE_KEY = "subspace-form-cache";
 
-export default function ImpalementProtectionForm() {
+function ImpalementProtectionFormContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
@@ -114,6 +115,17 @@ export default function ImpalementProtectionForm() {
       };
     });
   }, []);
+
+  // Read job number from URL parameter
+  useEffect(() => {
+    const jobNumberParam = searchParams.get('jobNumber');
+    if (jobNumberParam) {
+      setFormData(prev => ({
+        ...prev,
+        jobNumber: jobNumberParam,
+      }));
+    }
+  }, [searchParams]);
 
   const validateStep = (step: number): boolean => {
     setError("");
@@ -702,5 +714,19 @@ export default function ImpalementProtectionForm() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ImpalementProtectionForm() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 py-8 px-4 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-gray-600">Loading form...</div>
+        </div>
+      </div>
+    }>
+      <ImpalementProtectionFormContent />
+    </Suspense>
   );
 }

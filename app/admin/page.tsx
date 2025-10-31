@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import QRCode from "qrcode";
 
 interface FormSubmission {
   id: number;
@@ -23,6 +24,11 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubmission, setSelectedSubmission] = useState<FormSubmission | null>(null);
+
+  // QR Code Generator state
+  const [qrJobNumber, setQrJobNumber] = useState("");
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
+  const [showQrGenerator, setShowQrGenerator] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,6 +124,42 @@ export default function AdminDashboard() {
     return new Date(dateString).toLocaleString();
   };
 
+  const generateQRCode = async () => {
+    if (!qrJobNumber.trim()) {
+      alert("Please enter a job number");
+      return;
+    }
+
+    try {
+      // Generate URL with job number parameter
+      const formUrl = `${window.location.origin}/forms/impalement-protection?jobNumber=${encodeURIComponent(qrJobNumber)}`;
+
+      // Generate QR code
+      const qrDataUrl = await QRCode.toDataURL(formUrl, {
+        width: 400,
+        margin: 2,
+        color: {
+          dark: "#000000",
+          light: "#FFFFFF",
+        },
+      });
+
+      setQrCodeDataUrl(qrDataUrl);
+    } catch (error) {
+      console.error("Error generating QR code:", error);
+      alert("Failed to generate QR code");
+    }
+  };
+
+  const downloadQRCode = () => {
+    if (!qrCodeDataUrl) return;
+
+    const link = document.createElement("a");
+    link.download = `impalement-protection-qr-${qrJobNumber}.png`;
+    link.href = qrCodeDataUrl;
+    link.click();
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-100 py-12 px-4">
@@ -181,6 +223,89 @@ export default function AdminDashboard() {
             >
               Logout
             </button>
+          </div>
+
+          {/* QR Code Generator Section */}
+          <div className="mb-6 border-2 border-orange-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setShowQrGenerator(!showQrGenerator)}
+              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-4 flex justify-between items-center hover:from-orange-600 hover:to-orange-700 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📱</span>
+                <div className="text-left">
+                  <div className="font-bold text-lg">Generate QR Code for Job Site</div>
+                  <div className="text-sm text-orange-100">Create QR codes for subcontractors to scan on site</div>
+                </div>
+              </div>
+              <span className="text-2xl">{showQrGenerator ? "▼" : "▶"}</span>
+            </button>
+
+            {showQrGenerator && (
+              <div className="p-6 bg-orange-50">
+                <div className="max-w-2xl mx-auto">
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Job Number
+                    </label>
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        value={qrJobNumber}
+                        onChange={(e) => setQrJobNumber(e.target.value)}
+                        onKeyPress={(e) => e.key === "Enter" && generateQRCode()}
+                        placeholder="e.g., 2025-001"
+                        className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 font-medium"
+                      />
+                      <button
+                        onClick={generateQRCode}
+                        className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold"
+                      >
+                        Generate QR Code
+                      </button>
+                    </div>
+                  </div>
+
+                  {qrCodeDataUrl && (
+                    <div className="bg-white rounded-lg p-6 text-center border-2 border-orange-300">
+                      <div className="mb-4">
+                        <h3 className="text-lg font-bold text-gray-900 mb-2">
+                          QR Code for Job #{qrJobNumber}
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          Scan this code to open the Impalement Protection form with job number pre-filled
+                        </p>
+                      </div>
+
+                      <div className="inline-block p-4 bg-white border-2 border-gray-300 rounded-lg mb-4">
+                        <img src={qrCodeDataUrl} alt="QR Code" className="w-64 h-64" />
+                      </div>
+
+                      <div className="flex gap-3 justify-center">
+                        <button
+                          onClick={downloadQRCode}
+                          className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center gap-2"
+                        >
+                          <span>⬇️</span>
+                          Download QR Code
+                        </button>
+                        <button
+                          onClick={() => window.print()}
+                          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold flex items-center gap-2"
+                        >
+                          <span>🖨️</span>
+                          Print
+                        </button>
+                      </div>
+
+                      <div className="mt-4 text-xs text-gray-500">
+                        URL: {window.location.origin}/forms/impalement-protection?jobNumber={qrJobNumber}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="mb-6">
