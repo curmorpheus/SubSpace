@@ -31,6 +31,15 @@ export default function ImpalementProtectionForm() {
     return `${hours}:${minutes}`;
   };
 
+  // Get current time + 10 minutes in HH:mm format
+  const getTimeAfter10Minutes = () => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 10);
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   // Load cached values from localStorage
   const loadCachedData = () => {
     if (typeof window === "undefined") return {};
@@ -52,7 +61,7 @@ export default function ImpalementProtectionForm() {
     submittedByEmail: cached.submittedByEmail || "",
     submittedByCompany: cached.submittedByCompany || "",
     startTime: getCurrentTime(),
-    endTime: "",
+    endTime: getTimeAfter10Minutes(),
     location: "",
     hazardDescription: "",
     correctiveMeasures: "",
