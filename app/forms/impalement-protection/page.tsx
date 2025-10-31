@@ -40,39 +40,52 @@ export default function ImpalementProtectionForm() {
     return `${hours}:${minutes}`;
   };
 
-  // Load cached values from localStorage
-  const loadCachedData = () => {
-    if (typeof window === "undefined") return {};
+  // Load cached values from localStorage (only once on mount)
+  const [formData, setFormData] = useState(() => {
+    let cached: any = {};
 
-    try {
-      const cached = localStorage.getItem(CACHE_KEY);
-      return cached ? JSON.parse(cached) : {};
-    } catch {
-      return {};
+    if (typeof window !== "undefined") {
+      try {
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        cached = cachedData ? JSON.parse(cachedData) : {};
+      } catch {
+        cached = {};
+      }
     }
-  };
 
-  const cached = loadCachedData();
-
-  const [formData, setFormData] = useState({
-    date: getTodayDate(),
-    jobNumber: cached.jobNumber || "",
-    submittedBy: cached.submittedBy || "",
-    submittedByEmail: cached.submittedByEmail || "",
-    submittedByCompany: cached.submittedByCompany || "",
-    startTime: getCurrentTime(),
-    endTime: getTimeAfter10Minutes(),
-    location: "",
-    hazardDescription: "",
-    correctiveMeasures: "",
-    creatingEmployer: "",
-    supervisor: "",
+    return {
+      date: getTodayDate(),
+      jobNumber: cached.jobNumber || "",
+      submittedBy: cached.submittedBy || "",
+      submittedByEmail: cached.submittedByEmail || "",
+      submittedByCompany: cached.submittedByCompany || "",
+      startTime: getCurrentTime(),
+      endTime: getTimeAfter10Minutes(),
+      location: "",
+      hazardDescription: "",
+      correctiveMeasures: "",
+      creatingEmployer: "",
+      supervisor: "",
+    };
   });
 
-  const [emailOptions, setEmailOptions] = useState({
-    sendEmail: false,
-    recipientEmail: cached.recipientEmail || "",
-    emailSubject: "",
+  const [emailOptions, setEmailOptions] = useState(() => {
+    let cached: any = {};
+
+    if (typeof window !== "undefined") {
+      try {
+        const cachedData = localStorage.getItem(CACHE_KEY);
+        cached = cachedData ? JSON.parse(cachedData) : {};
+      } catch {
+        cached = {};
+      }
+    }
+
+    return {
+      sendEmail: false,
+      recipientEmail: cached.recipientEmail || "",
+      emailSubject: "",
+    };
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
