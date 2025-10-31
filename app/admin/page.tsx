@@ -355,74 +355,73 @@ export default function AdminDashboard() {
                 left: 0;
                 top: 0;
                 width: 100%;
-                height: 100%;
               }
               @page {
-                margin: 0;
+                margin: 0.5in;
                 size: letter portrait;
               }
             }
           `}</style>
-          <div className="print-flyer w-full min-h-screen flex items-center justify-center bg-white p-8">
-            <div className="w-full max-w-4xl">
+          <div className="print-flyer w-full bg-white p-6">
+            <div className="w-full max-w-5xl mx-auto">
               {/* Deacon Logo at top */}
-              <div className="flex justify-center mb-6">
-                <img src="/images/deacon-logo.svg" alt="Deacon Construction" className="h-12" />
+              <div className="flex justify-center mb-3">
+                <img src="/images/deacon-logo.svg" alt="Deacon Construction" className="h-10" />
               </div>
 
               {/* Thin orange accent bar */}
-              <div className="h-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full mb-8"></div>
+              <div className="h-1.5 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full mb-4"></div>
 
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-2 gap-6">
                 {/* Left Column - QR Code */}
-                <div className="flex flex-col items-center justify-center">
-                  <div className="bg-gray-50 rounded-2xl p-8 shadow-lg border-2 border-gray-200">
-                    <img src={qrCodeDataUrl} alt="QR Code" className="w-64 h-64" />
+                <div className="flex flex-col items-center justify-start">
+                  <div className="bg-gray-50 rounded-xl p-4 shadow-md border-2 border-gray-200">
+                    <img src={qrCodeDataUrl} alt="QR Code" className="w-48 h-48" />
                   </div>
 
-                  <div className="mt-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl px-8 py-4 shadow-lg">
-                    <p className="text-4xl font-black text-center">JOB #{qrJobNumber}</p>
+                  <div className="mt-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg px-6 py-3 shadow-md">
+                    <p className="text-3xl font-black text-center">JOB #{qrJobNumber}</p>
                   </div>
                 </div>
 
                 {/* Right Column - Instructions */}
-                <div className="flex flex-col justify-center space-y-6">
+                <div className="flex flex-col justify-start space-y-4">
                   <div>
-                    <h1 className="text-4xl font-black text-gray-900 mb-2">Impalement Protection</h1>
-                    <p className="text-xl font-semibold text-orange-600">Safety Inspection Form</p>
+                    <h1 className="text-3xl font-black text-gray-900 mb-1 leading-tight">Impalement Protection</h1>
+                    <p className="text-lg font-semibold text-orange-600">Safety Inspection Form</p>
                   </div>
 
-                  <div className="bg-gray-50 rounded-xl p-6 border-2 border-gray-200">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <span className="text-3xl">📱</span>
+                  <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
+                    <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+                      <span className="text-2xl">📱</span>
                       <span>How to Use This QR Code</span>
                     </h2>
-                    <ol className="space-y-3 text-gray-700">
-                      <li className="flex gap-3">
-                        <span className="flex-shrink-0 w-7 h-7 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-sm">1</span>
-                        <span className="text-base font-medium">Open your phone&apos;s camera app</span>
+                    <ol className="space-y-2 text-gray-700">
+                      <li className="flex gap-2 items-center">
+                        <span className="flex-shrink-0 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-xs">1</span>
+                        <span className="text-sm font-medium">Open your phone&apos;s camera app</span>
                       </li>
-                      <li className="flex gap-3">
-                        <span className="flex-shrink-0 w-7 h-7 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-sm">2</span>
-                        <span className="text-base font-medium">Point it at the QR code</span>
+                      <li className="flex gap-2 items-center">
+                        <span className="flex-shrink-0 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-xs">2</span>
+                        <span className="text-sm font-medium">Point it at the QR code</span>
                       </li>
-                      <li className="flex gap-3">
-                        <span className="flex-shrink-0 w-7 h-7 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-sm">3</span>
-                        <span className="text-base font-medium">Tap the notification that appears</span>
+                      <li className="flex gap-2 items-center">
+                        <span className="flex-shrink-0 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-xs">3</span>
+                        <span className="text-sm font-medium">Tap the notification that appears</span>
                       </li>
-                      <li className="flex gap-3">
-                        <span className="flex-shrink-0 w-7 h-7 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-sm">4</span>
-                        <span className="text-base font-medium">Complete the safety inspection form</span>
+                      <li className="flex gap-2 items-center">
+                        <span className="flex-shrink-0 w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold text-xs">4</span>
+                        <span className="text-sm font-medium">Complete the safety inspection form</span>
                       </li>
                     </ol>
                   </div>
 
-                  <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-5">
-                    <div className="flex items-start gap-3">
-                      <span className="text-3xl">⚠️</span>
+                  <div className="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg p-4">
+                    <div className="flex items-start gap-2">
+                      <span className="text-2xl">⚠️</span>
                       <div>
-                        <p className="text-lg font-black text-gray-900">SAFETY FIRST</p>
-                        <p className="text-sm font-semibold text-gray-700 mt-1">All impalement hazards must be reported and corrected immediately</p>
+                        <p className="text-base font-black text-gray-900">SAFETY FIRST</p>
+                        <p className="text-xs font-semibold text-gray-700 mt-0.5">All impalement hazards must be reported and corrected immediately</p>
                       </div>
                     </div>
                   </div>
@@ -430,9 +429,9 @@ export default function AdminDashboard() {
               </div>
 
               {/* Footer */}
-              <div className="mt-8 pt-6 border-t-2 border-gray-200 text-center">
-                <p className="text-lg font-bold text-gray-900">SubSpace - Construction Form Management</p>
-                <p className="text-sm text-gray-600 mt-1">For assistance, contact your site superintendent</p>
+              <div className="mt-5 pt-4 border-t-2 border-gray-200 text-center">
+                <p className="text-base font-bold text-gray-900">SubSpace - Construction Form Management</p>
+                <p className="text-xs text-gray-600 mt-0.5">For assistance, contact your site superintendent</p>
               </div>
             </div>
           </div>
