@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, forwardRef, useImperativeHandle, useEffect, useState } from "react";
-import SignatureCanvas from "react-signature-canvas";
 
 interface SignaturePadProps {
   label?: string;
@@ -16,81 +15,135 @@ export interface SignaturePadRef {
 
 const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
   ({ label = "Signature", required = false }, ref) => {
-    const sigCanvas = useRef<SignatureCanvas>(null);
-    const containerRef = useRef<HTMLDivElement>(null);
-    const [signatureData, setSignatureData] = useState<string>("");
-    const isRestoringRef = useRef(false);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [isEmpty, setIsEmpty] = useState(true);
+    const lastPointRef = useRef<{ x: number; y: number } | null>(null);
 
     useImperativeHandle(ref, () => ({
       clear: () => {
-        sigCanvas.current?.clear();
-        setSignatureData("");
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          setIsEmpty(true);
+        }
       },
-      isEmpty: () => {
-        return sigCanvas.current?.isEmpty() ?? true;
-      },
+      isEmpty: () => isEmpty,
       toDataURL: () => {
-        return sigCanvas.current?.toDataURL() ?? "";
+        return canvasRef.current?.toDataURL('image/png') ?? "";
       },
     }));
 
-    // Prevent page scrolling when touching the signature canvas (for mobile)
+    // Initialize canvas
     useEffect(() => {
-      const canvas = sigCanvas.current?.getCanvas();
+      const canvas = canvasRef.current;
       if (!canvas) return;
 
-      const preventScroll = (e: TouchEvent) => {
-        // Only prevent default to stop page scrolling, but let touch events through to canvas
-        if (e.cancelable) {
-          e.preventDefault();
+      // Set canvas size to match display size
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * window.devicePixelRatio;
+      canvas.height = rect.height * window.devicePixelRatio;
+
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+      }
+
+      // Handle resize
+      const handleResize = () => {
+        const rect = canvas.getBoundingClientRect();
+        const imageData = ctx?.getImageData(0, 0, canvas.width, canvas.height);
+        canvas.width = rect.width * window.devicePixelRatio;
+        canvas.height = rect.height * window.devicePixelRatio;
+        if (ctx) {
+          ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 2;
+          if (imageData) {
+            ctx.putImageData(imageData, 0, 0);
+          }
         }
       };
 
-      // Prevent scrolling only during touch move (allows tap/touch to work)
-      canvas.addEventListener('touchmove', preventScroll, { passive: false });
-
-      return () => {
-        canvas.removeEventListener('touchmove', preventScroll);
-      };
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Save signature data whenever user finishes drawing
-    const handleEnd = () => {
-      if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
-        const data = sigCanvas.current.toDataURL();
-        setSignatureData(data);
+    const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
+      const canvas = canvasRef.current;
+      if (!canvas) return null;
+
+      const rect = canvas.getBoundingClientRect();
+      let clientX: number;
+      let clientY: number;
+
+      if ('touches' in e && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else if ('clientX' in e) {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      } else {
+        return null;
       }
+
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top,
+      };
     };
 
-    // Restore signature when canvas resizes
-    useEffect(() => {
-      const canvasElement = sigCanvas.current?.getCanvas();
-      if (!canvasElement) return;
+    const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+      e.preventDefault();
+      const coords = getCoordinates(e);
+      if (!coords) return;
 
-      const resizeObserver = new ResizeObserver(() => {
-        // Only restore if we have saved data and canvas is empty (which happens after resize)
-        if (signatureData && sigCanvas.current && sigCanvas.current.isEmpty() && !isRestoringRef.current) {
-          isRestoringRef.current = true;
-          // Small delay to ensure canvas has finished resizing
-          setTimeout(() => {
-            if (sigCanvas.current) {
-              sigCanvas.current.fromDataURL(signatureData);
-            }
-            isRestoringRef.current = false;
-          }, 50);
-        }
-      });
+      setIsDrawing(true);
+      setIsEmpty(false);
+      lastPointRef.current = coords;
+    };
 
-      resizeObserver.observe(canvasElement);
+    const draw = (e: React.MouseEvent | React.TouchEvent) => {
+      e.preventDefault();
+      if (!isDrawing) return;
 
-      return () => {
-        resizeObserver.disconnect();
-      };
-    }, [signatureData]);
+      const coords = getCoordinates(e);
+      if (!coords || !lastPointRef.current) return;
+
+      const canvas = canvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      if (!ctx) return;
+
+      ctx.beginPath();
+      ctx.moveTo(lastPointRef.current.x, lastPointRef.current.y);
+      ctx.lineTo(coords.x, coords.y);
+      ctx.stroke();
+
+      lastPointRef.current = coords;
+    };
+
+    const stopDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+      e.preventDefault();
+      setIsDrawing(false);
+      lastPointRef.current = null;
+    };
 
     const handleClear = () => {
-      sigCanvas.current?.clear();
-      setSignatureData("");
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        setIsEmpty(true);
+      }
     };
 
     return (
@@ -99,21 +152,19 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
           {label} {required && <span className="text-red-500">*</span>}
         </label>
 
-        <div
-          ref={containerRef}
-          className="relative bg-white border-3 border-dashed border-purple-200 rounded-xl overflow-hidden shadow-inner"
-        >
-          <SignatureCanvas
-            ref={sigCanvas}
-            canvasProps={{
-              className: "w-full h-48",
-              style: {
-                touchAction: "none",
-                cursor: "crosshair"
-              } as React.CSSProperties,
-            }}
-            backgroundColor="white"
-            onEnd={handleEnd}
+        <div className="relative bg-white border-3 border-dashed border-purple-200 rounded-xl overflow-hidden shadow-inner">
+          <canvas
+            ref={canvasRef}
+            onMouseDown={startDrawing}
+            onMouseMove={draw}
+            onMouseUp={stopDrawing}
+            onMouseLeave={stopDrawing}
+            onTouchStart={startDrawing}
+            onTouchMove={draw}
+            onTouchEnd={stopDrawing}
+            onTouchCancel={stopDrawing}
+            className="w-full h-48 cursor-crosshair touch-none"
+            style={{ touchAction: 'none' }}
           />
           <div className="absolute bottom-3 right-3 text-xs text-gray-400 pointer-events-none">
             Sign here
