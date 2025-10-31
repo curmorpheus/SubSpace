@@ -82,7 +82,6 @@ export default function ImpalementProtectionForm() {
     }
 
     return {
-      sendEmail: false,
       recipientEmail: cached.recipientEmail || "",
       emailSubject: "",
     };
@@ -122,13 +121,13 @@ export default function ImpalementProtectionForm() {
             supervisor: formData.supervisor,
           }],
         },
-        emailOptions: emailOptions.sendEmail ? {
+        emailOptions: {
           recipientEmail: emailOptions.recipientEmail,
           emailSubject: emailOptions.emailSubject || `Impalement Protection Form - Job #${formData.jobNumber}`,
-        } : null,
+        },
       };
 
-      const endpoint = emailOptions.sendEmail ? "/api/forms/submit-and-email" : "/api/forms/submit";
+      const endpoint = "/api/forms/submit-and-email";
 
       const response = await fetch(endpoint, {
         method: "POST",
@@ -155,11 +154,7 @@ export default function ImpalementProtectionForm() {
       };
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
 
-      if (emailOptions.sendEmail) {
-        alert(`Form submitted and emailed successfully! Submission ID: ${result.id}\nEmail sent to: ${emailOptions.recipientEmail}`);
-      } else {
-        alert(`Form submitted successfully! Submission ID: ${result.id}`);
-      }
+      alert(`Form submitted and emailed successfully! Submission ID: ${result.id}\nEmail sent to: ${emailOptions.recipientEmail}`);
 
       router.push("/");
     } catch (err) {
@@ -404,47 +399,35 @@ export default function ImpalementProtectionForm() {
             {/* Divider */}
             <div className="my-10 border-t-2 border-gray-100"></div>
 
-            {/* Email Options Section */}
+            {/* Email Delivery Section */}
             <div className="mb-8">
               <div className="flex items-center mb-6">
                 <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
                   <span className="text-green-600 font-bold text-lg">4</span>
                 </div>
                 <h2 className="ml-4 text-2xl font-bold text-gray-900">
-                  Email Options
+                  Email Delivery
                 </h2>
               </div>
 
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-100 rounded-2xl p-6 sm:p-8">
-                <label className="flex items-start cursor-pointer group">
-                  <div className="flex items-center h-6">
-                    <input
-                      type="checkbox"
-                      id="sendEmail"
-                      checked={emailOptions.sendEmail}
-                      onChange={(e) => setEmailOptions({ ...emailOptions, sendEmail: e.target.checked })}
-                      className="w-5 h-5 text-green-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-green-500 cursor-pointer"
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <span className="text-base font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
-                      Email this form as a PDF
-                    </span>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Send a PDF copy to a superintendent or project manager
-                    </p>
-                  </div>
-                </label>
+                <div className="mb-6">
+                  <p className="text-base font-semibold text-gray-900 mb-2">
+                    📧 This form will be emailed as a PDF
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Enter the recipient&apos;s email address below to receive the completed inspection form
+                  </p>
+                </div>
 
-                {emailOptions.sendEmail && (
-                  <div className="mt-6 space-y-5 bg-white rounded-xl p-6 border-2 border-green-200">
+                <div className="space-y-5 bg-white rounded-xl p-6 border-2 border-green-200">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Recipient Email <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="email"
-                        required={emailOptions.sendEmail}
+                        required
                         value={emailOptions.recipientEmail}
                         onChange={(e) => setEmailOptions({ ...emailOptions, recipientEmail: e.target.value })}
                         placeholder="superintendent@example.com"
@@ -464,7 +447,6 @@ export default function ImpalementProtectionForm() {
                       />
                     </div>
                   </div>
-                )}
               </div>
             </div>
 
@@ -497,10 +479,7 @@ export default function ImpalementProtectionForm() {
                 disabled={isSubmitting}
                 className="flex-1 py-4 px-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting
-                  ? (emailOptions.sendEmail ? "Submitting & Emailing..." : "Submitting...")
-                  : (emailOptions.sendEmail ? "Submit & Email Form" : "Submit Form")
-                }
+                {isSubmitting ? "Submitting & Emailing..." : "Submit & Email Form"}
               </button>
             </div>
           </form>
