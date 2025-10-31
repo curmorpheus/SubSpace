@@ -221,12 +221,16 @@ export async function POST(request: NextRequest) {
           submissionTime: new Date().toLocaleString(),
         });
 
+        const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
         console.log("Sending email to:", emailOptions.recipientEmail);
-        console.log("From:", process.env.RESEND_FROM_EMAIL);
+        console.log("From (raw):", process.env.RESEND_FROM_EMAIL);
+        console.log("From (used):", fromEmail);
+        console.log("From (type):", typeof fromEmail);
+        console.log("From (length):", fromEmail.length);
         console.log("Subject:", emailSubject);
 
         const emailResult = await resendClient.emails.send({
-          from: process.env.RESEND_FROM_EMAIL || "forms@subspace.dev",
+          from: fromEmail,
           to: emailOptions.recipientEmail,
           subject: emailSubject,
           html: safeEmailHtml,

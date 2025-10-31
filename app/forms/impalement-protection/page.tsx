@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import DatePicker from "@/components/DatePicker";
 import TimePicker from "@/components/TimePicker";
+import ImageUpload from "@/components/ImageUpload";
+import type { CompressedImage } from "@/lib/image-compression";
 
 const CACHE_KEY = "subspace-form-cache";
 
@@ -68,8 +70,16 @@ export default function ImpalementProtectionForm() {
       correctiveMeasures: "",
       creatingEmployer: "",
       supervisor: "",
+      locationPhotos: [],
+      hazardPhotos: [],
+      measuresPhotos: [],
     };
   });
+
+  // State for images
+  const [locationPhotos, setLocationPhotos] = useState<CompressedImage[]>([]);
+  const [hazardPhotos, setHazardPhotos] = useState<CompressedImage[]>([]);
+  const [measuresPhotos, setMeasuresPhotos] = useState<CompressedImage[]>([]);
 
   const [emailOptions, setEmailOptions] = useState(() => {
     let cached: any = {};
