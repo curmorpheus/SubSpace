@@ -96,65 +96,65 @@ export function generateImpalementProtectionPDF(
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 20;
+  const margin = 15;
   const contentWidth = pageWidth - 2 * margin;
-  let yPosition = 20;
+  let yPosition = 15;
 
   // Helper function to add a section header with background
   const addSectionHeader = (text: string, y: number): number => {
     // Draw orange background
     doc.setFillColor(249, 115, 22); // Orange-500
-    doc.roundedRect(margin, y - 6, contentWidth, 12, 2, 2, "F");
+    doc.roundedRect(margin, y - 5, contentWidth, 10, 2, 2, "F");
 
     // Add white text
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(12);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text(text, margin + 4, y + 2);
+    doc.text(text, margin + 3, y + 1);
 
     // Reset text color
     doc.setTextColor(0, 0, 0);
 
-    return y + 15;
+    return y + 10;
   };
 
   // Helper function to add a field with label
   const addField = (label: string, value: string, y: number, bold: boolean = false): number => {
-    doc.setFontSize(9);
+    doc.setFontSize(7);
     doc.setTextColor(100, 100, 100);
     doc.setFont("helvetica", "bold");
     doc.text(label, margin, y);
 
     doc.setTextColor(0, 0, 0);
     doc.setFont("helvetica", bold ? "bold" : "normal");
-    doc.setFontSize(10);
-    const lines = doc.splitTextToSize(value, contentWidth - 5);
-    doc.text(lines, margin, y + 4);
+    doc.setFontSize(9);
+    const lines = doc.splitTextToSize(value, contentWidth - 3);
+    doc.text(lines, margin, y + 3.5);
 
-    return y + (lines.length * 5) + 6;
+    return y + (lines.length * 4) + 5;
   };
 
-  // Title Banner
+  // Title Banner - more compact
   doc.setFillColor(249, 115, 22); // Orange-500
-  doc.rect(0, 0, pageWidth, 35, "F");
+  doc.rect(0, 0, pageWidth, 28, "F");
 
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(20);
+  doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.text("IMPALEMENT PROTECTION", pageWidth / 2, 15, { align: "center" });
+  doc.text("IMPALEMENT PROTECTION FORM", pageWidth / 2, 12, { align: "center" });
 
-  doc.setFontSize(14);
+  doc.setFontSize(11);
   doc.setFont("helvetica", "normal");
-  doc.text("Safety Inspection Form", pageWidth / 2, 25, { align: "center" });
+  doc.text("Safety Inspection Report", pageWidth / 2, 20, { align: "center" });
 
   doc.setTextColor(0, 0, 0);
-  yPosition = 45;
+  yPosition = 35;
 
   // Form Information Section
   yPosition = addSectionHeader("FORM INFORMATION", yPosition);
 
-  // Two-column layout for basic info
-  doc.setFontSize(9);
+  // Two-column layout for basic info - more compact
+  doc.setFontSize(7);
   doc.setTextColor(100, 100, 100);
   doc.setFont("helvetica", "bold");
 
@@ -165,60 +165,60 @@ export function generateImpalementProtectionPDF(
   // Column 1
   doc.text("Job Number:", col1X, infoY);
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
-  doc.text(submissionInfo.jobNumber, col1X, infoY + 5);
+  doc.text(submissionInfo.jobNumber, col1X, infoY + 4);
 
   // Column 2
-  doc.setFontSize(9);
+  doc.setFontSize(7);
   doc.setTextColor(100, 100, 100);
   doc.setFont("helvetica", "bold");
   doc.text("Inspection Date:", col2X, infoY);
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(formData.date, col2X, infoY + 5);
+  doc.text(formData.date, col2X, infoY + 4);
 
-  infoY += 12;
+  infoY += 9;
 
   // Submitted by
-  doc.setFontSize(9);
+  doc.setFontSize(7);
   doc.setTextColor(100, 100, 100);
   doc.setFont("helvetica", "bold");
   doc.text("Submitted By:", col1X, infoY);
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(submissionInfo.submittedBy, col1X, infoY + 5);
+  doc.text(submissionInfo.submittedBy, col1X, infoY + 4);
 
   // Email
-  doc.setFontSize(9);
+  doc.setFontSize(7);
   doc.setTextColor(100, 100, 100);
   doc.setFont("helvetica", "bold");
   doc.text("Email:", col2X, infoY);
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(submissionInfo.submittedByEmail, col2X, infoY + 5);
+  doc.text(submissionInfo.submittedByEmail, col2X, infoY + 4);
 
-  infoY += 12;
+  infoY += 9;
 
   // Company
-  doc.setFontSize(9);
+  doc.setFontSize(7);
   doc.setTextColor(100, 100, 100);
   doc.setFont("helvetica", "bold");
   doc.text("Company:", col1X, infoY);
   doc.setTextColor(0, 0, 0);
-  doc.setFontSize(10);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(submissionInfo.submittedByCompany, col1X, infoY + 5);
+  doc.text(submissionInfo.submittedByCompany, col1X, infoY + 4);
 
-  yPosition = infoY + 15;
+  yPosition = infoY + 11;
 
   // Inspections
   formData.inspections.forEach((inspection, index) => {
     // Check if we need a new page
-    if (yPosition > 240) {
+    if (yPosition > 250) {
       doc.addPage();
       yPosition = 20;
     }
@@ -226,19 +226,19 @@ export function generateImpalementProtectionPDF(
     // Inspection Header
     yPosition = addSectionHeader(`INSPECTION DETAILS #${index + 1}`, yPosition);
 
-    // Time Information
-    doc.setFontSize(9);
+    // Time Information - more compact
+    doc.setFontSize(7);
     doc.setTextColor(100, 100, 100);
     doc.setFont("helvetica", "bold");
     doc.text("Start Time:", col1X, yPosition);
     doc.text("End Time:", col2X, yPosition);
 
     doc.setTextColor(0, 0, 0);
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
-    doc.text(inspection.startTime, col1X, yPosition + 4);
-    doc.text(inspection.endTime, col2X, yPosition + 4);
-    yPosition += 12;
+    doc.text(inspection.startTime, col1X, yPosition + 3.5);
+    doc.text(inspection.endTime, col2X, yPosition + 3.5);
+    yPosition += 9;
 
     // Location
     yPosition = addField("LOCATION OF INSPECTION", inspection.location, yPosition, true);
