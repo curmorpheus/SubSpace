@@ -22,6 +22,7 @@ export const formSubmissionSchema = z.object({
   submittedBy: z.string().min(1, "Name is required").max(100),
   submittedByEmail: z.string().email("Invalid email address"),
   submittedByCompany: z.string().min(1, "Company is required").max(200),
+  submittedAtLocal: z.string().optional(), // Local device time as string
   signature: z.string().optional(),
   data: z.object({
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),

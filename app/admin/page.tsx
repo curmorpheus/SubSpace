@@ -131,6 +131,11 @@ export default function AdminDashboard() {
   );
 
   const formatDate = (dateString: string) => {
+    // If it's already formatted (from client device), return as-is
+    // Otherwise, format the database timestamp
+    if (dateString.includes('/') || dateString.includes('AM') || dateString.includes('PM')) {
+      return dateString; // Already formatted local time
+    }
     return new Date(dateString).toLocaleString();
   };
 
@@ -181,9 +186,13 @@ export default function AdminDashboard() {
     },
     {
       field: "submittedAt",
-      headerName: "Submitted At",
-      width: 200,
+      headerName: "Submitted At (Local)",
+      width: 220,
       headerClassName: "font-bold bg-gray-50",
+      valueGetter: (value, row) => {
+        // Prefer local device time if available
+        return row.data?.submittedAtLocal || value;
+      },
       valueFormatter: (value) => formatDate(value),
     },
   ];
@@ -360,15 +369,21 @@ export default function AdminDashboard() {
                 margin: 0.5in;
                 size: letter portrait;
               }
+              body {
+                margin: 0 !important;
+                padding: 0 !important;
+              }
             }
           `}</style>
-          <div className="print-flyer w-full bg-white p-6">
-            <div className="w-full max-w-5xl mx-auto">
-              {/* Deacon Logo at top */}
-              <div className="flex justify-center mb-3">
-                <img src="/images/deacon-logo.svg" alt="Deacon Construction" className="h-10" />
+          <div className="print-flyer w-full bg-white">
+            {/* Full-width blue header bar with logo */}
+            <div className="w-full" style={{ backgroundColor: '#1e3a5f', padding: '1rem 0' }}>
+              <div className="max-w-5xl mx-auto flex justify-center">
+                <span className="text-white text-3xl font-black tracking-widest">DEACON</span>
               </div>
+            </div>
 
+            <div className="w-full max-w-5xl mx-auto px-6 pt-4">
               {/* Thin orange accent bar */}
               <div className="h-1.5 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full mb-4"></div>
 
@@ -426,12 +441,6 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 </div>
-              </div>
-
-              {/* Footer */}
-              <div className="mt-5 pt-4 border-t-2 border-gray-200 text-center">
-                <p className="text-base font-bold text-gray-900">SubSpace - Construction Form Management</p>
-                <p className="text-xs text-gray-600 mt-0.5">For assistance, contact your site superintendent</p>
               </div>
             </div>
           </div>
@@ -647,8 +656,10 @@ export default function AdminDashboard() {
                     <div className="font-semibold text-gray-900">{selectedSubmission.submittedByCompany}</div>
                   </div>
                   <div>
-                    <span className="text-sm font-semibold text-gray-700">Submitted At:</span>
-                    <div className="font-semibold text-gray-900">{formatDate(selectedSubmission.submittedAt)}</div>
+                    <span className="text-sm font-semibold text-gray-700">Submitted At (Local):</span>
+                    <div className="font-semibold text-gray-900">
+                      {formatDate(selectedSubmission.data?.submittedAtLocal || selectedSubmission.submittedAt)}
+                    </div>
                   </div>
                 </div>
 

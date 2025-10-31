@@ -112,6 +112,7 @@ export async function POST(request: NextRequest) {
       submittedBy,
       submittedByEmail,
       submittedByCompany,
+      submittedAtLocal,
       data,
       signature,
       emailOptions,
@@ -199,6 +200,7 @@ export async function POST(request: NextRequest) {
     const processedData = {
       ...data,
       inspections: processedInspections,
+      submittedAtLocal, // Store local device time
     };
 
     // Insert the form submission (including signature in data)
@@ -225,13 +227,14 @@ export async function POST(request: NextRequest) {
       try {
         console.log("Generating PDF...");
         // Generate PDF using original base64 data (still in memory)
+        // Use local device time if provided, otherwise fall back to database time
         const pdfBuffer = generateImpalementProtectionPDF(
           {
             jobNumber,
             submittedBy,
             submittedByEmail,
             submittedByCompany,
-            submittedAt: submission.submittedAt.toISOString(),
+            submittedAt: submittedAtLocal || submission.submittedAt.toISOString(),
           },
           { ...data, signature }
         );

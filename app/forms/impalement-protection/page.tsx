@@ -240,12 +240,25 @@ function ImpalementProtectionFormContent() {
     setIsSubmitting(true);
 
     try {
+      // Capture local time as a formatted string (not UTC)
+      const now = new Date();
+      const submittedAtLocal = now.toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true
+      });
+
       const payload = {
         formType: "impalement-protection",
         jobNumber: formData.jobNumber,
         submittedBy: formData.submittedBy,
         submittedByEmail: formData.submittedByEmail,
         submittedByCompany: formData.submittedByCompany,
+        submittedAtLocal, // Local device time
         data: {
           date: formData.date,
           inspections: [{

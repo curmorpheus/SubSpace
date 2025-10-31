@@ -392,9 +392,8 @@ export function generateImpalementProtectionPDF(
     doc.setFontSize(8);
     doc.setFont("helvetica", "italic");
     doc.setTextColor(128, 128, 128);
-    const footerText = `Submitted: ${new Date(
-      submissionInfo.submittedAt
-    ).toLocaleString()}`;
+    // Use the submitted time string directly (already formatted as local time on device)
+    const footerText = `Submitted: ${submissionInfo.submittedAt}`;
     doc.text(
       footerText,
       pageWidth / 2,
