@@ -276,7 +276,7 @@ export default function ImpalementProtectionForm() {
                 Step {currentStep} of {totalSteps}:{' '}
                 {currentStep === 1 && 'Basic Information'}
                 {currentStep === 2 && 'Inspection Details'}
-                {currentStep === 3 && 'Signature & Email'}
+                {currentStep === 3 && 'Email & Signature'}
               </p>
             </div>
           </div>
@@ -464,35 +464,13 @@ export default function ImpalementProtectionForm() {
               </div>
             </div>
 
-            {/* Step 3: Signature & Email Section */}
+            {/* Step 3: Email & Signature Section */}
             <div className={`space-y-8 ${currentStep === 3 ? 'block' : 'hidden'}`}>
-            {/* Signature Section */}
-            <div className="mb-8">
-              <div className="flex items-center mb-6">
-                <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                  <span className="text-purple-600 font-bold text-lg">3</span>
-                </div>
-                <h2 className="ml-4 text-2xl font-bold text-gray-900">
-                  Signature
-                </h2>
-              </div>
-
-              <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-2xl p-6 sm:p-8">
-                <SignaturePad ref={signaturePadRef} label="Inspector Signature" required />
-                <p className="mt-4 text-sm text-gray-600 bg-white/60 rounded-lg p-3">
-                  By signing above, you certify that the information provided is accurate and complete.
-                </p>
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="my-10 border-t-2 border-gray-100"></div>
-
             {/* Email Delivery Section */}
             <div className="mb-8">
               <div className="flex items-center mb-6">
                 <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <span className="text-green-600 font-bold text-lg">4</span>
+                  <span className="text-green-600 font-bold text-lg">3</span>
                 </div>
                 <h2 className="ml-4 text-2xl font-bold text-gray-900">
                   Email Delivery
@@ -536,6 +514,28 @@ export default function ImpalementProtectionForm() {
                       />
                     </div>
                   </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="my-10 border-t-2 border-gray-100"></div>
+
+            {/* Signature Section */}
+            <div className="mb-8">
+              <div className="flex items-center mb-6">
+                <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <span className="text-purple-600 font-bold text-lg">4</span>
+                </div>
+                <h2 className="ml-4 text-2xl font-bold text-gray-900">
+                  Signature
+                </h2>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-2xl p-6 sm:p-8">
+                <SignaturePad ref={signaturePadRef} label="Inspector Signature" required />
+                <p className="mt-4 text-sm text-gray-600 bg-white/60 rounded-lg p-3">
+                  By signing above, you certify that the information provided is accurate and complete.
+                </p>
               </div>
             </div>
             </div>

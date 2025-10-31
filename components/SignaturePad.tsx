@@ -33,7 +33,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
       },
     }));
 
-    // Save signature data whenever it changes
+    // Save signature data whenever user finishes drawing
     const handleEnd = () => {
       if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
         const data = sigCanvas.current.toDataURL();
@@ -41,19 +41,30 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
       }
     };
 
-    // Restore signature data if canvas was cleared unexpectedly
+    // Restore signature when canvas resizes
     useEffect(() => {
-      if (!sigCanvas.current || isRestoringRef.current) return;
+      const canvasElement = sigCanvas.current?.getCanvas();
+      if (!canvasElement) return;
 
-      const canvas = sigCanvas.current;
-      const isEmpty = canvas.isEmpty();
+      const resizeObserver = new ResizeObserver(() => {
+        // Only restore if we have saved data and canvas is empty (which happens after resize)
+        if (signatureData && sigCanvas.current && sigCanvas.current.isEmpty() && !isRestoringRef.current) {
+          isRestoringRef.current = true;
+          // Small delay to ensure canvas has finished resizing
+          setTimeout(() => {
+            if (sigCanvas.current) {
+              sigCanvas.current.fromDataURL(signatureData);
+            }
+            isRestoringRef.current = false;
+          }, 50);
+        }
+      });
 
-      // If we have saved data but canvas is empty, restore it
-      if (signatureData && isEmpty) {
-        isRestoringRef.current = true;
-        canvas.fromDataURL(signatureData);
-        isRestoringRef.current = false;
-      }
+      resizeObserver.observe(canvasElement);
+
+      return () => {
+        resizeObserver.disconnect();
+      };
     }, [signatureData]);
 
     const handleClear = () => {
