@@ -191,33 +191,133 @@ export async function POST(request: NextRequest) {
         }
 
         // Create safe HTML email with sanitized user input
+        const inspection = data.inspections[0]; // Get first inspection
+
         const emailHtmlTemplate = `
-          <h2>Impalement Protection Inspection Form</h2>
-          <p>A new impalement protection inspection form has been submitted.</p>
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f5f5f5; }
+              .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+              .header { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); padding: 40px 30px; text-align: center; }
+              .header h1 { color: #ffffff; margin: 0 0 10px 0; font-size: 28px; font-weight: bold; }
+              .header p { color: #fed7aa; margin: 0; font-size: 16px; }
+              .content { padding: 30px; }
+              .section { margin-bottom: 30px; }
+              .section-title { color: #1f2937; font-size: 18px; font-weight: bold; margin: 0 0 15px 0; padding-bottom: 8px; border-bottom: 2px solid #f97316; }
+              .info-grid { display: table; width: 100%; margin-bottom: 20px; }
+              .info-row { display: table-row; }
+              .info-label { display: table-cell; padding: 8px 0; color: #6b7280; font-size: 14px; font-weight: 600; width: 40%; }
+              .info-value { display: table-cell; padding: 8px 0; color: #1f2937; font-size: 14px; }
+              .field-box { background-color: #f9fafb; border-left: 4px solid #f97316; padding: 15px; margin-bottom: 15px; border-radius: 4px; }
+              .field-label { color: #6b7280; font-size: 13px; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
+              .field-value { color: #1f2937; font-size: 15px; line-height: 1.6; white-space: pre-wrap; }
+              .time-badge { display: inline-block; background-color: #dbeafe; color: #1e40af; padding: 4px 12px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-right: 10px; }
+              .attachment-notice { background-color: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px; padding: 15px; text-align: center; margin-top: 30px; }
+              .attachment-notice p { margin: 0; color: #78350f; font-size: 14px; }
+              .footer { background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb; }
+              .footer p { margin: 5px 0; color: #6b7280; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>IMPALEMENT PROTECTION</h1>
+                <p>Safety Inspection Form</p>
+              </div>
 
-          <h3>Details:</h3>
-          <ul>
-            <li><strong>Job Number:</strong> {{jobNumber}}</li>
-            <li><strong>Submitted By:</strong> {{submittedBy}}</li>
-            <li><strong>Company:</strong> {{submittedByCompany}}</li>
-            <li><strong>Date:</strong> {{date}}</li>
-            <li><strong>Number of Inspections:</strong> {{inspectionCount}}</li>
-          </ul>
+              <div class="content">
+                <div class="section">
+                  <h2 class="section-title">Form Information</h2>
+                  <div class="info-grid">
+                    <div class="info-row">
+                      <div class="info-label">Job Number:</div>
+                      <div class="info-value"><strong>{{jobNumber}}</strong></div>
+                    </div>
+                    <div class="info-row">
+                      <div class="info-label">Inspection Date:</div>
+                      <div class="info-value">{{date}}</div>
+                    </div>
+                    <div class="info-row">
+                      <div class="info-label">Submitted By:</div>
+                      <div class="info-value">{{submittedBy}}</div>
+                    </div>
+                    <div class="info-row">
+                      <div class="info-label">Company:</div>
+                      <div class="info-value">{{submittedByCompany}}</div>
+                    </div>
+                    <div class="info-row">
+                      <div class="info-label">Email:</div>
+                      <div class="info-value">{{submittedByEmail}}</div>
+                    </div>
+                  </div>
+                </div>
 
-          <p>The complete form is attached as a PDF.</p>
+                <div class="section">
+                  <h2 class="section-title">Inspection Details</h2>
 
-          <hr />
-          <p style="color: #666; font-size: 12px;">
-            This form was submitted via SubSpace on {{submissionTime}}
-          </p>
+                  <div style="margin-bottom: 15px;">
+                    <span class="time-badge">⏰ Start: {{startTime}}</span>
+                    <span class="time-badge">⏱️ End: {{endTime}}</span>
+                  </div>
+
+                  <div class="field-box">
+                    <div class="field-label">📍 Location of Inspection</div>
+                    <div class="field-value">{{location}}</div>
+                  </div>
+
+                  <div class="field-box">
+                    <div class="field-label">⚠️ Description of Impalement Hazard Observed</div>
+                    <div class="field-value">{{hazardDescription}}</div>
+                  </div>
+
+                  <div class="field-box">
+                    <div class="field-label">✅ Corrective Measures Taken</div>
+                    <div class="field-value">{{correctiveMeasures}}</div>
+                  </div>
+
+                  <div class="field-box">
+                    <div class="field-label">🏢 Creating/Exposing Employer(s)</div>
+                    <div class="field-value">{{creatingEmployer}}</div>
+                  </div>
+
+                  <div class="field-box">
+                    <div class="field-label">👷 Supervisor of Creating/Exposing Employer(s)</div>
+                    <div class="field-value">{{supervisor}}</div>
+                  </div>
+                </div>
+
+                <div class="attachment-notice">
+                  <p><strong>📎 Complete PDF Report Attached</strong></p>
+                  <p>The full inspection form with all details is attached to this email.</p>
+                </div>
+              </div>
+
+              <div class="footer">
+                <p><strong>SubSpace</strong> - Construction Form Management</p>
+                <p>Submitted on {{submissionTime}}</p>
+              </div>
+            </div>
+          </body>
+          </html>
         `;
 
         const safeEmailHtml = createSafeEmailHtml(emailHtmlTemplate, {
           jobNumber,
           submittedBy,
           submittedByCompany,
+          submittedByEmail,
           date: data.date,
-          inspectionCount: String(data.inspections.length),
+          startTime: inspection.startTime,
+          endTime: inspection.endTime,
+          location: inspection.location,
+          hazardDescription: inspection.hazardDescription,
+          correctiveMeasures: inspection.correctiveMeasures,
+          creatingEmployer: inspection.creatingEmployer,
+          supervisor: inspection.supervisor,
           submissionTime: new Date().toLocaleString(),
         });
 
