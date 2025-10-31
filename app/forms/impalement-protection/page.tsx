@@ -232,15 +232,40 @@ function ImpalementProtectionFormContent() {
     });
   }, []);
 
-  // Read job number and superintendent email from URL parameters
+  // Read job number, superintendent email, and subcontractor info from URL parameters
   useEffect(() => {
     const jobNumberParam = searchParams.get('jobNumber');
     const superintendentEmailParam = searchParams.get('superintendentEmail');
+    const nameParam = searchParams.get('name');
+    const emailParam = searchParams.get('email');
+    const companyParam = searchParams.get('company');
 
     if (jobNumberParam) {
       setFormData(prev => ({
         ...prev,
         jobNumber: jobNumberParam,
+      }));
+    }
+
+    // Pre-fill subcontractor info from invitation link
+    if (nameParam) {
+      setFormData(prev => ({
+        ...prev,
+        submittedBy: nameParam,
+      }));
+    }
+
+    if (emailParam) {
+      setFormData(prev => ({
+        ...prev,
+        submittedByEmail: emailParam,
+      }));
+    }
+
+    if (companyParam) {
+      setFormData(prev => ({
+        ...prev,
+        submittedByCompany: companyParam,
       }));
     }
 

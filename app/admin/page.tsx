@@ -40,6 +40,16 @@ export default function AdminDashboard() {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
   const [showQrGenerator, setShowQrGenerator] = useState(false);
 
+  // Subcontractor Invitation state
+  const [showInvitation, setShowInvitation] = useState(false);
+  const [inviteSubName, setInviteSubName] = useState("");
+  const [inviteSubEmail, setInviteSubEmail] = useState("");
+  const [inviteSubCompany, setInviteSubCompany] = useState("");
+  const [invitePersonalNote, setInvitePersonalNote] = useState("");
+  const [inviteSending, setInviteSending] = useState(false);
+  const [inviteSuccess, setInviteSuccess] = useState("");
+  const [inviteError, setInviteError] = useState("");
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError("");
@@ -239,6 +249,52 @@ export default function AdminDashboard() {
     link.download = `impalement-protection-qr-${qrJobNumber}.png`;
     link.href = qrCodeDataUrl;
     link.click();
+  };
+
+  const sendSubcontractorInvitation = async () => {
+    if (!inviteSubEmail || !inviteSubName || !inviteSubCompany) {
+      setInviteError("Please fill in all required fields");
+      return;
+    }
+
+    setInviteSending(true);
+    setInviteError("");
+    setInviteSuccess("");
+
+    try {
+      const response = await fetch("/api/invite-subcontractor", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          subcontractorName: inviteSubName,
+          subcontractorEmail: inviteSubEmail,
+          subcontractorCompany: inviteSubCompany,
+          personalNote: invitePersonalNote,
+        }),
+      });
+
+      if (response.ok) {
+        setInviteSuccess(`Invitation sent successfully to ${inviteSubEmail}!`);
+        // Clear form after 3 seconds
+        setTimeout(() => {
+          setInviteSubName("");
+          setInviteSubEmail("");
+          setInviteSubCompany("");
+          setInvitePersonalNote("");
+          setInviteSuccess("");
+        }, 3000);
+      } else {
+        const data = await response.json();
+        setInviteError(data.error || "Failed to send invitation");
+      }
+    } catch (error) {
+      setInviteError("Failed to send invitation. Please try again.");
+    } finally {
+      setInviteSending(false);
+    }
   };
 
   const downloadPDF = (submission: FormSubmission) => {
@@ -559,6 +615,107 @@ export default function AdminDashboard() {
                       <div className="mt-4 text-xs text-gray-500">
                         URL: {window.location.origin}/forms/impalement-protection?jobNumber={qrJobNumber}
                       </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Subcontractor Invitation Section */}
+          <div className="mb-6 border-2 border-blue-200 rounded-lg overflow-hidden">
+            <button
+              onClick={() => setShowInvitation(!showInvitation)}
+              className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-4 flex justify-between items-center hover:from-blue-600 hover:to-blue-700 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">✉️</span>
+                <div className="text-left">
+                  <div className="font-bold text-lg">Invite Subcontractor to Participate</div>
+                  <div className="text-sm text-blue-100">Send a personalized invitation to join impalement protection inspections</div>
+                </div>
+              </div>
+              <span className="text-2xl">{showInvitation ? "▼" : "▶"}</span>
+            </button>
+
+            {showInvitation && (
+              <div className="p-6 bg-blue-50">
+                <div className="max-w-2xl mx-auto">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Subcontractor Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={inviteSubName}
+                        onChange={(e) => setInviteSubName(e.target.value)}
+                        placeholder="e.g., John Smith"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Subcontractor Email *
+                      </label>
+                      <input
+                        type="email"
+                        value={inviteSubEmail}
+                        onChange={(e) => setInviteSubEmail(e.target.value)}
+                        placeholder="john@contractor.com"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Subcontractor Company *
+                      </label>
+                      <input
+                        type="text"
+                        value={inviteSubCompany}
+                        onChange={(e) => setInviteSubCompany(e.target.value)}
+                        placeholder="e.g., ABC Contractors"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Personal Note (Optional)
+                    </label>
+                    <textarea
+                      value={invitePersonalNote}
+                      onChange={(e) => setInvitePersonalNote(e.target.value)}
+                      placeholder="Add a personalized message to the subcontractor..."
+                      rows={4}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium resize-none"
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <button
+                      onClick={sendSubcontractorInvitation}
+                      disabled={inviteSending}
+                      className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {inviteSending ? "Sending..." : "Send Invitation"}
+                    </button>
+                  </div>
+
+                  {inviteSuccess && (
+                    <div className="bg-green-50 border-2 border-green-400 rounded-lg p-4 mb-4">
+                      <p className="text-sm font-bold text-green-900 flex items-center gap-2">
+                        <span>✓</span> {inviteSuccess}
+                      </p>
+                    </div>
+                  )}
+
+                  {inviteError && (
+                    <div className="bg-red-50 border-2 border-red-400 rounded-lg p-4 mb-4">
+                      <p className="text-sm font-bold text-red-900 flex items-center gap-2">
+                        <span>⚠</span> {inviteError}
+                      </p>
                     </div>
                   )}
                 </div>
