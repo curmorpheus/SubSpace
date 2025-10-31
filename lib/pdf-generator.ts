@@ -102,30 +102,32 @@ export function generateImpalementProtectionPDF(
 
   // Helper function to add a section header with background
   const addSectionHeader = (text: string, y: number): number => {
-    // Draw orange background
+    // Draw orange background with subtle gradient effect
     doc.setFillColor(249, 115, 22); // Orange-500
-    doc.roundedRect(margin, y - 5, contentWidth, 10, 2, 2, "F");
+    doc.roundedRect(margin, y - 4, contentWidth, 8, 1, 1, "F");
 
     // Add white text
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
-    doc.text(text, margin + 3, y + 1);
+    doc.text(text, margin + 2, y + 1);
 
     // Reset text color
     doc.setTextColor(0, 0, 0);
 
-    return y + 10;
+    return y + 8;
   };
 
-  // Helper function to add a field with label
+  // Helper function to add a field with label - consistent formatting
   const addField = (label: string, value: string, y: number, bold: boolean = false): number => {
-    doc.setFontSize(7);
-    doc.setTextColor(100, 100, 100);
+    // Label styling - consistent across all fields
+    doc.setFontSize(8);
+    doc.setTextColor(107, 114, 128); // Gray-500
     doc.setFont("helvetica", "bold");
     doc.text(label, margin, y);
 
-    doc.setTextColor(0, 0, 0);
+    // Value styling
+    doc.setTextColor(31, 41, 55); // Gray-800
     doc.setFont("helvetica", bold ? "bold" : "normal");
     doc.setFontSize(9);
     const lines = doc.splitTextToSize(value, contentWidth - 3);
@@ -151,64 +153,63 @@ export function generateImpalementProtectionPDF(
   yPosition = 25;
 
   // Form Information Section
-  yPosition = addSectionHeader("FORM INFORMATION", yPosition);
+  yPosition = addSectionHeader("Form Information", yPosition);
 
-  // Two-column layout for basic info - more compact
-  doc.setFontSize(7);
-  doc.setTextColor(100, 100, 100);
-  doc.setFont("helvetica", "bold");
-
+  // Two-column layout for basic info - consistent formatting
   const col1X = margin;
   const col2X = pageWidth / 2 + 5;
   let infoY = yPosition;
 
-  // Column 1
-  doc.text("Job Number:", col1X, infoY);
-  doc.setTextColor(0, 0, 0);
+  // Column 1 - Job Number
+  doc.setFontSize(8);
+  doc.setTextColor(107, 114, 128); // Gray-500
+  doc.setFont("helvetica", "bold");
+  doc.text("Job Number", col1X, infoY);
+  doc.setTextColor(31, 41, 55); // Gray-800
   doc.setFontSize(10);
   doc.setFont("helvetica", "bold");
   doc.text(submissionInfo.jobNumber, col1X, infoY + 4);
 
-  // Column 2
-  doc.setFontSize(7);
-  doc.setTextColor(100, 100, 100);
+  // Column 2 - Inspection Date
+  doc.setFontSize(8);
+  doc.setTextColor(107, 114, 128); // Gray-500
   doc.setFont("helvetica", "bold");
-  doc.text("Inspection Date:", col2X, infoY);
-  doc.setTextColor(0, 0, 0);
+  doc.text("Inspection Date", col2X, infoY);
+  doc.setTextColor(31, 41, 55); // Gray-800
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text(formData.date, col2X, infoY + 4);
 
   infoY += 9;
 
-  // Submitted by
-  doc.setFontSize(7);
-  doc.setTextColor(100, 100, 100);
+  // Column 1 - Submitted By
+  doc.setFontSize(8);
+  doc.setTextColor(107, 114, 128); // Gray-500
   doc.setFont("helvetica", "bold");
-  doc.text("Submitted By:", col1X, infoY);
-  doc.setTextColor(0, 0, 0);
+  doc.text("Submitted By", col1X, infoY);
+  doc.setTextColor(31, 41, 55); // Gray-800
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text(submissionInfo.submittedBy, col1X, infoY + 4);
 
-  // Email
-  doc.setFontSize(7);
-  doc.setTextColor(100, 100, 100);
+  // Column 2 - Email
+  doc.setFontSize(8);
+  doc.setTextColor(107, 114, 128); // Gray-500
   doc.setFont("helvetica", "bold");
-  doc.text("Email:", col2X, infoY);
-  doc.setTextColor(0, 0, 0);
+  doc.text("Email", col2X, infoY);
+  doc.setTextColor(31, 41, 55); // Gray-800
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text(submissionInfo.submittedByEmail, col2X, infoY + 4);
 
   infoY += 9;
 
-  // Company
-  doc.setFontSize(7);
-  doc.setTextColor(100, 100, 100);
+  // Column 1 - Company
+  doc.setFontSize(8);
+  doc.setTextColor(107, 114, 128); // Gray-500
   doc.setFont("helvetica", "bold");
-  doc.text("Company:", col1X, infoY);
-  doc.setTextColor(0, 0, 0);
+  doc.text("Company", col1X, infoY);
+  doc.setTextColor(31, 41, 55); // Gray-800
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text(submissionInfo.submittedByCompany, col1X, infoY + 4);
@@ -224,16 +225,16 @@ export function generateImpalementProtectionPDF(
     }
 
     // Inspection Header
-    yPosition = addSectionHeader(`INSPECTION DETAILS #${index + 1}`, yPosition);
+    yPosition = addSectionHeader(`Inspection Details #${index + 1}`, yPosition);
 
-    // Time Information - more compact
-    doc.setFontSize(7);
-    doc.setTextColor(100, 100, 100);
+    // Time Information - consistent formatting
+    doc.setFontSize(8);
+    doc.setTextColor(107, 114, 128); // Gray-500
     doc.setFont("helvetica", "bold");
-    doc.text("Start Time:", col1X, yPosition);
-    doc.text("End Time:", col2X, yPosition);
+    doc.text("Start Time", col1X, yPosition);
+    doc.text("End Time", col2X, yPosition);
 
-    doc.setTextColor(0, 0, 0);
+    doc.setTextColor(31, 41, 55); // Gray-800
     doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.text(inspection.startTime, col1X, yPosition + 3.5);
@@ -241,7 +242,7 @@ export function generateImpalementProtectionPDF(
     yPosition += 9;
 
     // Location
-    yPosition = addField("LOCATION OF INSPECTION", inspection.location, yPosition, true);
+    yPosition = addField("Location of Inspection", inspection.location, yPosition, true);
 
     // Add location photos if available
     if (inspection.locationPhotos && inspection.locationPhotos.length > 0) {
@@ -259,7 +260,7 @@ export function generateImpalementProtectionPDF(
     }
 
     // Hazard Description
-    yPosition = addField("DESCRIPTION OF IMPALEMENT HAZARD OBSERVED", inspection.hazardDescription, yPosition);
+    yPosition = addField("Description of Impalement Hazard Observed", inspection.hazardDescription, yPosition);
 
     // Add hazard photos if available
     if (inspection.hazardPhotos && inspection.hazardPhotos.length > 0) {
@@ -277,7 +278,7 @@ export function generateImpalementProtectionPDF(
     }
 
     // Corrective Measures
-    yPosition = addField("CORRECTIVE MEASURES TAKEN", inspection.correctiveMeasures, yPosition);
+    yPosition = addField("Corrective Measures Taken", inspection.correctiveMeasures, yPosition);
 
     // Add corrective measures photos if available
     if (inspection.measuresPhotos && inspection.measuresPhotos.length > 0) {
@@ -295,8 +296,8 @@ export function generateImpalementProtectionPDF(
     }
 
     // Employer Information
-    yPosition = addField("CREATING/EXPOSING EMPLOYER(S)", inspection.creatingEmployer, yPosition);
-    yPosition = addField("SUPERVISOR OF CREATING/EXPOSING EMPLOYER(S)", inspection.supervisor, yPosition);
+    yPosition = addField("Creating/Exposing Employer(s)", inspection.creatingEmployer, yPosition);
+    yPosition = addField("Supervisor of Creating/Exposing Employer(s)", inspection.supervisor, yPosition);
 
     yPosition += 5;
   });
