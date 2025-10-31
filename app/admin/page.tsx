@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
+import { DataGrid, GridColDef, GridRowParams } from "@mui/x-data-grid";
 
 interface FormSubmission {
   id: number;
@@ -123,6 +124,47 @@ export default function AdminDashboard() {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
+
+  // Define DataGrid columns
+  const columns: GridColDef[] = [
+    {
+      field: "id",
+      headerName: "ID",
+      width: 80,
+      headerClassName: "font-bold bg-gray-50",
+    },
+    {
+      field: "jobNumber",
+      headerName: "Job Number",
+      width: 150,
+      headerClassName: "font-bold bg-gray-50",
+    },
+    {
+      field: "submittedBy",
+      headerName: "Submitted By",
+      width: 180,
+      headerClassName: "font-bold bg-gray-50",
+    },
+    {
+      field: "submittedByCompany",
+      headerName: "Company",
+      width: 200,
+      headerClassName: "font-bold bg-gray-50",
+    },
+    {
+      field: "submittedByEmail",
+      headerName: "Email",
+      width: 220,
+      headerClassName: "font-bold bg-gray-50",
+    },
+    {
+      field: "submittedAt",
+      headerName: "Submitted At",
+      width: 200,
+      headerClassName: "font-bold bg-gray-50",
+      valueFormatter: (value) => formatDate(value),
+    },
+  ];
 
   const generateQRCode = async () => {
     if (!qrJobNumber.trim()) {
@@ -372,63 +414,46 @@ export default function AdminDashboard() {
           </div>
 
           <div className="mb-6">
-            <input
-              type="text"
-              placeholder="Search by job number, name, or company..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Form Submissions</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Click any row to view full details
+            </p>
           </div>
 
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="text-gray-600">Loading submissions...</div>
-            </div>
-          ) : filteredSubmissions.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-600">No form submissions found</div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredSubmissions.map((submission) => (
-                <div
-                  key={submission.id}
-                  className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => setSelectedSubmission(submission)}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-2">
-                        Impalement Protection
-                      </span>
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        Job #{submission.jobNumber}
-                      </h3>
-                    </div>
-                    <span className="text-sm text-gray-500">
-                      ID: {submission.id}
-                    </span>
-                  </div>
-
-                  <div className="grid md:grid-cols-3 gap-4 text-sm">
-                    <div>
-                      <span className="text-gray-600">Submitted by:</span>
-                      <div className="font-medium">{submission.submittedBy}</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Company:</span>
-                      <div className="font-medium">{submission.submittedByCompany}</div>
-                    </div>
-                    <div>
-                      <span className="text-gray-600">Date:</span>
-                      <div className="font-medium">{formatDate(submission.submittedAt)}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <div style={{ height: 600, width: "100%" }}>
+            <DataGrid
+              rows={filteredSubmissions}
+              columns={columns}
+              loading={loading}
+              initialState={{
+                pagination: {
+                  paginationModel: { page: 0, pageSize: 10 },
+                },
+                sorting: {
+                  sortModel: [{ field: "submittedAt", sort: "desc" }],
+                },
+              }}
+              pageSizeOptions={[10, 25, 50]}
+              disableRowSelectionOnClick
+              onRowClick={(params: GridRowParams) => {
+                setSelectedSubmission(params.row as FormSubmission);
+              }}
+              sx={{
+                border: "1px solid #e5e7eb",
+                borderRadius: "8px",
+                "& .MuiDataGrid-cell:hover": {
+                  cursor: "pointer",
+                },
+                "& .MuiDataGrid-row:hover": {
+                  backgroundColor: "#f9fafb",
+                },
+                "& .MuiDataGrid-columnHeaders": {
+                  backgroundColor: "#f9fafb",
+                  borderBottom: "2px solid #e5e7eb",
+                },
+              }}
+            />
+          </div>
         </div>
 
         {selectedSubmission && (
