@@ -611,7 +611,7 @@ function ImpalementProtectionFormContent() {
                   <p className="text-base font-semibold text-gray-900 mb-2">
                     📧 This form will be emailed as a PDF
                   </p>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-700 font-medium">
                     Enter the recipient&apos;s email address below to receive the completed inspection form
                   </p>
                 </div>
@@ -632,7 +632,7 @@ function ImpalementProtectionFormContent() {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        CC Emails <span className="text-gray-500 text-xs">(Optional)</span>
+                        CC Emails <span className="text-gray-600 text-xs font-medium">(Optional)</span>
                       </label>
                       <input
                         type="text"
@@ -641,11 +641,11 @@ function ImpalementProtectionFormContent() {
                         placeholder="email1@example.com, email2@example.com"
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-gray-900"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Separate multiple emails with commas</p>
+                      <p className="text-xs text-gray-600 font-medium mt-1">Separate multiple emails with commas</p>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Email Subject <span className="text-gray-500 text-xs">(Optional)</span>
+                        Email Subject <span className="text-gray-600 text-xs font-medium">(Optional)</span>
                       </label>
                       <input
                         type="text"

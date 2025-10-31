@@ -171,20 +171,20 @@ export function generateImpalementProtectionPDF(
 
   // Helper function to add a field with label - consistent formatting
   const addField = (label: string, value: string, y: number, bold: boolean = false): number => {
-    // Label styling - consistent across all fields
-    doc.setFontSize(8);
-    doc.setTextColor(107, 114, 128); // Gray-500
+    // Label styling - uppercase, larger, darker for better visibility
+    doc.setFontSize(9);
+    doc.setTextColor(75, 85, 99); // Gray-600 (darker than before)
     doc.setFont("helvetica", "bold");
-    doc.text(label, margin, y);
+    doc.text(label.toUpperCase(), margin, y);
 
     // Value styling
     doc.setTextColor(31, 41, 55); // Gray-800
     doc.setFont("helvetica", bold ? "bold" : "normal");
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     const lines = doc.splitTextToSize(value, contentWidth - 3);
-    doc.text(lines, margin, y + 3.5);
+    doc.text(lines, margin, y + 4.5);
 
-    return y + (lines.length * 4) + 5;
+    return y + (lines.length * 4.5) + 6;
   };
 
   // Elegant Header - White background with subtle orange accent
@@ -223,58 +223,58 @@ export function generateImpalementProtectionPDF(
   let infoY = yPosition;
 
   // Column 1 - Job Number
-  doc.setFontSize(8);
-  doc.setTextColor(107, 114, 128); // Gray-500
+  doc.setFontSize(9);
+  doc.setTextColor(75, 85, 99); // Gray-600 (darker)
   doc.setFont("helvetica", "bold");
-  doc.text("Job Number", col1X, infoY);
+  doc.text("JOB NUMBER", col1X, infoY);
   doc.setTextColor(31, 41, 55); // Gray-800
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
-  doc.text(submissionInfo.jobNumber, col1X, infoY + 4);
+  doc.text(submissionInfo.jobNumber, col1X, infoY + 5);
 
   // Column 2 - Inspection Date
-  doc.setFontSize(8);
-  doc.setTextColor(107, 114, 128); // Gray-500
-  doc.setFont("helvetica", "bold");
-  doc.text("Inspection Date", col2X, infoY);
-  doc.setTextColor(31, 41, 55); // Gray-800
   doc.setFontSize(9);
+  doc.setTextColor(75, 85, 99); // Gray-600 (darker)
+  doc.setFont("helvetica", "bold");
+  doc.text("INSPECTION DATE", col2X, infoY);
+  doc.setTextColor(31, 41, 55); // Gray-800
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(formData.date, col2X, infoY + 4);
+  doc.text(formData.date, col2X, infoY + 5);
 
-  infoY += 9;
+  infoY += 10;
 
   // Column 1 - Submitted By
-  doc.setFontSize(8);
-  doc.setTextColor(107, 114, 128); // Gray-500
-  doc.setFont("helvetica", "bold");
-  doc.text("Submitted By", col1X, infoY);
-  doc.setTextColor(31, 41, 55); // Gray-800
   doc.setFontSize(9);
+  doc.setTextColor(75, 85, 99); // Gray-600 (darker)
+  doc.setFont("helvetica", "bold");
+  doc.text("SUBMITTED BY", col1X, infoY);
+  doc.setTextColor(31, 41, 55); // Gray-800
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(submissionInfo.submittedBy, col1X, infoY + 4);
+  doc.text(submissionInfo.submittedBy, col1X, infoY + 5);
 
   // Column 2 - Email
-  doc.setFontSize(8);
-  doc.setTextColor(107, 114, 128); // Gray-500
-  doc.setFont("helvetica", "bold");
-  doc.text("Email", col2X, infoY);
-  doc.setTextColor(31, 41, 55); // Gray-800
   doc.setFontSize(9);
+  doc.setTextColor(75, 85, 99); // Gray-600 (darker)
+  doc.setFont("helvetica", "bold");
+  doc.text("EMAIL", col2X, infoY);
+  doc.setTextColor(31, 41, 55); // Gray-800
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(submissionInfo.submittedByEmail, col2X, infoY + 4);
+  doc.text(submissionInfo.submittedByEmail, col2X, infoY + 5);
 
-  infoY += 9;
+  infoY += 10;
 
   // Column 1 - Company
-  doc.setFontSize(8);
-  doc.setTextColor(107, 114, 128); // Gray-500
-  doc.setFont("helvetica", "bold");
-  doc.text("Company", col1X, infoY);
-  doc.setTextColor(31, 41, 55); // Gray-800
   doc.setFontSize(9);
+  doc.setTextColor(75, 85, 99); // Gray-600 (darker)
+  doc.setFont("helvetica", "bold");
+  doc.text("COMPANY", col1X, infoY);
+  doc.setTextColor(31, 41, 55); // Gray-800
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(submissionInfo.submittedByCompany, col1X, infoY + 4);
+  doc.text(submissionInfo.submittedByCompany, col1X, infoY + 5);
 
   yPosition = infoY + 11;
 
@@ -290,18 +290,18 @@ export function generateImpalementProtectionPDF(
     yPosition = addSectionHeader(`Inspection Details #${index + 1}`, yPosition);
 
     // Time Information - consistent formatting
-    doc.setFontSize(8);
-    doc.setTextColor(107, 114, 128); // Gray-500
+    doc.setFontSize(9);
+    doc.setTextColor(75, 85, 99); // Gray-600 (darker)
     doc.setFont("helvetica", "bold");
-    doc.text("Start Time", col1X, yPosition);
-    doc.text("End Time", col2X, yPosition);
+    doc.text("START TIME", col1X, yPosition);
+    doc.text("END TIME", col2X, yPosition);
 
     doc.setTextColor(31, 41, 55); // Gray-800
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
-    doc.text(inspection.startTime, col1X, yPosition + 3.5);
-    doc.text(inspection.endTime, col2X, yPosition + 3.5);
-    yPosition += 9;
+    doc.text(inspection.startTime, col1X, yPosition + 4.5);
+    doc.text(inspection.endTime, col2X, yPosition + 4.5);
+    yPosition += 10;
 
     // Location
     yPosition = addField("Location of Inspection", inspection.location, yPosition, true);
@@ -372,10 +372,12 @@ export function generateImpalementProtectionPDF(
       yPosition = 20;
     }
 
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Inspector Signature:`, margin, yPosition);
-    yPosition += 5;
+    doc.setFontSize(9);
+    doc.setTextColor(75, 85, 99); // Gray-600 (darker)
+    doc.setFont("helvetica", "bold");
+    doc.text("INSPECTOR SIGNATURE", margin, yPosition);
+    doc.setTextColor(31, 41, 55); // Reset color
+    yPosition += 6;
 
     try {
       doc.addImage(formData.signature, "PNG", margin, yPosition, 60, 20);
