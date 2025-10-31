@@ -286,6 +286,8 @@ export default function AdminDashboard() {
           setInvitePersonalNote("");
           setInviteSuccess("");
         }, 3000);
+      } else if (response.status === 401) {
+        setInviteError("Your session has expired. Please refresh the page and log in again.");
       } else {
         const data = await response.json();
         setInviteError(data.error || "Failed to send invitation");
