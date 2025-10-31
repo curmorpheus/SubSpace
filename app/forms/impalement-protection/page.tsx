@@ -12,7 +12,10 @@ export default function ImpalementProtectionForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [currentStep, setCurrentStep] = useState(1);
   const signaturePadRef = useRef<SignaturePadRef>(null);
+
+  const totalSteps = 3;
 
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
@@ -87,13 +90,54 @@ export default function ImpalementProtectionForm() {
     };
   });
 
+  const validateStep = (step: number): boolean => {
+    setError("");
+
+    if (step === 1) {
+      if (!formData.date || !formData.jobNumber || !formData.submittedBy ||
+          !formData.submittedByEmail || !formData.submittedByCompany) {
+        setError("Please fill in all required fields");
+        return false;
+      }
+    } else if (step === 2) {
+      if (!formData.startTime || !formData.endTime || !formData.location ||
+          !formData.hazardDescription || !formData.correctiveMeasures ||
+          !formData.creatingEmployer || !formData.supervisor) {
+        setError("Please fill in all inspection details");
+        return false;
+      }
+    } else if (step === 3) {
+      if (signaturePadRef.current?.isEmpty()) {
+        setError("Please provide your signature");
+        return false;
+      }
+      if (!emailOptions.recipientEmail) {
+        setError("Please provide a recipient email address");
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleNext = () => {
+    if (validateStep(currentStep)) {
+      setCurrentStep(current => Math.min(current + 1, totalSteps));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePrevious = () => {
+    setCurrentStep(current => Math.max(current - 1, 1));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    // Validate signature
-    if (signaturePadRef.current?.isEmpty()) {
-      setError("Please provide your signature before submitting");
+    // Final validation
+    if (!validateStep(3)) {
       return;
     }
 
@@ -188,9 +232,42 @@ export default function ImpalementProtectionForm() {
 
         {/* Main Form Card */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          {/* Progress Indicator */}
+          <div className="bg-gray-50 px-6 sm:px-8 py-6 border-b-2 border-gray-200">
+            <div className="flex items-center justify-between max-w-md mx-auto">
+              {[1, 2, 3].map((step) => (
+                <div key={step} className="flex items-center">
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold transition-all ${
+                    currentStep === step
+                      ? 'bg-orange-500 text-white scale-110 shadow-lg'
+                      : currentStep > step
+                      ? 'bg-green-500 text-white'
+                      : 'bg-gray-200 text-gray-500'
+                  }`}>
+                    {currentStep > step ? '✓' : step}
+                  </div>
+                  {step < 3 && (
+                    <div className={`w-16 sm:w-24 h-1 mx-2 transition-all ${
+                      currentStep > step ? 'bg-green-500' : 'bg-gray-200'
+                    }`} />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="text-center mt-4">
+              <p className="text-sm font-semibold text-gray-700">
+                Step {currentStep} of {totalSteps}:{' '}
+                {currentStep === 1 && 'Basic Information'}
+                {currentStep === 2 && 'Inspection Details'}
+                {currentStep === 3 && 'Signature & Email'}
+              </p>
+            </div>
+          </div>
+
           <form onSubmit={handleSubmit} className="p-6 sm:p-8 lg:p-10">
 
-            {/* Basic Information Section */}
+            {/* Step 1: Basic Information Section */}
+            {currentStep === 1 && (
             <div className="mb-8">
               <div className="flex items-center mb-6">
                 <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
@@ -268,11 +345,10 @@ export default function ImpalementProtectionForm() {
                 </div>
               </div>
             </div>
+            )}
 
-            {/* Divider */}
-            <div className="my-10 border-t-2 border-gray-100"></div>
-
-            {/* Inspection Details Section */}
+            {/* Step 2: Inspection Details Section */}
+            {currentStep === 2 && (
             <div className="mb-8">
               <div className="flex items-center mb-6">
                 <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -373,10 +449,11 @@ export default function ImpalementProtectionForm() {
                 </div>
               </div>
             </div>
+            )}
 
-            {/* Divider */}
-            <div className="my-10 border-t-2 border-gray-100"></div>
-
+            {/* Step 3: Signature & Email Section */}
+            {currentStep === 3 && (
+            <div className="space-y-8">
             {/* Signature Section */}
             <div className="mb-8">
               <div className="flex items-center mb-6">
@@ -449,6 +526,8 @@ export default function ImpalementProtectionForm() {
                   </div>
               </div>
             </div>
+            </div>
+            )}
 
             {/* Error Message */}
             {error && (
@@ -465,22 +544,60 @@ export default function ImpalementProtectionForm() {
               </div>
             )}
 
-            {/* Submit Buttons */}
+            {/* Navigation Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 pt-6">
-              <button
-                type="button"
-                onClick={() => router.push("/")}
-                className="flex-1 py-4 px-6 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-semibold text-lg"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex-1 py-4 px-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? "Submitting & Emailing..." : "Submit & Email Form"}
-              </button>
+              {currentStep === 1 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => router.push("/")}
+                    className="flex-1 py-4 px-6 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-semibold text-lg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="flex-1 py-4 px-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl"
+                  >
+                    Next →
+                  </button>
+                </>
+              ) : currentStep === 2 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handlePrevious}
+                    className="flex-1 py-4 px-6 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-semibold text-lg"
+                  >
+                    ← Previous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    className="flex-1 py-4 px-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl"
+                  >
+                    Next →
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handlePrevious}
+                    className="flex-1 py-4 px-6 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-semibold text-lg"
+                  >
+                    ← Previous
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 py-4 px-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? "Submitting & Emailing..." : "Submit & Email Form"}
+                  </button>
+                </>
+              )}
             </div>
           </form>
         </div>
