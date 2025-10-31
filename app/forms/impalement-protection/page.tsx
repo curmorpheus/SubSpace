@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import SignaturePad, { SignaturePadRef } from "@/components/SignaturePad";
 import DatePicker from "@/components/DatePicker";
@@ -46,8 +46,9 @@ export default function ImpalementProtectionForm() {
   // Load cached values from localStorage (only once on mount)
   const [formData, setFormData] = useState(() => {
     let cached: any = {};
+    let isClient = typeof window !== "undefined";
 
-    if (typeof window !== "undefined") {
+    if (isClient) {
       try {
         const cachedData = localStorage.getItem(CACHE_KEY);
         cached = cachedData ? JSON.parse(cachedData) : {};
@@ -57,13 +58,13 @@ export default function ImpalementProtectionForm() {
     }
 
     return {
-      date: getTodayDate(),
+      date: isClient ? getTodayDate() : "",
       jobNumber: cached.jobNumber || "",
       submittedBy: cached.submittedBy || "",
       submittedByEmail: cached.submittedByEmail || "",
       submittedByCompany: cached.submittedByCompany || "",
-      startTime: getCurrentTime(),
-      endTime: getTimeAfter10Minutes(),
+      startTime: isClient ? getCurrentTime() : "",
+      endTime: isClient ? getTimeAfter10Minutes() : "",
       location: "",
       hazardDescription: "",
       correctiveMeasures: "",
@@ -89,6 +90,16 @@ export default function ImpalementProtectionForm() {
       emailSubject: "",
     };
   });
+
+  // Set date/time values after mount to avoid hydration mismatch
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      date: prev.date || getTodayDate(),
+      startTime: prev.startTime || getCurrentTime(),
+      endTime: prev.endTime || getTimeAfter10Minutes(),
+    }));
+  }, []);
 
   const validateStep = (step: number): boolean => {
     setError("");
