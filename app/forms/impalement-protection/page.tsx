@@ -181,6 +181,8 @@ export default function ImpalementProtectionForm() {
 
       const endpoint = "/api/forms/submit-and-email";
 
+      console.log("Submitting payload:", payload);
+
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -189,8 +191,21 @@ export default function ImpalementProtectionForm() {
         body: JSON.stringify(payload),
       });
 
+      console.log("Response status:", response.status);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        const contentType = response.headers.get("content-type");
+
+        // Check if response is JSON before parsing
+        if (contentType && contentType.includes("application/json")) {
+          errorData = await response.json();
+        } else {
+          const textResponse = await response.text();
+          console.error("Non-JSON response:", textResponse);
+          throw new Error(`Server error (${response.status}): ${textResponse || 'No response body'}`);
+        }
 
         // Parse validation errors for better error messages
         let errorMessage = errorData.error || "Failed to submit form";
