@@ -6,6 +6,11 @@ import DatePicker from "@/components/DatePicker";
 import TimePicker from "@/components/TimePicker";
 import ImageUpload from "@/components/ImageUpload";
 import type { CompressedImage } from "@/lib/image-compression";
+import {
+  queueSubmission,
+  getPendingCount,
+  processPendingSubmissions,
+} from "@/lib/offline-storage";
 
 const CACHE_KEY = "subspace-form-cache";
 
@@ -84,6 +89,113 @@ function ImpalementProtectionFormContent() {
 
   // State for "no hazards observed" option
   const [noHazardsObserved, setNoHazardsObserved] = useState(false);
+
+  // State for accessibility preferences
+  const [rememberMe, setRememberMe] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("rememberMe") === "true";
+    }
+    return false;
+  });
+
+  const [largeButtons, setLargeButtons] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("largeButtons") === "true";
+    }
+    return false;
+  });
+
+  // Check if we have saved user info
+  const [hasSavedInfo, setHasSavedInfo] = useState(false);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const cachedData = localStorage.getItem(CACHE_KEY);
+      if (cachedData) {
+        try {
+          const parsed = JSON.parse(cachedData);
+          setHasSavedInfo(!!(parsed.submittedBy || parsed.submittedByEmail || parsed.submittedByCompany));
+        } catch {}
+      }
+    }
+  }, []);
+
+  // Offline mode state
+  const [isOnline, setIsOnline] = useState(true);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Detect online/offline status
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const updateOnlineStatus = () => {
+      setIsOnline(navigator.onLine);
+    };
+
+    // Set initial status
+    updateOnlineStatus();
+
+    // Listen for online/offline events
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
+
+    return () => {
+      window.removeEventListener("online", updateOnlineStatus);
+      window.removeEventListener("offline", updateOnlineStatus);
+    };
+  }, []);
+
+  // Update pending count
+  const updatePendingCount = async () => {
+    try {
+      const count = await getPendingCount();
+      setPendingCount(count);
+    } catch (error) {
+      console.error("Error getting pending count:", error);
+    }
+  };
+
+  // Load pending count on mount
+  useEffect(() => {
+    updatePendingCount();
+  }, []);
+
+  // Process pending submissions when coming back online
+  useEffect(() => {
+    if (!isOnline || pendingCount === 0 || isSyncing) return;
+
+    const syncPending = async () => {
+      setIsSyncing(true);
+      try {
+        const result = await processPendingSubmissions(
+          (id) => {
+            console.log("Successfully synced submission:", id);
+          },
+          (id, error) => {
+            console.error("Failed to sync submission:", id, error);
+          }
+        );
+
+        if (result.succeeded > 0) {
+          console.log(
+            `Successfully synced ${result.succeeded} pending submission${
+              result.succeeded > 1 ? "s" : ""
+            }!`
+          );
+        }
+
+        await updatePendingCount();
+      } catch (error) {
+        console.error("Error syncing pending submissions:", error);
+      } finally {
+        setIsSyncing(false);
+      }
+    };
+
+    // Wait a bit before syncing to ensure connection is stable
+    const timeout = setTimeout(syncPending, 2000);
+    return () => clearTimeout(timeout);
+  }, [isOnline, pendingCount, isSyncing]);
 
   const [emailOptions, setEmailOptions] = useState(() => {
     let cached: any = {};
@@ -200,6 +312,31 @@ function ImpalementProtectionFormContent() {
     }
   };
 
+  const handleRememberMeToggle = (checked: boolean) => {
+    setRememberMe(checked);
+    localStorage.setItem("rememberMe", checked.toString());
+  };
+
+  const handleLargeButtonsToggle = (checked: boolean) => {
+    setLargeButtons(checked);
+    localStorage.setItem("largeButtons", checked.toString());
+  };
+
+  const handleClearSavedInfo = () => {
+    if (confirm("Clear your saved information (Name, Email, Company)?")) {
+      localStorage.removeItem(CACHE_KEY);
+      setFormData({
+        ...formData,
+        submittedBy: "",
+        submittedByEmail: "",
+        submittedByCompany: "",
+      });
+      setHasSavedInfo(false);
+      setRememberMe(false);
+      localStorage.setItem("rememberMe", "false");
+    }
+  };
+
   const handleTestAutofill = () => {
     setNoHazardsObserved(false);
     setFormData({
@@ -281,6 +418,31 @@ function ImpalementProtectionFormContent() {
         },
       };
 
+      // Check if offline - queue submission instead
+      if (!isOnline) {
+        const queuedId = await queueSubmission(payload);
+        console.log("Queued submission for later:", queuedId);
+
+        await updatePendingCount();
+
+        // Cache commonly reused fields for next time
+        const cacheData = {
+          jobNumber: formData.jobNumber,
+          submittedBy: formData.submittedBy,
+          submittedByEmail: formData.submittedByEmail,
+          submittedByCompany: formData.submittedByCompany,
+          recipientEmail: emailOptions.recipientEmail,
+        };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+
+        alert(
+          `You're currently offline. Form saved locally and will be submitted automatically when you're back online.\n\nJob #${formData.jobNumber}\nTo: ${emailOptions.recipientEmail}`
+        );
+
+        router.push("/");
+        return;
+      }
+
       const endpoint = "/api/forms/submit";
 
       console.log("Submitting payload:", payload);
@@ -359,6 +521,28 @@ function ImpalementProtectionFormContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 py-8 px-4 sm:px-6 lg:px-8">
+      {/* Large Buttons CSS */}
+      <style jsx>{`
+        .large-buttons input[type="text"],
+        .large-buttons input[type="email"],
+        .large-buttons textarea {
+          padding: 1rem 1.25rem !important;
+          font-size: 1.125rem !important;
+          min-height: 56px;
+        }
+        .large-buttons button {
+          padding: 1rem 1.5rem !important;
+          font-size: 1.125rem !important;
+          min-height: 56px;
+        }
+        .large-buttons input[type="checkbox"] {
+          width: 1.5rem !important;
+          height: 1.5rem !important;
+        }
+        .large-buttons label {
+          font-size: 1rem !important;
+        }
+      `}</style>
       <div className="max-w-4xl mx-auto">
         {/* Header Card */}
         <div className="bg-white rounded-2xl shadow-lg mb-6 overflow-hidden">
@@ -377,6 +561,38 @@ function ImpalementProtectionFormContent() {
             </p>
           </div>
         </div>
+
+        {/* Offline Mode Indicator */}
+        {!isOnline && (
+          <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-4 mb-6 shadow-md">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📴</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-amber-900">You&apos;re currently offline</p>
+                <p className="text-xs text-amber-700 mt-1">
+                  Forms will be saved locally and submitted automatically when you&apos;re back online.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pending Submissions Indicator */}
+        {isOnline && pendingCount > 0 && (
+          <div className="bg-blue-50 border-2 border-blue-400 rounded-xl p-4 mb-6 shadow-md">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">{isSyncing ? "⏳" : "📤"}</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-blue-900">
+                  {isSyncing ? "Syncing pending submissions..." : `${pendingCount} pending submission${pendingCount > 1 ? 's' : ''} waiting to sync`}
+                </p>
+                <p className="text-xs text-blue-700 mt-1">
+                  {isSyncing ? "Please wait..." : "Your queued forms will be submitted automatically."}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Form Card */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
@@ -412,7 +628,36 @@ function ImpalementProtectionFormContent() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} noValidate className="p-6 sm:p-8 lg:p-10">
+          <form onSubmit={handleSubmit} noValidate className={`p-6 sm:p-8 lg:p-10 ${largeButtons ? 'large-buttons' : ''}`}>
+
+            {/* Accessibility Toggles */}
+            <div className="mb-6 bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
+              <h3 className="text-sm font-bold text-gray-900 mb-3">⚙️ Preferences</h3>
+              <div className="flex flex-wrap gap-3">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={largeButtons}
+                    onChange={(e) => handleLargeButtonsToggle(e.target.checked)}
+                    className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    👆 Large buttons (for gloves)
+                  </span>
+                </label>
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => handleRememberMeToggle(e.target.checked)}
+                    className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                  />
+                  <span className="text-sm font-medium text-gray-700">
+                    💾 Remember my info
+                  </span>
+                </label>
+              </div>
+            </div>
 
             {/* Step 1: Basic Information Section */}
             <div className={`mb-8 ${currentStep === 1 ? 'block' : 'hidden'}`}>
@@ -449,6 +694,30 @@ function ImpalementProtectionFormContent() {
                   </div>
                 </div>
 
+                {/* Saved Info Indicator */}
+                {hasSavedInfo && rememberMe && (
+                  <div className="sm:col-span-2 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      <span className="text-green-600 text-xl">✓</span>
+                      <div>
+                        <p className="text-sm font-bold text-green-900">Using saved information</p>
+                        <p className="text-xs text-green-700 mt-1">
+                          {formData.submittedBy && `${formData.submittedBy}`}
+                          {formData.submittedByEmail && ` (${formData.submittedByEmail})`}
+                          {formData.submittedByCompany && ` from ${formData.submittedByCompany}`}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleClearSavedInfo}
+                      className="text-xs text-green-700 hover:text-green-900 font-semibold underline whitespace-nowrap"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Your Name <span className="text-red-500">*</span>
@@ -459,6 +728,7 @@ function ImpalementProtectionFormContent() {
                     value={formData.submittedBy}
                     onChange={(e) => setFormData({ ...formData, submittedBy: e.target.value })}
                     placeholder="John Doe"
+                    autoComplete="name"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
                   />
                 </div>
@@ -473,6 +743,7 @@ function ImpalementProtectionFormContent() {
                     value={formData.submittedByEmail}
                     onChange={(e) => setFormData({ ...formData, submittedByEmail: e.target.value })}
                     placeholder="john@company.com"
+                    autoComplete="email"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
                   />
                 </div>
@@ -487,6 +758,7 @@ function ImpalementProtectionFormContent() {
                     value={formData.submittedByCompany}
                     onChange={(e) => setFormData({ ...formData, submittedByCompany: e.target.value })}
                     placeholder="Company Name"
+                    autoComplete="organization"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
                   />
                 </div>
@@ -505,8 +777,8 @@ function ImpalementProtectionFormContent() {
               </div>
 
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100 rounded-2xl p-6 sm:p-8">
-                <div className="space-y-5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="space-y-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <TimePicker
                       value={formData.startTime}
                       onChange={(time) => setFormData({ ...formData, startTime: time })}
