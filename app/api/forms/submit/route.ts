@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { formSubmissions } from "@/db/schema";
 import { generateImpalementProtectionPDF } from "@/lib/pdf-generator";
@@ -16,6 +17,7 @@ import {
   logRateLimitExceeded,
   logValidationError,
 } from "@/lib/security-logger";
+import { uploadImagesToBlob } from "@/lib/blob-storage";
 
 // Configure runtime for this route
 export const runtime = 'nodejs';
@@ -139,8 +141,68 @@ export async function POST(request: NextRequest) {
     // For now, we'll use formTypeId: 1 for impalement-protection
     const formTypeId = 1;
 
+    // Upload photos to Vercel Blob storage before saving to database
+    console.log("Uploading photos to Vercel Blob...");
+    const processedInspections = await Promise.all(
+      data.inspections.map(async (inspection: any, inspectionIndex: number) => {
+        const processed = { ...inspection };
+
+        // Upload location photos
+        if (inspection.locationPhotos && inspection.locationPhotos.length > 0) {
+          try {
+            const locationBlobPhotos = await uploadImagesToBlob(
+              inspection.locationPhotos,
+              `${jobNumber}/inspection-${inspectionIndex}/location`
+            );
+            processed.locationPhotos = locationBlobPhotos;
+          } catch (error) {
+            console.error("Error uploading location photos:", error);
+            // Keep original photos if upload fails
+          }
+        }
+
+        // Upload hazard photos
+        if (inspection.hazardPhotos && inspection.hazardPhotos.length > 0) {
+          try {
+            const hazardBlobPhotos = await uploadImagesToBlob(
+              inspection.hazardPhotos,
+              `${jobNumber}/inspection-${inspectionIndex}/hazard`
+            );
+            processed.hazardPhotos = hazardBlobPhotos;
+          } catch (error) {
+            console.error("Error uploading hazard photos:", error);
+            // Keep original photos if upload fails
+          }
+        }
+
+        // Upload measures photos
+        if (inspection.measuresPhotos && inspection.measuresPhotos.length > 0) {
+          try {
+            const measuresBlobPhotos = await uploadImagesToBlob(
+              inspection.measuresPhotos,
+              `${jobNumber}/inspection-${inspectionIndex}/measures`
+            );
+            processed.measuresPhotos = measuresBlobPhotos;
+          } catch (error) {
+            console.error("Error uploading measures photos:", error);
+            // Keep original photos if upload fails
+          }
+        }
+
+        return processed;
+      })
+    );
+
+    console.log("Photos uploaded to Vercel Blob");
+
+    // Prepare submission data with blob URLs instead of base64
+    const processedData = {
+      ...data,
+      inspections: processedInspections,
+    };
+
     // Insert the form submission (including signature in data)
-    const submissionData = { ...data, signature };
+    const submissionData = { ...processedData, signature };
 
     const [submission] = await db
       .insert(formSubmissions)
@@ -162,7 +224,7 @@ export async function POST(request: NextRequest) {
       console.log("Starting email send process...");
       try {
         console.log("Generating PDF...");
-        // Generate PDF
+        // Generate PDF using original base64 data (still in memory)
         const pdfBuffer = generateImpalementProtectionPDF(
           {
             jobNumber,
@@ -174,6 +236,14 @@ export async function POST(request: NextRequest) {
           { ...data, signature }
         );
         console.log("PDF generated, size:", pdfBuffer.length);
+
+        // Store PDF in database (as base64)
+        const pdfBase64 = pdfBuffer.toString("base64");
+        await db
+          .update(formSubmissions)
+          .set({ pdfData: pdfBase64 })
+          .where(eq(formSubmissions.id, submission.id));
+        console.log("PDF stored in database");
 
         // Send email with PDF attachment
         const emailSubject =

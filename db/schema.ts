@@ -24,6 +24,9 @@ export const formSubmissions = pgTable("form_submissions", {
   // Form data stored as JSON for flexibility
   data: jsonb("data").notNull(),
 
+  // PDF storage - the generated PDF that was emailed (stored as base64)
+  pdfData: text("pdf_data"),
+
   // Timestamps
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

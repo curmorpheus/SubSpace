@@ -7,15 +7,24 @@ interface CompressedImage {
   height: number;
 }
 
+interface BlobImage {
+  url: string;
+  width: number;
+  height: number;
+}
+
+// Support both old format (base64) and new format (blob URLs)
+type ImageData = CompressedImage | BlobImage;
+
 interface InspectionData {
   startTime: string;
   endTime: string;
   location: string;
-  locationPhotos?: CompressedImage[];
+  locationPhotos?: ImageData[];
   hazardDescription: string;
-  hazardPhotos?: CompressedImage[];
+  hazardPhotos?: ImageData[];
   correctiveMeasures: string;
-  measuresPhotos?: CompressedImage[];
+  measuresPhotos?: ImageData[];
   creatingEmployer: string;
   supervisor: string;
 }
@@ -35,12 +44,19 @@ interface SubmissionInfo {
 }
 
 /**
+ * Helper function to check if image is a blob image
+ */
+function isBlobImage(image: ImageData): image is BlobImage {
+  return "url" in image && !("dataUrl" in image);
+}
+
+/**
  * Helper function to add images to PDF
  * Returns the new Y position after adding images
  */
 function addImagesToPDF(
   doc: jsPDF,
-  images: CompressedImage[],
+  images: ImageData[],
   yPosition: number,
   margin: number,
   pageWidth: number
@@ -66,8 +82,37 @@ function addImagesToPDF(
     }
 
     try {
-      // Add the image
-      doc.addImage(images[i].dataUrl, "JPEG", xPosition, currentY, imageWidth, imageHeight);
+      const image = images[i];
+
+      // Handle blob images (new format with URL)
+      if (isBlobImage(image)) {
+        // Add a placeholder with link to original
+        doc.setFillColor(240, 240, 240);
+        doc.rect(xPosition, currentY, imageWidth, imageHeight, "F");
+
+        // Add clickable link
+        doc.link(xPosition, currentY, imageWidth, imageHeight, { url: image.url });
+
+        // Add text indicating it's a linked photo
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(59, 130, 246); // Blue color
+        const linkText = "🔗 View Photo";
+        const textWidth = doc.getTextWidth(linkText);
+        doc.text(linkText, xPosition + (imageWidth - textWidth) / 2, currentY + imageHeight / 2);
+
+        // Add "Click to view full resolution" text
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 100, 100);
+        const subText = "(Click to view)";
+        const subTextWidth = doc.getTextWidth(subText);
+        doc.text(subText, xPosition + (imageWidth - subTextWidth) / 2, currentY + imageHeight / 2 + 5);
+        doc.setTextColor(0, 0, 0);
+      } else {
+        // Handle base64 images (old format)
+        doc.addImage(image.dataUrl, "JPEG", xPosition, currentY, imageWidth, imageHeight);
+      }
 
       // Add image number label
       doc.setFontSize(8);

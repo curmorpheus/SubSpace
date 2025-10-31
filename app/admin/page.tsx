@@ -3,7 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
-import { DataGrid, GridColDef, GridRowParams } from "@mui/x-data-grid";
+import {
+  DataGrid,
+  GridColDef,
+  GridRowParams,
+  GridToolbarContainer,
+  GridToolbarQuickFilter
+} from "@mui/x-data-grid";
 import { generateImpalementProtectionPDF } from "@/lib/pdf-generator";
 
 interface FormSubmission {
@@ -14,6 +20,7 @@ interface FormSubmission {
   submittedByEmail: string;
   submittedByCompany: string;
   data: any;
+  pdfData: string | null;
   submittedAt: string;
 }
 
@@ -126,6 +133,19 @@ export default function AdminDashboard() {
     return new Date(dateString).toLocaleString();
   };
 
+  // Custom toolbar with quick filter
+  function CustomToolbar() {
+    return (
+      <GridToolbarContainer sx={{ padding: "8px 16px" }}>
+        <GridToolbarQuickFilter
+          placeholder="Search all fields..."
+          sx={{ flex: 1 }}
+          debounceMs={200}
+        />
+      </GridToolbarContainer>
+    );
+  }
+
   // Define DataGrid columns
   const columns: GridColDef[] = [
     {
@@ -205,30 +225,57 @@ export default function AdminDashboard() {
 
   const downloadPDF = (submission: FormSubmission) => {
     try {
-      // Generate the same PDF that gets emailed
-      const pdfBuffer = generateImpalementProtectionPDF(
-        {
-          jobNumber: submission.jobNumber,
-          submittedBy: submission.submittedBy,
-          submittedByEmail: submission.submittedByEmail,
-          submittedByCompany: submission.submittedByCompany,
-          submittedAt: submission.submittedAt,
-        },
-        submission.data
-      );
+      let pdfData: Uint8Array;
 
-      // Convert Buffer to Uint8Array for Blob compatibility
-      const uint8Array = new Uint8Array(pdfBuffer);
-      const blob = new Blob([uint8Array], { type: "application/pdf" });
+      // Check if we have a stored PDF
+      if (submission.pdfData) {
+        console.log("Using stored PDF from database");
+        // Convert base64 to Uint8Array
+        const base64Data = submission.pdfData;
+        const binaryString = atob(base64Data);
+        pdfData = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          pdfData[i] = binaryString.charCodeAt(i);
+        }
+      } else {
+        console.log("Generating PDF on the fly");
+        // Generate PDF on the fly (backwards compatibility)
+        const pdfBuffer = generateImpalementProtectionPDF(
+          {
+            jobNumber: submission.jobNumber,
+            submittedBy: submission.submittedBy,
+            submittedByEmail: submission.submittedByEmail,
+            submittedByCompany: submission.submittedByCompany,
+            submittedAt: submission.submittedAt,
+          },
+          submission.data
+        );
+        pdfData = new Uint8Array(pdfBuffer);
+      }
+
+      // Create blob and download
+      // Create a proper Uint8Array from the data
+      const blobArray = Uint8Array.from(pdfData);
+      const blob = new Blob([blobArray], { type: "application/pdf" });
       const url = URL.createObjectURL(blob);
+
+      // Create link element with download attribute
       const link = document.createElement("a");
+      const filename = `Impalement_Protection_Form_${submission.jobNumber}_${Date.now()}.pdf`;
+      link.download = filename;
       link.href = url;
-      link.download = `Impalement_Protection_Form_${submission.jobNumber}_${Date.now()}.pdf`;
+      link.style.display = "none";
+
+      // Add to document, click, and remove
+      document.body.appendChild(link);
       link.click();
-      URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+
+      // Clean up the URL
+      setTimeout(() => URL.revokeObjectURL(url), 100);
     } catch (error) {
-      console.error("Error generating PDF:", error);
-      alert("Failed to generate PDF");
+      console.error("Error downloading PDF:", error);
+      alert("Failed to download PDF");
     }
   };
 
@@ -455,6 +502,9 @@ export default function AdminDashboard() {
               rows={filteredSubmissions}
               columns={columns}
               loading={loading}
+              slots={{
+                toolbar: CustomToolbar,
+              }}
               initialState={{
                 pagination: {
                   paginationModel: { page: 0, pageSize: 10 },
