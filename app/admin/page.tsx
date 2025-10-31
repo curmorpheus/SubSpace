@@ -627,68 +627,68 @@ export default function AdminDashboard() {
               <div className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4 pb-4 border-b">
                   <div>
-                    <span className="text-sm text-gray-600">Submission ID:</span>
-                    <div className="font-medium">{selectedSubmission.id}</div>
+                    <span className="text-sm font-semibold text-gray-700">Submission ID:</span>
+                    <div className="font-semibold text-gray-900">{selectedSubmission.id}</div>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600">Job Number:</span>
-                    <div className="font-medium">{selectedSubmission.jobNumber}</div>
+                    <span className="text-sm font-semibold text-gray-700">Job Number:</span>
+                    <div className="font-semibold text-gray-900">{selectedSubmission.jobNumber}</div>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600">Submitted By:</span>
-                    <div className="font-medium">{selectedSubmission.submittedBy}</div>
+                    <span className="text-sm font-semibold text-gray-700">Submitted By:</span>
+                    <div className="font-semibold text-gray-900">{selectedSubmission.submittedBy}</div>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600">Email:</span>
-                    <div className="font-medium">{selectedSubmission.submittedByEmail}</div>
+                    <span className="text-sm font-semibold text-gray-700">Email:</span>
+                    <div className="font-semibold text-gray-900">{selectedSubmission.submittedByEmail}</div>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600">Company:</span>
-                    <div className="font-medium">{selectedSubmission.submittedByCompany}</div>
+                    <span className="text-sm font-semibold text-gray-700">Company:</span>
+                    <div className="font-semibold text-gray-900">{selectedSubmission.submittedByCompany}</div>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600">Submitted At:</span>
-                    <div className="font-medium">{formatDate(selectedSubmission.submittedAt)}</div>
+                    <span className="text-sm font-semibold text-gray-700">Submitted At:</span>
+                    <div className="font-semibold text-gray-900">{formatDate(selectedSubmission.submittedAt)}</div>
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="text-lg font-semibold mb-3">Form Data</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">Form Data</h3>
                   <div className="space-y-4">
                     <div>
-                      <span className="text-sm text-gray-600">Date of Inspection:</span>
-                      <div className="font-medium">{selectedSubmission.data.date}</div>
+                      <span className="text-sm font-semibold text-gray-700">Date of Inspection:</span>
+                      <div className="font-semibold text-gray-900">{selectedSubmission.data.date}</div>
                     </div>
 
                     {selectedSubmission.data.inspections?.map((inspection: any, idx: number) => (
                       <div key={idx} className="border-2 border-gray-200 rounded-lg p-4">
-                        <h4 className="font-semibold text-gray-900 mb-3">
+                        <h4 className="font-bold text-gray-900 mb-3">
                           Inspection #{idx + 1}
                         </h4>
                         <div className="grid gap-3">
                           <div>
-                            <span className="text-sm text-gray-600">Time:</span>
-                            <div>{inspection.startTime} - {inspection.endTime}</div>
+                            <span className="text-sm font-semibold text-gray-700">Time:</span>
+                            <div className="font-medium text-gray-900">{inspection.startTime} - {inspection.endTime}</div>
                           </div>
                           <div>
-                            <span className="text-sm text-gray-600">Location:</span>
-                            <div>{inspection.location}</div>
+                            <span className="text-sm font-semibold text-gray-700">Location:</span>
+                            <div className="font-medium text-gray-900">{inspection.location}</div>
                           </div>
                           <div>
-                            <span className="text-sm text-gray-600">Hazard Description:</span>
-                            <div>{inspection.hazardDescription}</div>
+                            <span className="text-sm font-semibold text-gray-700">Hazard Description:</span>
+                            <div className="font-medium text-gray-900">{inspection.hazardDescription}</div>
                           </div>
                           <div>
-                            <span className="text-sm text-gray-600">Corrective Measures:</span>
-                            <div>{inspection.correctiveMeasures}</div>
+                            <span className="text-sm font-semibold text-gray-700">Corrective Measures:</span>
+                            <div className="font-medium text-gray-900">{inspection.correctiveMeasures}</div>
                           </div>
                           <div>
-                            <span className="text-sm text-gray-600">Creating/Exposing Employer:</span>
-                            <div>{inspection.creatingEmployer}</div>
+                            <span className="text-sm font-semibold text-gray-700">Creating/Exposing Employer:</span>
+                            <div className="font-medium text-gray-900">{inspection.creatingEmployer}</div>
                           </div>
                           <div>
-                            <span className="text-sm text-gray-600">Supervisor:</span>
-                            <div>{inspection.supervisor}</div>
+                            <span className="text-sm font-semibold text-gray-700">Supervisor:</span>
+                            <div className="font-medium text-gray-900">{inspection.supervisor}</div>
                           </div>
                         </div>
                       </div>
