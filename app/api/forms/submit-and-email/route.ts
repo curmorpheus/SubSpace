@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
         attachments: [
           {
             filename: `Impalement_Protection_Form_${jobNumber}_${Date.now()}.pdf`,
-            content: pdfBuffer,
+            content: pdfBuffer.toString('base64'),
           },
         ],
       });
