@@ -365,7 +365,12 @@ export default function AdminDashboard() {
           `}</style>
           <div className="print-flyer w-full min-h-screen flex items-center justify-center bg-white p-8">
             <div className="w-full max-w-4xl">
-              {/* Thin orange accent bar at top */}
+              {/* Deacon Logo at top */}
+              <div className="flex justify-center mb-6">
+                <img src="/images/deacon-logo.svg" alt="Deacon Construction" className="h-12" />
+              </div>
+
+              {/* Thin orange accent bar */}
               <div className="h-2 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full mb-8"></div>
 
               <div className="grid grid-cols-2 gap-8">
