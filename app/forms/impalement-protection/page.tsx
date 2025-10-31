@@ -284,8 +284,7 @@ export default function ImpalementProtectionForm() {
           <form onSubmit={handleSubmit} className="p-6 sm:p-8 lg:p-10">
 
             {/* Step 1: Basic Information Section */}
-            {currentStep === 1 && (
-            <div className="mb-8">
+            <div className={`mb-8 ${currentStep === 1 ? 'block' : 'hidden'}`}>
               <div className="flex items-center mb-6">
                 <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
                   <span className="text-orange-600 font-bold text-lg">1</span>
@@ -362,11 +361,9 @@ export default function ImpalementProtectionForm() {
                 </div>
               </div>
             </div>
-            )}
 
             {/* Step 2: Inspection Details Section */}
-            {currentStep === 2 && (
-            <div className="mb-8">
+            <div className={`mb-8 ${currentStep === 2 ? 'block' : 'hidden'}`}>
               <div className="flex items-center mb-6">
                 <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                   <span className="text-blue-600 font-bold text-lg">2</span>
@@ -466,11 +463,9 @@ export default function ImpalementProtectionForm() {
                 </div>
               </div>
             </div>
-            )}
 
             {/* Step 3: Signature & Email Section */}
-            {currentStep === 3 && (
-            <div className="space-y-8">
+            <div className={`space-y-8 ${currentStep === 3 ? 'block' : 'hidden'}`}>
             {/* Signature Section */}
             <div className="mb-8">
               <div className="flex items-center mb-6">
@@ -544,7 +539,6 @@ export default function ImpalementProtectionForm() {
               </div>
             </div>
             </div>
-            )}
 
             {/* Error Message */}
             {error && (
