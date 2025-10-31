@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
 import { DataGrid, GridColDef, GridRowParams } from "@mui/x-data-grid";
+import { generateImpalementProtectionPDF } from "@/lib/pdf-generator";
 
 interface FormSubmission {
   id: number;
@@ -200,6 +201,35 @@ export default function AdminDashboard() {
     link.download = `impalement-protection-qr-${qrJobNumber}.png`;
     link.href = qrCodeDataUrl;
     link.click();
+  };
+
+  const downloadPDF = (submission: FormSubmission) => {
+    try {
+      // Generate the same PDF that gets emailed
+      const pdfBuffer = generateImpalementProtectionPDF(
+        {
+          jobNumber: submission.jobNumber,
+          submittedBy: submission.submittedBy,
+          submittedByEmail: submission.submittedByEmail,
+          submittedByCompany: submission.submittedByCompany,
+          submittedAt: submission.submittedAt,
+        },
+        submission.data
+      );
+
+      // Convert Buffer to Uint8Array for Blob compatibility
+      const uint8Array = new Uint8Array(pdfBuffer);
+      const blob = new Blob([uint8Array], { type: "application/pdf" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Impalement_Protection_Form_${submission.jobNumber}_${Date.now()}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate PDF");
+    }
   };
 
   if (!isAuthenticated) {
@@ -552,12 +582,10 @@ export default function AdminDashboard() {
 
               <div className="mt-6 flex gap-3">
                 <button
-                  onClick={() => {
-                    window.print();
-                  }}
-                  className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  onClick={() => downloadPDF(selectedSubmission)}
+                  className="flex-1 py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold"
                 >
-                  Print / Export PDF
+                  📥 Download PDF
                 </button>
                 <button
                   onClick={() => setSelectedSubmission(null)}
