@@ -719,30 +719,6 @@ function ImpalementProtectionFormContent() {
                   </div>
                 </div>
 
-                {/* Saved Info Indicator */}
-                {hasSavedInfo && rememberMe && (
-                  <div className="sm:col-span-2 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start justify-between">
-                    <div className="flex items-start gap-3">
-                      <span className="text-green-600 text-xl">✓</span>
-                      <div>
-                        <p className="text-sm font-bold text-green-900">Using saved information</p>
-                        <p className="text-xs text-green-700 mt-1">
-                          {formData.submittedBy && `${formData.submittedBy}`}
-                          {formData.submittedByEmail && ` (${formData.submittedByEmail})`}
-                          {formData.submittedByCompany && ` from ${formData.submittedByCompany}`}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleClearSavedInfo}
-                      className="text-xs text-green-700 hover:text-green-900 font-semibold underline whitespace-nowrap"
-                    >
-                      Clear
-                    </button>
-                  </div>
-                )}
-
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     Your Name <span className="text-red-500">*</span>
@@ -1091,6 +1067,30 @@ function ImpalementProtectionFormContent() {
                 </>
               )}
             </div>
+
+            {/* Saved Info Indicator - Below Buttons */}
+            {hasSavedInfo && rememberMe && currentStep === 1 && (
+              <div className="mt-6 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start justify-between">
+                <div className="flex items-start gap-3">
+                  <span className="text-green-600 text-xl">✓</span>
+                  <div>
+                    <p className="text-sm font-bold text-green-900">Using saved information</p>
+                    <p className="text-xs text-green-700 mt-1">
+                      {formData.submittedBy && `${formData.submittedBy}`}
+                      {formData.submittedByEmail && ` (${formData.submittedByEmail})`}
+                      {formData.submittedByCompany && ` from ${formData.submittedByCompany}`}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleClearSavedInfo}
+                  className="text-xs text-green-700 hover:text-green-900 font-semibold underline whitespace-nowrap"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
           </form>
         </div>
 
