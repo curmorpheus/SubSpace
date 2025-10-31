@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     const rateLimitResult = rateLimit(request, ip, RateLimits.FORM_SUBMIT);
 
     if (!rateLimitResult.success) {
-      logRateLimitExceeded(ip, "/api/forms/submit-and-email", userAgent);
+      logRateLimitExceeded(ip, "/api/forms/submit_and_email", userAgent);
 
       return NextResponse.json(
         {
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       if (!sigValidation.success) {
         logValidationError(
           ip,
-          "/api/forms/submit-and-email",
+          "/api/forms/submit_and_email",
           sigValidation.error.flatten(),
           userAgent
         );
