@@ -196,6 +196,8 @@ export default function ImpalementProtectionForm() {
         let errorMessage = errorData.error || "Failed to submit form";
 
         if (errorData.details) {
+          console.error("Validation errors:", errorData.details);
+
           // If we have detailed validation errors, show them
           const fieldErrors = errorData.details.fieldErrors || {};
           const formErrors = errorData.details.formErrors || [];
@@ -208,7 +210,7 @@ export default function ImpalementProtectionForm() {
           });
 
           if (allErrors.length > 0) {
-            errorMessage = allErrors.join("; ");
+            errorMessage = allErrors.join("\n");
           }
         }
 
