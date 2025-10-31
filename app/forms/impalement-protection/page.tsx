@@ -1,0 +1,460 @@
+"use client";
+
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import SignaturePad, { SignaturePadRef } from "@/components/SignaturePad";
+import DatePicker from "@/components/DatePicker";
+import TimePicker from "@/components/TimePicker";
+
+export default function ImpalementProtectionForm() {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const signaturePadRef = useRef<SignaturePadRef>(null);
+
+  // Get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const [formData, setFormData] = useState({
+    date: getTodayDate(),
+    jobNumber: "",
+    submittedBy: "",
+    submittedByEmail: "",
+    submittedByCompany: "",
+    startTime: "",
+    endTime: "",
+    location: "",
+    hazardDescription: "",
+    correctiveMeasures: "",
+    creatingEmployer: "",
+    supervisor: "",
+  });
+
+  const [emailOptions, setEmailOptions] = useState({
+    sendEmail: false,
+    recipientEmail: "",
+    emailSubject: "",
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    // Validate signature
+    if (signaturePadRef.current?.isEmpty()) {
+      setError("Please provide your signature before submitting");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const signatureData = signaturePadRef.current?.toDataURL();
+
+      const payload = {
+        formType: "impalement-protection",
+        jobNumber: formData.jobNumber,
+        submittedBy: formData.submittedBy,
+        submittedByEmail: formData.submittedByEmail,
+        submittedByCompany: formData.submittedByCompany,
+        signature: signatureData,
+        data: {
+          date: formData.date,
+          inspections: [{
+            startTime: formData.startTime,
+            endTime: formData.endTime,
+            location: formData.location,
+            hazardDescription: formData.hazardDescription,
+            correctiveMeasures: formData.correctiveMeasures,
+            creatingEmployer: formData.creatingEmployer,
+            supervisor: formData.supervisor,
+          }],
+        },
+        emailOptions: emailOptions.sendEmail ? {
+          recipientEmail: emailOptions.recipientEmail,
+          emailSubject: emailOptions.emailSubject || `Impalement Protection Form - Job #${formData.jobNumber}`,
+        } : null,
+      };
+
+      const endpoint = emailOptions.sendEmail ? "/api/forms/submit-and-email" : "/api/forms/submit";
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit form");
+      }
+
+      const result = await response.json();
+
+      if (emailOptions.sendEmail) {
+        alert(`Form submitted and emailed successfully! Submission ID: ${result.id}\nEmail sent to: ${emailOptions.recipientEmail}`);
+      } else {
+        alert(`Form submitted successfully! Submission ID: ${result.id}`);
+      }
+
+      router.push("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to submit form. Please try again.");
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto">
+        {/* Header Card */}
+        <div className="bg-white rounded-2xl shadow-lg mb-6 overflow-hidden">
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 sm:px-8 py-6">
+            <button
+              onClick={() => router.push("/")}
+              className="text-orange-100 hover:text-white mb-4 text-sm font-medium inline-flex items-center transition-colors"
+            >
+              ← Back to Home
+            </button>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white">
+              Impalement Protection
+            </h1>
+            <p className="text-orange-100 mt-2 text-lg">
+              Safety Inspection Form
+            </p>
+          </div>
+        </div>
+
+        {/* Main Form Card */}
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <form onSubmit={handleSubmit} className="p-6 sm:p-8 lg:p-10">
+
+            {/* Basic Information Section */}
+            <div className="mb-8">
+              <div className="flex items-center mb-6">
+                <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                  <span className="text-orange-600 font-bold text-lg">1</span>
+                </div>
+                <h2 className="ml-4 text-2xl font-bold text-gray-900">
+                  Basic Information
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <DatePicker
+                    value={formData.date}
+                    onChange={(date) => setFormData({ ...formData, date })}
+                    label="Inspection Date"
+                    required
+                  />
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Job Number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.jobNumber}
+                      onChange={(e) => setFormData({ ...formData, jobNumber: e.target.value })}
+                      placeholder="e.g., 2025-001"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Your Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.submittedBy}
+                    onChange={(e) => setFormData({ ...formData, submittedBy: e.target.value })}
+                    placeholder="John Doe"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Your Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.submittedByEmail}
+                    onChange={(e) => setFormData({ ...formData, submittedByEmail: e.target.value })}
+                    placeholder="john@company.com"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Your Company <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.submittedByCompany}
+                    onChange={(e) => setFormData({ ...formData, submittedByCompany: e.target.value })}
+                    placeholder="Company Name"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="my-10 border-t-2 border-gray-100"></div>
+
+            {/* Inspection Details Section */}
+            <div className="mb-8">
+              <div className="flex items-center mb-6">
+                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 font-bold text-lg">2</span>
+                </div>
+                <h2 className="ml-4 text-2xl font-bold text-gray-900">
+                  Inspection Details
+                </h2>
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100 rounded-2xl p-6 sm:p-8">
+                <div className="space-y-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <TimePicker
+                      value={formData.startTime}
+                      onChange={(time) => setFormData({ ...formData, startTime: time })}
+                      label="Start Time"
+                      required
+                    />
+
+                    <TimePicker
+                      value={formData.endTime}
+                      onChange={(time) => setFormData({ ...formData, endTime: time })}
+                      label="End Time"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Location of Inspection <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      placeholder="e.g., Building A, 3rd Floor, North Wing"
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Description of Impalement Hazard Observed <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      required
+                      rows={4}
+                      value={formData.hazardDescription}
+                      onChange={(e) => setFormData({ ...formData, hazardDescription: e.target.value })}
+                      placeholder="Describe the hazard in detail..."
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Corrective Measures Taken <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      required
+                      rows={4}
+                      value={formData.correctiveMeasures}
+                      onChange={(e) => setFormData({ ...formData, correctiveMeasures: e.target.value })}
+                      placeholder="Describe what actions were taken to address the hazard..."
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Creating/Exposing Employer(s) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.creatingEmployer}
+                      onChange={(e) => setFormData({ ...formData, creatingEmployer: e.target.value })}
+                      placeholder="Company name(s)"
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Supervisor of Creating/Exposing Employer(s) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.supervisor}
+                      onChange={(e) => setFormData({ ...formData, supervisor: e.target.value })}
+                      placeholder="Supervisor name"
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="my-10 border-t-2 border-gray-100"></div>
+
+            {/* Signature Section */}
+            <div className="mb-8">
+              <div className="flex items-center mb-6">
+                <div className="flex-shrink-0 w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                  <span className="text-purple-600 font-bold text-lg">3</span>
+                </div>
+                <h2 className="ml-4 text-2xl font-bold text-gray-900">
+                  Signature
+                </h2>
+              </div>
+
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-100 rounded-2xl p-6 sm:p-8">
+                <SignaturePad ref={signaturePadRef} label="Inspector Signature" required />
+                <p className="mt-4 text-sm text-gray-600 bg-white/60 rounded-lg p-3">
+                  By signing above, you certify that the information provided is accurate and complete.
+                </p>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="my-10 border-t-2 border-gray-100"></div>
+
+            {/* Email Options Section */}
+            <div className="mb-8">
+              <div className="flex items-center mb-6">
+                <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                  <span className="text-green-600 font-bold text-lg">4</span>
+                </div>
+                <h2 className="ml-4 text-2xl font-bold text-gray-900">
+                  Email Options
+                </h2>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-100 rounded-2xl p-6 sm:p-8">
+                <label className="flex items-start cursor-pointer group">
+                  <div className="flex items-center h-6">
+                    <input
+                      type="checkbox"
+                      id="sendEmail"
+                      checked={emailOptions.sendEmail}
+                      onChange={(e) => setEmailOptions({ ...emailOptions, sendEmail: e.target.checked })}
+                      className="w-5 h-5 text-green-600 border-2 border-gray-300 rounded focus:ring-2 focus:ring-green-500 cursor-pointer"
+                    />
+                  </div>
+                  <div className="ml-3">
+                    <span className="text-base font-semibold text-gray-900 group-hover:text-green-600 transition-colors">
+                      Email this form as a PDF
+                    </span>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Send a PDF copy to a superintendent or project manager
+                    </p>
+                  </div>
+                </label>
+
+                {emailOptions.sendEmail && (
+                  <div className="mt-6 space-y-5 bg-white rounded-xl p-6 border-2 border-green-200">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Recipient Email <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        required={emailOptions.sendEmail}
+                        value={emailOptions.recipientEmail}
+                        onChange={(e) => setEmailOptions({ ...emailOptions, recipientEmail: e.target.value })}
+                        placeholder="superintendent@example.com"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Email Subject <span className="text-gray-500 text-xs">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={emailOptions.emailSubject}
+                        onChange={(e) => setEmailOptions({ ...emailOptions, emailSubject: e.target.value })}
+                        placeholder={`Impalement Protection Form - Job #${formData.jobNumber || '...'}`}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4">
+                <div className="flex items-start">
+                  <div className="flex-shrink-0">
+                    <span className="text-red-600 text-xl">⚠️</span>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-semibold text-red-800">Error</h3>
+                    <p className="text-sm text-red-700 mt-1">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Submit Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-6">
+              <button
+                type="button"
+                onClick={() => router.push("/")}
+                className="flex-1 py-4 px-6 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-semibold text-lg"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 py-4 px-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting
+                  ? (emailOptions.sendEmail ? "Submitting & Emailing..." : "Submitting...")
+                  : (emailOptions.sendEmail ? "Submit & Email Form" : "Submit Form")
+                }
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center text-sm text-gray-500">
+          <p>SubSpace - Construction Form Management</p>
+        </div>
+      </div>
+    </div>
+  );
+}
