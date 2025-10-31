@@ -29,37 +29,41 @@ export default function AdminDashboard() {
     setAuthError("");
 
     try {
-      const response = await fetch("/api/forms/list", {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
         headers: {
-          Authorization: `Bearer ${password}`,
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({ password }),
+        credentials: "include", // Important for cookies
       });
 
       if (response.ok) {
         setIsAuthenticated(true);
-        sessionStorage.setItem("adminAuth", password);
-        fetchSubmissions(password);
+        setPassword(""); // Clear password from state
+        fetchSubmissions();
       } else {
-        setAuthError("Invalid password");
+        const data = await response.json();
+        setAuthError(data.error || "Invalid password");
       }
     } catch (error) {
       setAuthError("Authentication failed");
     }
   };
 
-  const fetchSubmissions = async (authPassword?: string) => {
+  const fetchSubmissions = async () => {
     setLoading(true);
     try {
-      const auth = authPassword || sessionStorage.getItem("adminAuth");
       const response = await fetch("/api/forms/list", {
-        headers: {
-          Authorization: `Bearer ${auth}`,
-        },
+        credentials: "include", // Important for cookies
       });
 
       if (response.ok) {
         const data = await response.json();
         setSubmissions(data.submissions);
+      } else {
+        // If unauthorized, redirect to login
+        setIsAuthenticated(false);
       }
     } catch (error) {
       console.error("Error fetching submissions:", error);
@@ -69,18 +73,37 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    const savedAuth = sessionStorage.getItem("adminAuth");
-    if (savedAuth) {
-      setIsAuthenticated(true);
-      setPassword(savedAuth);
-      fetchSubmissions(savedAuth);
-    }
+    // Check if user is already authenticated
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/auth/verify", {
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          setIsAuthenticated(true);
+          fetchSubmissions();
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+      }
+    };
+
+    checkAuth();
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+
     setIsAuthenticated(false);
     setPassword("");
-    sessionStorage.removeItem("adminAuth");
     setSubmissions([]);
   };
 
