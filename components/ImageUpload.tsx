@@ -81,20 +81,9 @@ export default function ImageUpload({
   const totalSize = images.reduce((sum, img) => sum + img.size, 0);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700">
-          {label} ({images.length}/{maxImages})
-        </label>
-        {images.length > 0 && (
-          <span className="text-xs text-gray-500">
-            Total: {formatFileSize(totalSize)}
-          </span>
-        )}
-      </div>
-
-      {/* Upload Button */}
-      <div>
+    <div className="space-y-2">
+      {/* Compact Upload Button */}
+      <div className="flex items-center gap-3">
         <input
           ref={fileInputRef}
           type="file"
@@ -106,14 +95,15 @@ export default function ImageUpload({
         />
         <label
           htmlFor={`upload-${label.replace(/\s/g, "-")}`}
-          className={`inline-flex items-center px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-400 transition-colors ${
+          className={`flex-1 flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 hover:border-blue-400 transition-all ${
             uploading || images.length >= maxImages
               ? "opacity-50 cursor-not-allowed"
               : ""
           }`}
         >
+          {/* Camera Icon */}
           <svg
-            className="w-5 h-5 mr-2 text-gray-400"
+            className="w-5 h-5 text-gray-400 flex-shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -122,47 +112,63 @@ export default function ImageUpload({
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+            />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
             />
           </svg>
-          <span className="text-sm text-gray-600">
-            {uploading
-              ? "Processing..."
-              : images.length >= maxImages
-              ? "Maximum reached"
-              : "Add Photos"}
+
+          {/* Label Text */}
+          <span className="text-sm text-gray-700 flex-1">
+            {uploading ? "Processing..." : label}
+          </span>
+
+          {/* Count Badge */}
+          <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+            images.length >= maxImages
+              ? "bg-orange-100 text-orange-700"
+              : images.length > 0
+              ? "bg-blue-100 text-blue-700"
+              : "bg-gray-100 text-gray-600"
+          }`}>
+            {images.length}/{maxImages}
           </span>
         </label>
       </div>
 
       {/* Error Message */}
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded">
+        <div className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
           {error}
         </div>
       )}
 
-      {/* Image Previews */}
+      {/* Compact Image Previews - Horizontal Scroll */}
       {images.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           {images.map((image, index) => (
             <div
               key={index}
-              className="relative group bg-gray-100 rounded-lg overflow-hidden"
+              className="relative group flex-shrink-0 bg-gray-100 rounded-lg overflow-hidden"
+              style={{ width: "80px", height: "80px" }}
             >
               <img
                 src={image.dataUrl}
                 alt={`Photo ${index + 1}`}
-                className="w-full h-32 object-cover"
+                className="w-full h-full object-cover"
               />
               <button
                 type="button"
                 onClick={() => handleRemove(index)}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
                 title="Remove photo"
               >
                 <svg
-                  className="w-4 h-4"
+                  className="w-3 h-3"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -175,7 +181,7 @@ export default function ImageUpload({
                   />
                 </svg>
               </button>
-              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs px-2 py-1">
+              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-60 text-white text-xs px-1 py-0.5 text-center">
                 {formatFileSize(image.size)}
               </div>
             </div>
