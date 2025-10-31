@@ -157,8 +157,11 @@ export async function POST(request: NextRequest) {
     logFormSubmission(ip, formType, jobNumber, true, userAgent);
 
     // If email options provided, send email with PDF
+    console.log("Email options:", emailOptions);
     if (emailOptions && emailOptions.recipientEmail) {
+      console.log("Starting email send process...");
       try {
+        console.log("Generating PDF...");
         // Generate PDF
         const pdfBuffer = generateImpalementProtectionPDF(
           {
@@ -170,13 +173,17 @@ export async function POST(request: NextRequest) {
           },
           { ...data, signature }
         );
+        console.log("PDF generated, size:", pdfBuffer.length);
 
         // Send email with PDF attachment
         const emailSubject =
           emailOptions.emailSubject ||
           `Impalement Protection Inspection Form - Job #${jobNumber}`;
 
+        console.log("Getting Resend client...");
         const resendClient = getResendClient();
+        console.log("Resend client status:", resendClient ? "OK" : "NULL");
+        console.log("RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
         if (!resendClient) {
           throw new Error(
             "Resend client not configured. Please set RESEND_API_KEY environment variable."
@@ -214,7 +221,11 @@ export async function POST(request: NextRequest) {
           submissionTime: new Date().toLocaleString(),
         });
 
-        await resendClient.emails.send({
+        console.log("Sending email to:", emailOptions.recipientEmail);
+        console.log("From:", process.env.RESEND_FROM_EMAIL);
+        console.log("Subject:", emailSubject);
+
+        const emailResult = await resendClient.emails.send({
           from: process.env.RESEND_FROM_EMAIL || "forms@subspace.dev",
           to: emailOptions.recipientEmail,
           subject: emailSubject,
@@ -227,6 +238,7 @@ export async function POST(request: NextRequest) {
           ],
         });
 
+        console.log("Email sent successfully! Result:", emailResult);
         logEmailSent(ip, emailOptions.recipientEmail, true, userAgent);
 
         return NextResponse.json({
@@ -236,7 +248,9 @@ export async function POST(request: NextRequest) {
           emailSent: true,
         });
       } catch (emailError) {
+        console.error("!!! EMAIL ERROR !!!");
         console.error("Error sending email:", emailError);
+        console.error("Error details:", JSON.stringify(emailError, null, 2));
 
         logEmailSent(
           ip,
