@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DatePicker from "@/components/DatePicker";
 import TimePicker from "@/components/TimePicker";
 import ImageUpload from "@/components/ImageUpload";
+import SignaturePad, { SignaturePadRef } from "@/components/SignaturePad";
 import type { CompressedImage } from "@/lib/image-compression";
 import {
   queueSubmission,
@@ -17,6 +18,7 @@ const CACHE_KEY = "subspace-form-cache";
 function ImpalementProtectionFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const signaturePadRef = useRef<SignaturePadRef>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
@@ -438,6 +440,12 @@ function ImpalementProtectionFormContent() {
         hour12: true
       });
 
+      // Extract signature if provided
+      let signature = "";
+      if (signaturePadRef.current && !signaturePadRef.current.isEmpty()) {
+        signature = signaturePadRef.current.toDataURL();
+      }
+
       const payload = {
         formType: "impalement-protection",
         jobNumber: formData.jobNumber,
@@ -445,6 +453,7 @@ function ImpalementProtectionFormContent() {
         submittedByEmail: formData.submittedByEmail,
         submittedByCompany: formData.submittedByCompany,
         submittedAtLocal, // Local device time
+        signature, // Inspector signature (optional)
         data: {
           date: formData.date,
           inspections: [{
@@ -585,8 +594,9 @@ function ImpalementProtectionFormContent() {
           min-height: 56px;
         }
         .large-buttons input[type="checkbox"] {
-          width: 1.5rem !important;
-          height: 1.5rem !important;
+          width: 2.25rem !important;
+          height: 2.25rem !important;
+          cursor: pointer;
         }
         .large-buttons label {
           font-size: 1rem !important;
@@ -608,6 +618,9 @@ function ImpalementProtectionFormContent() {
             <p className="text-orange-100 mt-2 text-lg">
               Safety Inspection Form
             </p>
+            <div className="mt-3 flex items-center gap-2 text-orange-50">
+              <span className="text-sm font-medium">⏱️ Estimated time: 5-10 minutes</span>
+            </div>
           </div>
         </div>
 
@@ -886,7 +899,7 @@ function ImpalementProtectionFormContent() {
                       }}
                       placeholder="Describe the hazard in detail..."
                       disabled={noHazardsObserved}
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-600"
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
                     />
 
                     <div className="mt-3">
@@ -903,7 +916,7 @@ function ImpalementProtectionFormContent() {
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Corrective Measures Taken {noHazardsObserved ? (
-                        <span className="text-gray-600 text-xs font-medium">(Optional)</span>
+                        <span className="text-gray-700 text-xs font-medium">(Optional)</span>
                       ) : (
                         <span className="text-red-500">*</span>
                       )}
@@ -920,7 +933,7 @@ function ImpalementProtectionFormContent() {
                       }}
                       placeholder="Describe what actions were taken to address the hazard..."
                       disabled={noHazardsObserved}
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-600"
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
                     />
 
                     <div className="mt-3">
@@ -1003,7 +1016,7 @@ function ImpalementProtectionFormContent() {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        CC Emails <span className="text-gray-600 text-xs font-medium">(Optional)</span>
+                        CC Emails <span className="text-gray-700 text-xs font-medium">(Optional)</span>
                       </label>
                       <input
                         type="text"
@@ -1012,11 +1025,11 @@ function ImpalementProtectionFormContent() {
                         placeholder="email1@example.com, email2@example.com"
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-gray-900"
                       />
-                      <p className="text-xs text-gray-600 font-medium mt-1">Separate multiple emails with commas</p>
+                      <p className="text-xs text-gray-700 font-medium mt-1">Separate multiple emails with commas</p>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Email Subject <span className="text-gray-600 text-xs font-medium">(Optional)</span>
+                        Email Subject <span className="text-gray-700 text-xs font-medium">(Optional)</span>
                       </label>
                       <input
                         type="text"
@@ -1026,6 +1039,20 @@ function ImpalementProtectionFormContent() {
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-gray-900"
                       />
                     </div>
+                  </div>
+
+                  {/* Signature Section */}
+                  <div className="mt-8 bg-gradient-to-br from-purple-50 to-violet-50 border-2 border-purple-200 rounded-2xl p-6">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                        <span>✍️</span>
+                        Inspector Signature
+                      </h3>
+                      <p className="text-sm text-gray-700 mt-1">
+                        Sign below to certify this inspection report is accurate
+                      </p>
+                    </div>
+                    <SignaturePad ref={signaturePadRef} required={false} />
                   </div>
               </div>
             </div>
@@ -1129,7 +1156,7 @@ function ImpalementProtectionFormContent() {
         </div>
 
         {/* Footer */}
-        <div className="mt-8 text-center text-sm text-gray-500">
+        <div className="mt-8 text-center text-sm text-gray-600">
           <p>
             SubSpace
             <sup
@@ -1152,7 +1179,7 @@ export default function ImpalementProtectionForm() {
     <Suspense fallback={
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 py-8 px-4 flex items-center justify-center">
         <div className="text-center">
-          <div className="text-gray-600">Loading form...</div>
+          <div className="text-gray-700">Loading form...</div>
         </div>
       </div>
     }>
