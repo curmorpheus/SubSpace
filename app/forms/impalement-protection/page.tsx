@@ -82,6 +82,9 @@ function ImpalementProtectionFormContent() {
   const [hazardPhotos, setHazardPhotos] = useState<CompressedImage[]>([]);
   const [measuresPhotos, setMeasuresPhotos] = useState<CompressedImage[]>([]);
 
+  // State for "no hazards observed" option
+  const [noHazardsObserved, setNoHazardsObserved] = useState(false);
+
   const [emailOptions, setEmailOptions] = useState(() => {
     let cached: any = {};
 
@@ -147,8 +150,12 @@ function ImpalementProtectionFormContent() {
         return false;
       }
     } else if (step === 2) {
+      // Corrective measures is optional when "no hazards observed" is checked
+      const correctiveMeasuresRequired = !noHazardsObserved;
+
       if (!formData.startTime || !formData.endTime || !formData.location ||
-          !formData.hazardDescription || !formData.correctiveMeasures ||
+          !formData.hazardDescription ||
+          (correctiveMeasuresRequired && !formData.correctiveMeasures) ||
           !formData.creatingEmployer || !formData.supervisor) {
         setError("Please fill in all inspection details");
         return false;
@@ -175,7 +182,26 @@ function ImpalementProtectionFormContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleNoHazardsToggle = (checked: boolean) => {
+    setNoHazardsObserved(checked);
+    if (checked) {
+      setFormData({
+        ...formData,
+        hazardDescription: "There were no impalement hazards observed during this inspection.",
+        correctiveMeasures: "N/A - No hazards present",
+      });
+    } else {
+      // Clear fields when unchecked
+      setFormData({
+        ...formData,
+        hazardDescription: "",
+        correctiveMeasures: "",
+      });
+    }
+  };
+
   const handleTestAutofill = () => {
+    setNoHazardsObserved(false);
     setFormData({
       date: getTodayDate(),
       jobNumber: "TEST-2025-001",
@@ -511,13 +537,36 @@ function ImpalementProtectionFormContent() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Description of Impalement Hazard Observed <span className="text-red-500">*</span>
                     </label>
+
+                    {/* Quick option for no hazards */}
+                    <div className="mb-3 bg-green-50 border-2 border-green-200 rounded-xl p-4">
+                      <label className="flex items-start gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={noHazardsObserved}
+                          onChange={(e) => handleNoHazardsToggle(e.target.checked)}
+                          className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                        />
+                        <div>
+                          <span className="font-semibold text-green-900">No impalement hazards observed</span>
+                          <p className="text-xs text-green-700 mt-1">
+                            Check this if no hazards were found during inspection
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+
                     <textarea
                       required
                       rows={4}
                       value={formData.hazardDescription}
-                      onChange={(e) => setFormData({ ...formData, hazardDescription: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, hazardDescription: e.target.value });
+                        if (noHazardsObserved) setNoHazardsObserved(false);
+                      }}
                       placeholder="Describe the hazard in detail..."
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900"
+                      disabled={noHazardsObserved}
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-600"
                     />
 
                     <div className="mt-3">
@@ -533,15 +582,25 @@ function ImpalementProtectionFormContent() {
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Corrective Measures Taken <span className="text-red-500">*</span>
+                      Corrective Measures Taken {noHazardsObserved ? (
+                        <span className="text-gray-600 text-xs font-medium">(Optional)</span>
+                      ) : (
+                        <span className="text-red-500">*</span>
+                      )}
                     </label>
                     <textarea
-                      required
+                      required={!noHazardsObserved}
                       rows={4}
                       value={formData.correctiveMeasures}
-                      onChange={(e) => setFormData({ ...formData, correctiveMeasures: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, correctiveMeasures: e.target.value });
+                        if (noHazardsObserved && e.target.value !== "N/A - No hazards present") {
+                          setNoHazardsObserved(false);
+                        }
+                      }}
                       placeholder="Describe what actions were taken to address the hazard..."
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900"
+                      disabled={noHazardsObserved}
+                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-600"
                     />
 
                     <div className="mt-3">
