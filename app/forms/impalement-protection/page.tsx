@@ -6,6 +6,8 @@ import SignaturePad, { SignaturePadRef } from "@/components/SignaturePad";
 import DatePicker from "@/components/DatePicker";
 import TimePicker from "@/components/TimePicker";
 
+const CACHE_KEY = "subspace-form-cache";
+
 export default function ImpalementProtectionForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,12 +31,26 @@ export default function ImpalementProtectionForm() {
     return `${hours}:${minutes}`;
   };
 
+  // Load cached values from localStorage
+  const loadCachedData = () => {
+    if (typeof window === "undefined") return {};
+
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      return cached ? JSON.parse(cached) : {};
+    } catch {
+      return {};
+    }
+  };
+
+  const cached = loadCachedData();
+
   const [formData, setFormData] = useState({
     date: getTodayDate(),
-    jobNumber: "",
-    submittedBy: "",
-    submittedByEmail: "",
-    submittedByCompany: "",
+    jobNumber: cached.jobNumber || "",
+    submittedBy: cached.submittedBy || "",
+    submittedByEmail: cached.submittedByEmail || "",
+    submittedByCompany: cached.submittedByCompany || "",
     startTime: getCurrentTime(),
     endTime: "",
     location: "",
@@ -46,7 +62,7 @@ export default function ImpalementProtectionForm() {
 
   const [emailOptions, setEmailOptions] = useState({
     sendEmail: false,
-    recipientEmail: "",
+    recipientEmail: cached.recipientEmail || "",
     emailSubject: "",
   });
 
@@ -106,6 +122,16 @@ export default function ImpalementProtectionForm() {
       }
 
       const result = await response.json();
+
+      // Cache commonly reused fields for next time
+      const cacheData = {
+        jobNumber: formData.jobNumber,
+        submittedBy: formData.submittedBy,
+        submittedByEmail: formData.submittedByEmail,
+        submittedByCompany: formData.submittedByCompany,
+        recipientEmail: emailOptions.recipientEmail,
+      };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
 
       if (emailOptions.sendEmail) {
         alert(`Form submitted and emailed successfully! Submission ID: ${result.id}\nEmail sent to: ${emailOptions.recipientEmail}`);
