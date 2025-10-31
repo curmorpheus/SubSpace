@@ -145,20 +145,26 @@ export function generateImpalementProtectionPDF(
   const contentWidth = pageWidth - 2 * margin;
   let yPosition = 15;
 
-  // Helper function to add a section header with background
+  // Helper function to add a section header with subtle styling
   const addSectionHeader = (text: string, y: number): number => {
-    // Draw orange background with subtle gradient effect
+    // Draw subtle left border accent
     doc.setFillColor(249, 115, 22); // Orange-500
-    doc.roundedRect(margin, y - 4, contentWidth, 8, 1, 1, "F");
+    doc.rect(margin, y - 2, 2, 6, "F");
 
-    // Add white text
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(9);
+    // Add section header text
+    doc.setTextColor(31, 41, 55); // Gray-800
+    doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
-    doc.text(text, margin + 2, y + 1);
+    doc.text(text, margin + 5, y + 2);
 
-    // Reset text color
+    // Add subtle bottom border
+    doc.setDrawColor(229, 231, 235); // Gray-200
+    doc.setLineWidth(0.5);
+    doc.line(margin, y + 5, margin + contentWidth, y + 5);
+
+    // Reset
     doc.setTextColor(0, 0, 0);
+    doc.setDrawColor(0, 0, 0);
 
     return y + 8;
   };
@@ -181,21 +187,32 @@ export function generateImpalementProtectionPDF(
     return y + (lines.length * 4) + 5;
   };
 
-  // Title Banner - lighter and more compact
+  // Elegant Header - White background with subtle orange accent
+  // Top accent bar
   doc.setFillColor(249, 115, 22); // Orange-500
-  doc.rect(0, 0, pageWidth, 18, "F");
+  doc.rect(0, 0, pageWidth, 3, "F");
 
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(12);
+  // Add subtle border at bottom of header
+  doc.setDrawColor(229, 231, 235); // Gray-200
+  doc.setLineWidth(0.5);
+  doc.line(0, 20, pageWidth, 20);
+
+  // Main title
+  doc.setTextColor(31, 41, 55); // Gray-800
+  doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("IMPALEMENT PROTECTION FORM", margin, 12);
+  doc.text("Impalement Protection Form", margin, 12);
 
-  doc.setFontSize(9);
+  // Subtitle
+  doc.setTextColor(107, 114, 128); // Gray-500
+  doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
-  doc.text("Safety Inspection Report", pageWidth - margin, 12, { align: "right" });
+  doc.text("SAFETY INSPECTION REPORT", margin, 16);
 
+  // Reset
   doc.setTextColor(0, 0, 0);
-  yPosition = 25;
+  doc.setDrawColor(0, 0, 0);
+  yPosition = 26;
 
   // Form Information Section
   yPosition = addSectionHeader("Form Information", yPosition);
