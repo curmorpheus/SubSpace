@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, forwardRef, useImperativeHandle } from "react";
+import { useRef, forwardRef, useImperativeHandle, useEffect, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
 
 interface SignaturePadProps {
@@ -17,10 +17,13 @@ export interface SignaturePadRef {
 const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
   ({ label = "Signature", required = false }, ref) => {
     const sigCanvas = useRef<SignatureCanvas>(null);
+    const [signatureData, setSignatureData] = useState<string>("");
+    const isRestoringRef = useRef(false);
 
     useImperativeHandle(ref, () => ({
       clear: () => {
         sigCanvas.current?.clear();
+        setSignatureData("");
       },
       isEmpty: () => {
         return sigCanvas.current?.isEmpty() ?? true;
@@ -30,8 +33,32 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
       },
     }));
 
+    // Save signature data whenever it changes
+    const handleEnd = () => {
+      if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
+        const data = sigCanvas.current.toDataURL();
+        setSignatureData(data);
+      }
+    };
+
+    // Restore signature data if canvas was cleared unexpectedly
+    useEffect(() => {
+      if (!sigCanvas.current || isRestoringRef.current) return;
+
+      const canvas = sigCanvas.current;
+      const isEmpty = canvas.isEmpty();
+
+      // If we have saved data but canvas is empty, restore it
+      if (signatureData && isEmpty) {
+        isRestoringRef.current = true;
+        canvas.fromDataURL(signatureData);
+        isRestoringRef.current = false;
+      }
+    }, [signatureData]);
+
     const handleClear = () => {
       sigCanvas.current?.clear();
+      setSignatureData("");
     };
 
     return (
@@ -48,6 +75,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
               style: { touchAction: "none" },
             }}
             backgroundColor="white"
+            onEnd={handleEnd}
           />
           <div className="absolute bottom-3 right-3 text-xs text-gray-400 pointer-events-none">
             Sign here
