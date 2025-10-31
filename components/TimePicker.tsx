@@ -43,33 +43,6 @@ const theme = createTheme({
         },
       },
     },
-    MuiClock: {
-      styleOverrides: {
-        pin: {
-          backgroundColor: '#3b82f6',
-        },
-      },
-    },
-    MuiClockPointer: {
-      styleOverrides: {
-        root: {
-          backgroundColor: '#3b82f6',
-        },
-        thumb: {
-          backgroundColor: '#3b82f6',
-          borderColor: '#3b82f6',
-        },
-      },
-    },
-    MuiClockNumber: {
-      styleOverrides: {
-        root: {
-          '&.Mui-selected': {
-            backgroundColor: '#3b82f6',
-          },
-        },
-      },
-    },
   },
 });
 

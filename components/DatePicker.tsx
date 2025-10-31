@@ -43,18 +43,6 @@ const theme = createTheme({
         },
       },
     },
-    MuiPickersDay: {
-      styleOverrides: {
-        root: {
-          '&.Mui-selected': {
-            backgroundColor: '#f97316 !important',
-            '&:hover': {
-              backgroundColor: '#ea580c !important',
-            },
-          },
-        },
-      },
-    },
   },
 });
 
