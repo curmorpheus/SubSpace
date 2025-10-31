@@ -227,7 +227,6 @@ export async function POST(request: NextRequest) {
         console.log("=== EMAIL DEBUG ===");
         console.log("ENV RESEND_FROM_EMAIL:", process.env.RESEND_FROM_EMAIL);
         console.log("ENV RESEND_FROM_EMAIL (JSON):", JSON.stringify(process.env.RESEND_FROM_EMAIL));
-        console.log("Hardcoded from:", hardcodedFrom);
         console.log("Using from:", fromEmail);
         console.log("From bytes:", Array.from(fromEmail).map(c => c.charCodeAt(0)));
         console.log("To:", emailOptions.recipientEmail);
