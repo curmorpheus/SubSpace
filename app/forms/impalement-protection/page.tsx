@@ -179,7 +179,7 @@ export default function ImpalementProtectionForm() {
         },
       };
 
-      const endpoint = "/api/forms/submit_and_email";
+      const endpoint = "/api/forms/submit";
 
       console.log("Submitting payload:", payload);
 

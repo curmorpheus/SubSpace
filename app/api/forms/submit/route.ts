@@ -1,13 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Resend } from "resend";
 import { db } from "@/db";
 import { formSubmissions } from "@/db/schema";
+import { generateImpalementProtectionPDF } from "@/lib/pdf-generator";
 import { rateLimit, getClientIP, RateLimits } from "@/lib/rate-limit";
-import { formSubmissionSchema, signatureSchema } from "@/lib/validation";
+import {
+  formSubmissionSchema,
+  signatureSchema,
+  validateEmailAllowlist,
+} from "@/lib/validation";
+import { createSafeEmailHtml } from "@/lib/sanitize";
 import {
   logFormSubmission,
+  logEmailSent,
   logRateLimitExceeded,
   logValidationError,
 } from "@/lib/security-logger";
+
+// Configure runtime for this route
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+// Lazy-initialize Resend to avoid build-time validation errors
+let resend: Resend | null = null;
+function getResendClient() {
+  if (!resend && process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 export async function POST(request: NextRequest) {
   const ip = getClientIP(request);
@@ -91,7 +112,29 @@ export async function POST(request: NextRequest) {
       submittedByCompany,
       data,
       signature,
+      emailOptions,
     } = validation.data;
+
+    // If email options provided, validate email
+    if (emailOptions && emailOptions.recipientEmail) {
+      const emailValidation = validateEmailAllowlist(
+        emailOptions.recipientEmail
+      );
+
+      if (!emailValidation.valid) {
+        logValidationError(
+          ip,
+          "/api/forms/submit",
+          { email: emailValidation.error },
+          userAgent
+        );
+
+        return NextResponse.json(
+          { error: emailValidation.error },
+          { status: 400 }
+        );
+      }
+    }
 
     // For now, we'll use formTypeId: 1 for impalement-protection
     const formTypeId = 1;
@@ -113,6 +156,107 @@ export async function POST(request: NextRequest) {
 
     logFormSubmission(ip, formType, jobNumber, true, userAgent);
 
+    // If email options provided, send email with PDF
+    if (emailOptions && emailOptions.recipientEmail) {
+      try {
+        // Generate PDF
+        const pdfBuffer = generateImpalementProtectionPDF(
+          {
+            jobNumber,
+            submittedBy,
+            submittedByEmail,
+            submittedByCompany,
+            submittedAt: submission.submittedAt.toISOString(),
+          },
+          { ...data, signature }
+        );
+
+        // Send email with PDF attachment
+        const emailSubject =
+          emailOptions.emailSubject ||
+          `Impalement Protection Inspection Form - Job #${jobNumber}`;
+
+        const resendClient = getResendClient();
+        if (!resendClient) {
+          throw new Error(
+            "Resend client not configured. Please set RESEND_API_KEY environment variable."
+          );
+        }
+
+        // Create safe HTML email with sanitized user input
+        const emailHtmlTemplate = `
+          <h2>Impalement Protection Inspection Form</h2>
+          <p>A new impalement protection inspection form has been submitted.</p>
+
+          <h3>Details:</h3>
+          <ul>
+            <li><strong>Job Number:</strong> {{jobNumber}}</li>
+            <li><strong>Submitted By:</strong> {{submittedBy}}</li>
+            <li><strong>Company:</strong> {{submittedByCompany}}</li>
+            <li><strong>Date:</strong> {{date}}</li>
+            <li><strong>Number of Inspections:</strong> {{inspectionCount}}</li>
+          </ul>
+
+          <p>The complete form is attached as a PDF.</p>
+
+          <hr />
+          <p style="color: #666; font-size: 12px;">
+            This form was submitted via SubSpace on {{submissionTime}}
+          </p>
+        `;
+
+        const safeEmailHtml = createSafeEmailHtml(emailHtmlTemplate, {
+          jobNumber,
+          submittedBy,
+          submittedByCompany,
+          date: data.date,
+          inspectionCount: String(data.inspections.length),
+          submissionTime: new Date().toLocaleString(),
+        });
+
+        await resendClient.emails.send({
+          from: process.env.RESEND_FROM_EMAIL || "forms@subspace.dev",
+          to: emailOptions.recipientEmail,
+          subject: emailSubject,
+          html: safeEmailHtml,
+          attachments: [
+            {
+              filename: `Impalement_Protection_Form_${jobNumber}_${Date.now()}.pdf`,
+              content: pdfBuffer.toString("base64"),
+            },
+          ],
+        });
+
+        logEmailSent(ip, emailOptions.recipientEmail, true, userAgent);
+
+        return NextResponse.json({
+          success: true,
+          id: submission.id,
+          message: "Form submitted and emailed successfully",
+          emailSent: true,
+        });
+      } catch (emailError) {
+        console.error("Error sending email:", emailError);
+
+        logEmailSent(
+          ip,
+          emailOptions.recipientEmail,
+          false,
+          userAgent
+        );
+
+        // Form was saved, but email failed
+        return NextResponse.json({
+          success: true,
+          id: submission.id,
+          message: "Form submitted but email failed to send",
+          emailSent: false,
+          error: "Email sending failed",
+        });
+      }
+    }
+
+    // No email requested, just return success
     return NextResponse.json({
       success: true,
       id: submission.id,
