@@ -48,9 +48,12 @@ const theme = createTheme({
 
 export default function TimePicker({ value, onChange, label, required = false }: TimePickerProps) {
   const handleChange = (newValue: Dayjs | null) => {
-    if (newValue) {
+    if (newValue && newValue.isValid()) {
       // Convert to HH:mm format
       onChange(newValue.format('HH:mm'));
+    } else if (newValue === null) {
+      // When cleared, set to empty string
+      onChange('');
     }
   };
 

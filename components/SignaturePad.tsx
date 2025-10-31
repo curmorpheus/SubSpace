@@ -17,6 +17,7 @@ export interface SignaturePadRef {
 const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
   ({ label = "Signature", required = false }, ref) => {
     const sigCanvas = useRef<SignatureCanvas>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const [signatureData, setSignatureData] = useState<string>("");
     const isRestoringRef = useRef(false);
 
@@ -32,6 +33,24 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         return sigCanvas.current?.toDataURL() ?? "";
       },
     }));
+
+    // Prevent scrolling when touching the signature pad (for mobile)
+    useEffect(() => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const preventScroll = (e: TouchEvent) => {
+        e.preventDefault();
+      };
+
+      container.addEventListener('touchstart', preventScroll, { passive: false });
+      container.addEventListener('touchmove', preventScroll, { passive: false });
+
+      return () => {
+        container.removeEventListener('touchstart', preventScroll);
+        container.removeEventListener('touchmove', preventScroll);
+      };
+    }, []);
 
     // Save signature data whenever user finishes drawing
     const handleEnd = () => {
@@ -78,12 +97,21 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
           {label} {required && <span className="text-red-500">*</span>}
         </label>
 
-        <div className="relative bg-white border-3 border-dashed border-purple-200 rounded-xl overflow-hidden shadow-inner">
+        <div
+          ref={containerRef}
+          className="relative bg-white border-3 border-dashed border-purple-200 rounded-xl overflow-hidden shadow-inner"
+          style={{ touchAction: "none" }}
+        >
           <SignatureCanvas
             ref={sigCanvas}
             canvasProps={{
               className: "w-full h-48 cursor-crosshair",
-              style: { touchAction: "none" },
+              style: {
+                touchAction: "none",
+                msTouchAction: "none",
+                WebkitUserSelect: "none",
+                userSelect: "none"
+              } as React.CSSProperties,
             }}
             backgroundColor="white"
             onEnd={handleEnd}

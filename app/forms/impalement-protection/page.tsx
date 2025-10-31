@@ -200,7 +200,28 @@ export default function ImpalementProtectionForm() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to submit form");
+
+        // Parse validation errors for better error messages
+        let errorMessage = errorData.error || "Failed to submit form";
+
+        if (errorData.details) {
+          // If we have detailed validation errors, show them
+          const fieldErrors = errorData.details.fieldErrors || {};
+          const formErrors = errorData.details.formErrors || [];
+
+          const allErrors: string[] = [...formErrors];
+          Object.entries(fieldErrors).forEach(([field, errors]) => {
+            if (Array.isArray(errors)) {
+              allErrors.push(...errors.map((err: string) => `${field}: ${err}`));
+            }
+          });
+
+          if (allErrors.length > 0) {
+            errorMessage = allErrors.join("; ");
+          }
+        }
+
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();

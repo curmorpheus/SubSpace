@@ -48,9 +48,12 @@ const theme = createTheme({
 
 export default function DatePicker({ value, onChange, label, required = false }: DatePickerProps) {
   const handleChange = (newValue: Dayjs | null) => {
-    if (newValue) {
+    if (newValue && newValue.isValid()) {
       // Convert to YYYY-MM-DD format
       onChange(newValue.format('YYYY-MM-DD'));
+    } else if (newValue === null) {
+      // When cleared, set to empty string
+      onChange('');
     }
   };
 
