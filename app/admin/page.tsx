@@ -210,20 +210,83 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Superintendent Dashboard
-            </h1>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-            >
-              Logout
-            </button>
+    <>
+      {/* Print-only flyer layout */}
+      {qrCodeDataUrl && (
+        <div className="hidden print:block print:page-break-after-always">
+          <style jsx>{`
+            @media print {
+              body * {
+                visibility: hidden;
+              }
+              .print-flyer, .print-flyer * {
+                visibility: visible;
+              }
+              .print-flyer {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+              }
+              @page {
+                margin: 0;
+              }
+            }
+          `}</style>
+          <div className="print-flyer w-full h-screen flex flex-col items-center justify-center bg-gradient-to-br from-orange-500 to-orange-600 text-white p-12">
+            <div className="text-center mb-8">
+              <h1 className="text-6xl font-black mb-4">IMPALEMENT PROTECTION</h1>
+              <p className="text-3xl font-bold text-orange-100">Safety Inspection Form</p>
+            </div>
+
+            <div className="bg-white rounded-3xl p-12 shadow-2xl mb-8">
+              <img src={qrCodeDataUrl} alt="QR Code" className="w-96 h-96" />
+            </div>
+
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-8 border-4 border-white">
+              <p className="text-5xl font-black text-center">JOB #{qrJobNumber}</p>
+            </div>
+
+            <div className="max-w-3xl text-center space-y-6">
+              <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6 border-2 border-white">
+                <h2 className="text-3xl font-bold mb-3">📱 How to Use This QR Code</h2>
+                <ol className="text-left text-xl space-y-2 font-medium">
+                  <li>1. Open your phone&apos;s camera app</li>
+                  <li>2. Point it at the QR code above</li>
+                  <li>3. Tap the notification that appears</li>
+                  <li>4. Complete the safety inspection form</li>
+                </ol>
+              </div>
+
+              <div className="bg-yellow-400 text-gray-900 rounded-xl p-6 border-4 border-yellow-300">
+                <p className="text-2xl font-black">⚠️ SAFETY FIRST</p>
+                <p className="text-lg font-semibold mt-2">All impalement hazards must be reported and corrected immediately</p>
+              </div>
+            </div>
+
+            <div className="mt-12 text-center">
+              <p className="text-xl font-semibold text-orange-100">SubSpace - Construction Form Management</p>
+              <p className="text-lg text-orange-200 mt-2">For assistance, contact your site superintendent</p>
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* Regular dashboard view */}
+      <div className="min-h-screen bg-gray-50 py-8 px-4 print:hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-3xl font-bold text-gray-900">
+                Superintendent Dashboard
+              </h1>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              >
+                Logout
+              </button>
+            </div>
 
           {/* QR Code Generator Section */}
           <div className="mb-6 border-2 border-orange-200 rounded-lg overflow-hidden">
@@ -483,5 +546,6 @@ export default function AdminDashboard() {
         )}
       </div>
     </div>
+    </>
   );
 }
