@@ -93,12 +93,18 @@ export default function ImpalementProtectionForm() {
 
   // Set date/time values after mount to avoid hydration mismatch
   useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      date: prev.date || getTodayDate(),
-      startTime: prev.startTime || getCurrentTime(),
-      endTime: prev.endTime || getTimeAfter10Minutes(),
-    }));
+    setFormData(prev => {
+      // Only update if values are actually empty to avoid unnecessary re-renders
+      const needsUpdate = !prev.date || !prev.startTime || !prev.endTime;
+      if (!needsUpdate) return prev;
+
+      return {
+        ...prev,
+        date: prev.date || getTodayDate(),
+        startTime: prev.startTime || getCurrentTime(),
+        endTime: prev.endTime || getTimeAfter10Minutes(),
+      };
+    });
   }, []);
 
   const validateStep = (step: number): boolean => {
