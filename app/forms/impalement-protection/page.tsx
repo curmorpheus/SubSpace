@@ -21,13 +21,21 @@ export default function ImpalementProtectionForm() {
     return `${year}-${month}-${day}`;
   };
 
+  // Get current time in HH:mm format
+  const getCurrentTime = () => {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
   const [formData, setFormData] = useState({
     date: getTodayDate(),
     jobNumber: "",
     submittedBy: "",
     submittedByEmail: "",
     submittedByCompany: "",
-    startTime: "",
+    startTime: getCurrentTime(),
     endTime: "",
     location: "",
     hazardDescription: "",
