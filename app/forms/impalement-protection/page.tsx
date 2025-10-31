@@ -20,6 +20,7 @@ function ImpalementProtectionFormContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
+  const [justNavigated, setJustNavigated] = useState(false);
 
   const totalSteps = 3;
 
@@ -309,14 +310,26 @@ function ImpalementProtectionFormContent() {
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
+      setJustNavigated(true);
       setCurrentStep(current => Math.min(current + 1, totalSteps));
       window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Reset the flag after a short delay to prevent accidental submission
+      setTimeout(() => {
+        setJustNavigated(false);
+      }, 500);
     }
   };
 
   const handlePrevious = () => {
+    setJustNavigated(true);
     setCurrentStep(current => Math.max(current - 1, 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      setJustNavigated(false);
+    }, 500);
   };
 
   const handleNoHazardsToggle = (checked: boolean) => {
@@ -393,6 +406,17 @@ function ImpalementProtectionFormContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Prevent submission if not on final step (step 3)
+    if (currentStep !== 3) {
+      return;
+    }
+
+    // Prevent accidental submission right after navigation
+    if (justNavigated) {
+      console.log("Prevented accidental submission - just navigated to this step");
+      return;
+    }
 
     // Final validation
     if (!validateStep(3)) {
@@ -653,7 +677,17 @@ function ImpalementProtectionFormContent() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} noValidate className={`p-6 sm:p-8 lg:p-10 ${largeButtons ? 'large-buttons' : ''}`}>
+          <form
+            onSubmit={handleSubmit}
+            onKeyDown={(e) => {
+              // Prevent Enter key from submitting the form on steps 1 and 2
+              if (e.key === 'Enter' && currentStep !== 3) {
+                e.preventDefault();
+              }
+            }}
+            noValidate
+            className={`p-6 sm:p-8 lg:p-10 ${largeButtons ? 'large-buttons' : ''}`}
+          >
 
             {/* Accessibility Toggles */}
             <div className="mb-6 bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
