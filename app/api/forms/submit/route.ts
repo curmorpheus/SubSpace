@@ -403,7 +403,12 @@ export async function POST(request: NextRequest) {
         console.log("Subject:", emailSubject);
         console.log("===================");
 
-        const emailPayload = {
+        // Parse CC emails if provided
+        const ccEmails = emailOptions.ccEmails
+          ? emailOptions.ccEmails.split(',').map((email: string) => email.trim()).filter(Boolean)
+          : [];
+
+        const emailPayload: any = {
           from: fromEmail,
           to: emailOptions.recipientEmail,
           subject: emailSubject,
@@ -415,6 +420,11 @@ export async function POST(request: NextRequest) {
             },
           ],
         };
+
+        // Add CC if provided
+        if (ccEmails.length > 0) {
+          emailPayload.cc = ccEmails;
+        }
 
         console.log("Email payload (without html/attachments):", {
           from: emailPayload.from,

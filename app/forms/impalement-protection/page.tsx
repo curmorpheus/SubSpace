@@ -96,6 +96,7 @@ function ImpalementProtectionFormContent() {
 
     return {
       recipientEmail: cached.recipientEmail || "",
+      ccEmails: "",
       emailSubject: "",
     };
   });
@@ -116,13 +117,22 @@ function ImpalementProtectionFormContent() {
     });
   }, []);
 
-  // Read job number from URL parameter
+  // Read job number and superintendent email from URL parameters
   useEffect(() => {
     const jobNumberParam = searchParams.get('jobNumber');
+    const superintendentEmailParam = searchParams.get('superintendentEmail');
+
     if (jobNumberParam) {
       setFormData(prev => ({
         ...prev,
         jobNumber: jobNumberParam,
+      }));
+    }
+
+    if (superintendentEmailParam) {
+      setFormData(prev => ({
+        ...prev,
+        recipientEmail: superintendentEmailParam,
       }));
     }
   }, [searchParams]);
@@ -185,6 +195,7 @@ function ImpalementProtectionFormContent() {
     });
     setEmailOptions({
       recipientEmail: "curt.mills@deacon.com",
+      ccEmails: "",
       emailSubject: "TEST - Impalement Protection Form - Job #TEST-2025-001",
     });
     setCurrentStep(3);
@@ -226,6 +237,7 @@ function ImpalementProtectionFormContent() {
         },
         emailOptions: {
           recipientEmail: emailOptions.recipientEmail,
+          ccEmails: emailOptions.ccEmails,
           emailSubject: emailOptions.emailSubject || `Impalement Protection Form - Job #${formData.jobNumber}`,
         },
       };
@@ -617,6 +629,19 @@ function ImpalementProtectionFormContent() {
                         placeholder="superintendent@example.com"
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-gray-900"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        CC Emails <span className="text-gray-500 text-xs">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={emailOptions.ccEmails}
+                        onChange={(e) => setEmailOptions({ ...emailOptions, ccEmails: e.target.value })}
+                        placeholder="email1@example.com, email2@example.com"
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-gray-900"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Separate multiple emails with commas</p>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">

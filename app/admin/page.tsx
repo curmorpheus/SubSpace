@@ -36,6 +36,7 @@ export default function AdminDashboard() {
 
   // QR Code Generator state
   const [qrJobNumber, setQrJobNumber] = useState("");
+  const [qrSuperintendentEmail, setQrSuperintendentEmail] = useState("");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
   const [showQrGenerator, setShowQrGenerator] = useState(false);
 
@@ -194,8 +195,16 @@ export default function AdminDashboard() {
     }
 
     try {
-      // Generate URL with job number parameter
-      const formUrl = `${window.location.origin}/forms/impalement-protection?jobNumber=${encodeURIComponent(qrJobNumber)}`;
+      // Build URL with parameters
+      const params = new URLSearchParams();
+      params.append("jobNumber", qrJobNumber);
+
+      // Add email parameter if provided
+      if (qrSuperintendentEmail.trim()) {
+        params.append("superintendentEmail", qrSuperintendentEmail.trim());
+      }
+
+      const formUrl = `${window.location.origin}/forms/impalement-protection?${params.toString()}`;
 
       // Generate QR code
       const qrDataUrl = await QRCode.toDataURL(formUrl, {
@@ -460,26 +469,46 @@ export default function AdminDashboard() {
             {showQrGenerator && (
               <div className="p-6 bg-orange-50">
                 <div className="max-w-2xl mx-auto">
-                  <div className="mb-4">
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Job Number
-                    </label>
-                    <div className="flex gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Job Number *
+                      </label>
                       <input
                         type="text"
                         value={qrJobNumber}
                         onChange={(e) => setQrJobNumber(e.target.value)}
                         onKeyPress={(e) => e.key === "Enter" && generateQRCode()}
                         placeholder="e.g., 2025-001"
-                        className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 font-medium"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 font-medium"
                       />
-                      <button
-                        onClick={generateQRCode}
-                        className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold"
-                      >
-                        Generate QR Code
-                      </button>
                     </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Your Email (Optional)
+                      </label>
+                      <input
+                        type="email"
+                        value={qrSuperintendentEmail}
+                        onChange={(e) => setQrSuperintendentEmail(e.target.value)}
+                        onKeyPress={(e) => e.key === "Enter" && generateQRCode()}
+                        placeholder="superintendent@deacon.com"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 font-medium"
+                      />
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <button
+                      onClick={generateQRCode}
+                      className="w-full px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-semibold"
+                    >
+                      Generate QR Code
+                    </button>
+                    {qrSuperintendentEmail && (
+                      <p className="mt-2 text-xs text-gray-600 text-center">
+                        💡 Your email will be pre-filled in the form when scanned
+                      </p>
+                    )}
                   </div>
 
                   {qrCodeDataUrl && (

@@ -52,6 +52,7 @@ export const formSubmissionSchema = z.object({
   emailOptions: z
     .object({
       recipientEmail: z.string().email("Invalid recipient email"),
+      ccEmails: z.string().optional(),
       emailSubject: z.string().max(200).optional(),
     })
     .optional(),
