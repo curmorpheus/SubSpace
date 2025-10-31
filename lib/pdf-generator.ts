@@ -134,21 +134,21 @@ export function generateImpalementProtectionPDF(
     return y + (lines.length * 4) + 5;
   };
 
-  // Title Banner - more compact
+  // Title Banner - lighter and more compact
   doc.setFillColor(249, 115, 22); // Orange-500
-  doc.rect(0, 0, pageWidth, 28, "F");
+  doc.rect(0, 0, pageWidth, 18, "F");
 
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
+  doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text("IMPALEMENT PROTECTION FORM", pageWidth / 2, 12, { align: "center" });
+  doc.text("IMPALEMENT PROTECTION FORM", margin, 12);
 
-  doc.setFontSize(11);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text("Safety Inspection Report", pageWidth / 2, 20, { align: "center" });
+  doc.text("Safety Inspection Report", pageWidth - margin, 12, { align: "right" });
 
   doc.setTextColor(0, 0, 0);
-  yPosition = 35;
+  yPosition = 25;
 
   // Form Information Section
   yPosition = addSectionHeader("FORM INFORMATION", yPosition);
