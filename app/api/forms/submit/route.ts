@@ -221,15 +221,21 @@ export async function POST(request: NextRequest) {
           submissionTime: new Date().toLocaleString(),
         });
 
-        const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
-        console.log("Sending email to:", emailOptions.recipientEmail);
-        console.log("From (raw):", process.env.RESEND_FROM_EMAIL);
-        console.log("From (used):", fromEmail);
-        console.log("From (type):", typeof fromEmail);
-        console.log("From (length):", fromEmail.length);
-        console.log("Subject:", emailSubject);
+        // Try hardcoded email first
+        const hardcodedFrom = "onboarding@resend.dev";
+        const fromEmail = hardcodedFrom; // Ignore env var for now
 
-        const emailResult = await resendClient.emails.send({
+        console.log("=== EMAIL DEBUG ===");
+        console.log("ENV RESEND_FROM_EMAIL:", process.env.RESEND_FROM_EMAIL);
+        console.log("ENV RESEND_FROM_EMAIL (JSON):", JSON.stringify(process.env.RESEND_FROM_EMAIL));
+        console.log("Hardcoded from:", hardcodedFrom);
+        console.log("Using from:", fromEmail);
+        console.log("From bytes:", Array.from(fromEmail).map(c => c.charCodeAt(0)));
+        console.log("To:", emailOptions.recipientEmail);
+        console.log("Subject:", emailSubject);
+        console.log("===================");
+
+        const emailPayload = {
           from: fromEmail,
           to: emailOptions.recipientEmail,
           subject: emailSubject,
@@ -240,7 +246,15 @@ export async function POST(request: NextRequest) {
               content: pdfBuffer.toString("base64"),
             },
           ],
+        };
+
+        console.log("Email payload (without html/attachments):", {
+          from: emailPayload.from,
+          to: emailPayload.to,
+          subject: emailPayload.subject,
         });
+
+        const emailResult = await resendClient.emails.send(emailPayload);
 
         console.log("Email sent successfully! Result:", emailResult);
         logEmailSent(ip, emailOptions.recipientEmail, true, userAgent);
