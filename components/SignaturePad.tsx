@@ -73,9 +73,66 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         }
       };
 
+      // Native touch event handlers (non-passive for Safari)
+      const handleTouchStart = (e: TouchEvent) => {
+        e.preventDefault();
+        if (e.touches.length > 0) {
+          const rect = canvas.getBoundingClientRect();
+          const coords = {
+            x: e.touches[0].clientX - rect.left,
+            y: e.touches[0].clientY - rect.top,
+          };
+          setIsDrawing(true);
+          setIsEmpty(false);
+          lastPointRef.current = coords;
+        }
+      };
+
+      const handleTouchMove = (e: TouchEvent) => {
+        e.preventDefault();
+        if (!isDrawing || e.touches.length === 0) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const coords = {
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top,
+        };
+
+        if (!lastPointRef.current) return;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.beginPath();
+        ctx.moveTo(lastPointRef.current.x, lastPointRef.current.y);
+        ctx.lineTo(coords.x, coords.y);
+        ctx.stroke();
+
+        lastPointRef.current = coords;
+      };
+
+      const handleTouchEnd = (e: TouchEvent) => {
+        e.preventDefault();
+        setIsDrawing(false);
+        lastPointRef.current = null;
+      };
+
+      // Add touch event listeners with non-passive option for Safari
+      canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+      canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+      canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+      canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+
       window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }, []);
+
+      return () => {
+        canvas.removeEventListener('touchstart', handleTouchStart);
+        canvas.removeEventListener('touchmove', handleTouchMove);
+        canvas.removeEventListener('touchend', handleTouchEnd);
+        canvas.removeEventListener('touchcancel', handleTouchEnd);
+        window.removeEventListener('resize', handleResize);
+      };
+    }, [isDrawing]);
 
     const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
       const canvas = canvasRef.current;
@@ -159,10 +216,6 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
             onMouseMove={draw}
             onMouseUp={stopDrawing}
             onMouseLeave={stopDrawing}
-            onTouchStart={startDrawing}
-            onTouchMove={draw}
-            onTouchEnd={stopDrawing}
-            onTouchCancel={stopDrawing}
             className="w-full h-48 cursor-crosshair touch-none"
             style={{ touchAction: 'none' }}
           />
@@ -175,7 +228,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
           <button
             type="button"
             onClick={handleClear}
-            className="px-4 py-2 text-sm font-medium text-purple-600 hover:text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
           >
             Clear Signature
           </button>
