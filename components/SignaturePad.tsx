@@ -19,6 +19,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
     const [isDrawing, setIsDrawing] = useState(false);
     const [isEmpty, setIsEmpty] = useState(true);
     const lastPointRef = useRef<{ x: number; y: number } | null>(null);
+    const isDrawingRef = useRef(false);
 
     useImperativeHandle(ref, () => ({
       clear: () => {
@@ -82,6 +83,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
             x: e.touches[0].clientX - rect.left,
             y: e.touches[0].clientY - rect.top,
           };
+          isDrawingRef.current = true;
           setIsDrawing(true);
           setIsEmpty(false);
           lastPointRef.current = coords;
@@ -90,7 +92,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
 
       const handleTouchMove = (e: TouchEvent) => {
         e.preventDefault();
-        if (!isDrawing || e.touches.length === 0) return;
+        if (!isDrawingRef.current || e.touches.length === 0) return;
 
         const rect = canvas.getBoundingClientRect();
         const coords = {
@@ -113,6 +115,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
 
       const handleTouchEnd = (e: TouchEvent) => {
         e.preventDefault();
+        isDrawingRef.current = false;
         setIsDrawing(false);
         lastPointRef.current = null;
       };
@@ -132,7 +135,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         canvas.removeEventListener('touchcancel', handleTouchEnd);
         window.removeEventListener('resize', handleResize);
       };
-    }, [isDrawing]);
+    }, []);
 
     const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
       const canvas = canvasRef.current;
@@ -163,6 +166,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
       const coords = getCoordinates(e);
       if (!coords) return;
 
+      isDrawingRef.current = true;
       setIsDrawing(true);
       setIsEmpty(false);
       lastPointRef.current = coords;
@@ -170,7 +174,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
 
     const draw = (e: React.MouseEvent | React.TouchEvent) => {
       e.preventDefault();
-      if (!isDrawing) return;
+      if (!isDrawingRef.current) return;
 
       const coords = getCoordinates(e);
       if (!coords || !lastPointRef.current) return;
@@ -189,6 +193,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
 
     const stopDrawing = (e: React.MouseEvent | React.TouchEvent) => {
       e.preventDefault();
+      isDrawingRef.current = false;
       setIsDrawing(false);
       lastPointRef.current = null;
     };
