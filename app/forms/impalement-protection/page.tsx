@@ -15,6 +15,9 @@ import {
 
 const CACHE_KEY = "subspace-form-cache";
 
+// Generate unique ID for inspections
+const generateInspectionId = () => `insp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
 function ImpalementProtectionFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -72,26 +75,24 @@ function ImpalementProtectionFormContent() {
       submittedBy: cached.submittedBy || "",
       submittedByEmail: cached.submittedByEmail || "",
       submittedByCompany: cached.submittedByCompany || "",
-      startTime: isClient ? getCurrentTime() : "",
-      endTime: isClient ? getTimeAfter10Minutes() : "",
-      location: "",
-      hazardDescription: "",
-      correctiveMeasures: "",
-      creatingEmployer: "",
-      supervisor: "",
-      locationPhotos: [],
-      hazardPhotos: [],
-      measuresPhotos: [],
+      inspections: [
+        {
+          id: generateInspectionId(),
+          startTime: isClient ? getCurrentTime() : "",
+          endTime: isClient ? getTimeAfter10Minutes() : "",
+          location: "",
+          hazardDescription: "",
+          correctiveMeasures: "",
+          creatingEmployer: "",
+          supervisor: "",
+          locationPhotos: [],
+          hazardPhotos: [],
+          measuresPhotos: [],
+          noHazardsObserved: false,
+        }
+      ],
     };
   });
-
-  // State for images
-  const [locationPhotos, setLocationPhotos] = useState<CompressedImage[]>([]);
-  const [hazardPhotos, setHazardPhotos] = useState<CompressedImage[]>([]);
-  const [measuresPhotos, setMeasuresPhotos] = useState<CompressedImage[]>([]);
-
-  // State for "no hazards observed" option
-  const [noHazardsObserved, setNoHazardsObserved] = useState(false);
 
   // State for accessibility preferences
   const [rememberMe, setRememberMe] = useState(() => {
@@ -223,14 +224,19 @@ function ImpalementProtectionFormContent() {
   useEffect(() => {
     setFormData(prev => {
       // Only update if values are actually empty to avoid unnecessary re-renders
-      const needsUpdate = !prev.date || !prev.startTime || !prev.endTime;
+      const needsUpdate = !prev.date || (prev.inspections[0] && (!prev.inspections[0].startTime || !prev.inspections[0].endTime));
       if (!needsUpdate) return prev;
 
       return {
         ...prev,
         date: prev.date || getTodayDate(),
-        startTime: prev.startTime || getCurrentTime(),
-        endTime: prev.endTime || getTimeAfter10Minutes(),
+        inspections: prev.inspections.map((inspection, index) =>
+          index === 0 ? {
+            ...inspection,
+            startTime: inspection.startTime || getCurrentTime(),
+            endTime: inspection.endTime || getTimeAfter10Minutes(),
+          } : inspection
+        )
       };
     });
   }, []);
@@ -280,6 +286,54 @@ function ImpalementProtectionFormContent() {
     }
   }, [searchParams]);
 
+  // Inspection management functions
+  const addInspection = () => {
+    setFormData(prev => ({
+      ...prev,
+      inspections: [
+        ...prev.inspections,
+        {
+          id: generateInspectionId(),
+          startTime: getCurrentTime(),
+          endTime: getTimeAfter10Minutes(),
+          location: "",
+          hazardDescription: "",
+          correctiveMeasures: "",
+          creatingEmployer: "",
+          supervisor: "",
+          locationPhotos: [],
+          hazardPhotos: [],
+          measuresPhotos: [],
+          noHazardsObserved: false,
+        }
+      ]
+    }));
+  };
+
+  const updateInspection = (inspectionId: string, field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      inspections: prev.inspections.map(inspection =>
+        inspection.id === inspectionId
+          ? { ...inspection, [field]: value }
+          : inspection
+      )
+    }));
+  };
+
+  const deleteInspection = (inspectionId: string) => {
+    setFormData(prev => {
+      // Don't allow deleting if only one inspection remains
+      if (prev.inspections.length <= 1) {
+        return prev;
+      }
+      return {
+        ...prev,
+        inspections: prev.inspections.filter(inspection => inspection.id !== inspectionId)
+      };
+    });
+  };
+
   const validateStep = (step: number): boolean => {
     setError("");
 
@@ -290,15 +344,23 @@ function ImpalementProtectionFormContent() {
         return false;
       }
     } else if (step === 2) {
-      // Corrective measures is optional when "no hazards observed" is checked
-      const correctiveMeasuresRequired = !noHazardsObserved;
-
-      if (!formData.startTime || !formData.endTime || !formData.location ||
-          !formData.hazardDescription ||
-          (correctiveMeasuresRequired && !formData.correctiveMeasures) ||
-          !formData.creatingEmployer || !formData.supervisor) {
-        setError("Please fill in all inspection details");
+      // Validate all inspections
+      if (!formData.inspections || formData.inspections.length === 0) {
+        setError("At least one inspection is required");
         return false;
+      }
+
+      for (let i = 0; i < formData.inspections.length; i++) {
+        const inspection = formData.inspections[i];
+        const correctiveMeasuresRequired = !inspection.noHazardsObserved;
+
+        if (!inspection.startTime || !inspection.endTime || !inspection.location ||
+            !inspection.hazardDescription ||
+            (correctiveMeasuresRequired && !inspection.correctiveMeasures) ||
+            !inspection.creatingEmployer || !inspection.supervisor) {
+          setError(`Please fill in all details for Inspection #${i + 1}`);
+          return false;
+        }
       }
     } else if (step === 3) {
       if (!emailOptions.recipientEmail) {
@@ -334,24 +396,6 @@ function ImpalementProtectionFormContent() {
     }, 500);
   };
 
-  const handleNoHazardsToggle = (checked: boolean) => {
-    setNoHazardsObserved(checked);
-    if (checked) {
-      setFormData({
-        ...formData,
-        hazardDescription: "There were no impalement hazards observed during this inspection.",
-        correctiveMeasures: "N/A - No hazards present",
-      });
-    } else {
-      // Clear fields when unchecked
-      setFormData({
-        ...formData,
-        hazardDescription: "",
-        correctiveMeasures: "",
-      });
-    }
-  };
-
   const handleRememberMeToggle = (checked: boolean) => {
     setRememberMe(checked);
     localStorage.setItem("rememberMe", checked.toString());
@@ -378,23 +422,26 @@ function ImpalementProtectionFormContent() {
   };
 
   const handleTestAutofill = () => {
-    setNoHazardsObserved(false);
     setFormData({
       date: getTodayDate(),
       jobNumber: "TEST-2025-001",
       submittedBy: "Test User",
       submittedByEmail: "test@deacon.com",
       submittedByCompany: "Deacon Construction",
-      startTime: "08:00",
-      endTime: "08:15",
-      location: "Building A, 3rd Floor, North Wing",
-      hazardDescription: "Exposed rebar on concrete slab near north stairwell. Multiple vertical rebars without protective caps.",
-      correctiveMeasures: "Installed protective rebar caps on all exposed vertical rebars. Posted warning signs around the area.",
-      creatingEmployer: "ABC Concrete Co.",
-      supervisor: "John Smith",
-      locationPhotos: [],
-      hazardPhotos: [],
-      measuresPhotos: [],
+      inspections: [{
+        id: generateInspectionId(),
+        startTime: "08:00",
+        endTime: "08:15",
+        location: "Building A, 3rd Floor, North Wing",
+        hazardDescription: "Exposed rebar on concrete slab near north stairwell. Multiple vertical rebars without protective caps.",
+        correctiveMeasures: "Installed protective rebar caps on all exposed vertical rebars. Posted warning signs around the area.",
+        creatingEmployer: "ABC Concrete Co.",
+        supervisor: "John Smith",
+        locationPhotos: [],
+        hazardPhotos: [],
+        measuresPhotos: [],
+        noHazardsObserved: false,
+      }],
     });
     setEmailOptions({
       recipientEmail: "curt.mills@deacon.com",
@@ -456,18 +503,7 @@ function ImpalementProtectionFormContent() {
         signature, // Inspector signature (optional)
         data: {
           date: formData.date,
-          inspections: [{
-            startTime: formData.startTime,
-            endTime: formData.endTime,
-            location: formData.location,
-            locationPhotos: locationPhotos,
-            hazardDescription: formData.hazardDescription,
-            hazardPhotos: hazardPhotos,
-            correctiveMeasures: formData.correctiveMeasures,
-            measuresPhotos: measuresPhotos,
-            creatingEmployer: formData.creatingEmployer,
-            supervisor: formData.supervisor,
-          }],
+          inspections: formData.inspections,
         },
         emailOptions: {
           recipientEmail: emailOptions.recipientEmail,
@@ -684,7 +720,7 @@ function ImpalementProtectionFormContent() {
               <p className="text-sm font-semibold text-gray-700">
                 Step {currentStep} of {totalSteps}:{' '}
                 {currentStep === 1 && 'Basic Information'}
-                {currentStep === 2 && 'Inspection Details'}
+                {currentStep === 2 && `Inspection Details (${formData.inspections.length})`}
                 {currentStep === 3 && 'Email Delivery'}
               </p>
             </div>
@@ -815,166 +851,212 @@ function ImpalementProtectionFormContent() {
 
             {/* Step 2: Inspection Details Section */}
             <div className={`mb-8 ${currentStep === 2 ? 'block' : 'hidden'}`}>
-              <div className="flex items-center mb-6">
-                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 font-bold text-lg">2</span>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center">
+                  <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 font-bold text-lg">2</span>
+                  </div>
+                  <h2 className="ml-4 text-2xl font-bold text-gray-900">
+                    Inspection Details
+                    <span className="ml-2 text-sm font-medium text-blue-600">
+                      ({formData.inspections.length})
+                    </span>
+                  </h2>
                 </div>
-                <h2 className="ml-4 text-2xl font-bold text-gray-900">
-                  Inspection Details
-                </h2>
               </div>
 
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100 rounded-2xl p-6 sm:p-8">
-                <div className="space-y-8">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <TimePicker
-                      value={formData.startTime}
-                      onChange={(time) => setFormData({ ...formData, startTime: time })}
-                      label="Start Time"
-                      required
-                    />
-
-                    <TimePicker
-                      value={formData.endTime}
-                      onChange={(time) => setFormData({ ...formData, endTime: time })}
-                      label="End Time"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Location of Inspection <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.location}
-                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                      placeholder="e.g., Building A, 3rd Floor, North Wing"
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
-                    />
-
-                    <div className="mt-3">
-                      <ImageUpload
-                        label="Location Photos (Optional)"
-                        images={locationPhotos}
-                        onChange={setLocationPhotos}
-                        maxImages={3}
-                        maxSizeMB={5}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Description of Impalement Hazard Observed <span className="text-red-500">*</span>
-                    </label>
-
-                    {/* Quick option for no hazards */}
-                    <div className="mb-3 bg-green-50 border-2 border-green-200 rounded-xl p-4">
-                      <label className="flex items-start gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={noHazardsObserved}
-                          onChange={(e) => handleNoHazardsToggle(e.target.checked)}
-                          className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                        />
-                        <div>
-                          <span className="font-semibold text-green-900">No impalement hazards observed</span>
-                          <p className="text-xs text-green-700 mt-1">
-                            Check this if no hazards were found during inspection
-                          </p>
-                        </div>
-                      </label>
-                    </div>
-
-                    <textarea
-                      required
-                      rows={4}
-                      value={formData.hazardDescription}
-                      onChange={(e) => {
-                        setFormData({ ...formData, hazardDescription: e.target.value });
-                        if (noHazardsObserved) setNoHazardsObserved(false);
-                      }}
-                      placeholder="Describe the hazard in detail..."
-                      disabled={noHazardsObserved}
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
-                    />
-
-                    <div className="mt-3">
-                      <ImageUpload
-                        label="Hazard Photos (Optional)"
-                        images={hazardPhotos}
-                        onChange={setHazardPhotos}
-                        maxImages={5}
-                        maxSizeMB={8}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Corrective Measures Taken {noHazardsObserved ? (
-                        <span className="text-gray-700 text-xs font-medium">(Optional)</span>
-                      ) : (
-                        <span className="text-red-500">*</span>
+              <div className="space-y-6">
+                {formData.inspections.map((inspection, index) => (
+                  <div key={inspection.id} className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100 rounded-2xl p-6 sm:p-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-bold text-gray-900">
+                        📋 Inspection #{index + 1}
+                      </h3>
+                      {formData.inspections.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => deleteInspection(inspection.id)}
+                          className="text-red-600 hover:text-red-700 font-medium text-sm px-3 py-1 hover:bg-red-50 rounded-lg transition-colors"
+                        >
+                          🗑️ Delete
+                        </button>
                       )}
-                    </label>
-                    <textarea
-                      required={!noHazardsObserved}
-                      rows={4}
-                      value={formData.correctiveMeasures}
-                      onChange={(e) => {
-                        setFormData({ ...formData, correctiveMeasures: e.target.value });
-                        if (noHazardsObserved && e.target.value !== "N/A - No hazards present") {
-                          setNoHazardsObserved(false);
-                        }
-                      }}
-                      placeholder="Describe what actions were taken to address the hazard..."
-                      disabled={noHazardsObserved}
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
-                    />
+                    </div>
 
-                    <div className="mt-3">
-                      <ImageUpload
-                        label="After Photos (Optional)"
-                        images={measuresPhotos}
-                        onChange={setMeasuresPhotos}
-                        maxImages={5}
-                        maxSizeMB={8}
-                      />
+                    <div className="space-y-8">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <TimePicker
+                          value={inspection.startTime}
+                          onChange={(time) => updateInspection(inspection.id, 'startTime', time)}
+                          label="Start Time"
+                          required
+                        />
+
+                        <TimePicker
+                          value={inspection.endTime}
+                          onChange={(time) => updateInspection(inspection.id, 'endTime', time)}
+                          label="End Time"
+                          required
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Location of Inspection <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={inspection.location}
+                          onChange={(e) => updateInspection(inspection.id, 'location', e.target.value)}
+                          placeholder="e.g., Building A, 3rd Floor, North Wing"
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                        />
+
+                        <div className="mt-3">
+                          <ImageUpload
+                            label="Location Photos (Optional)"
+                            images={inspection.locationPhotos}
+                            onChange={(photos) => updateInspection(inspection.id, 'locationPhotos', photos)}
+                            maxImages={3}
+                            maxSizeMB={5}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Description of Impalement Hazard Observed <span className="text-red-500">*</span>
+                        </label>
+
+                        {/* Quick option for no hazards */}
+                        <div className="mb-3 bg-green-50 border-2 border-green-200 rounded-xl p-4">
+                          <label className="flex items-start gap-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={inspection.noHazardsObserved}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                updateInspection(inspection.id, 'noHazardsObserved', checked);
+                                if (checked) {
+                                  updateInspection(inspection.id, 'hazardDescription', 'There were no impalement hazards observed during this inspection.');
+                                  updateInspection(inspection.id, 'correctiveMeasures', 'N/A - No hazards present');
+                                } else {
+                                  updateInspection(inspection.id, 'hazardDescription', '');
+                                  updateInspection(inspection.id, 'correctiveMeasures', '');
+                                }
+                              }}
+                              className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                            />
+                            <div>
+                              <span className="font-semibold text-green-900">No impalement hazards observed</span>
+                              <p className="text-xs text-green-700 mt-1">
+                                Check this if no hazards were found during inspection
+                              </p>
+                            </div>
+                          </label>
+                        </div>
+
+                        <textarea
+                          required
+                          rows={4}
+                          value={inspection.hazardDescription}
+                          onChange={(e) => {
+                            updateInspection(inspection.id, 'hazardDescription', e.target.value);
+                            if (inspection.noHazardsObserved) {
+                              updateInspection(inspection.id, 'noHazardsObserved', false);
+                            }
+                          }}
+                          placeholder="Describe the hazard in detail..."
+                          disabled={inspection.noHazardsObserved}
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
+                        />
+
+                        <div className="mt-3">
+                          <ImageUpload
+                            label="Hazard Photos (Optional)"
+                            images={inspection.hazardPhotos}
+                            onChange={(photos) => updateInspection(inspection.id, 'hazardPhotos', photos)}
+                            maxImages={5}
+                            maxSizeMB={8}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Corrective Measures Taken {inspection.noHazardsObserved ? (
+                            <span className="text-gray-700 text-xs font-medium">(Optional)</span>
+                          ) : (
+                            <span className="text-red-500">*</span>
+                          )}
+                        </label>
+                        <textarea
+                          required={!inspection.noHazardsObserved}
+                          rows={4}
+                          value={inspection.correctiveMeasures}
+                          onChange={(e) => {
+                            updateInspection(inspection.id, 'correctiveMeasures', e.target.value);
+                            if (inspection.noHazardsObserved && e.target.value !== "N/A - No hazards present") {
+                              updateInspection(inspection.id, 'noHazardsObserved', false);
+                            }
+                          }}
+                          placeholder="Describe what actions were taken to address the hazard..."
+                          disabled={inspection.noHazardsObserved}
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
+                        />
+
+                        <div className="mt-3">
+                          <ImageUpload
+                            label="After Photos (Optional)"
+                            images={inspection.measuresPhotos}
+                            onChange={(photos) => updateInspection(inspection.id, 'measuresPhotos', photos)}
+                            maxImages={5}
+                            maxSizeMB={8}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Creating/Exposing Employer(s) <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={inspection.creatingEmployer}
+                          onChange={(e) => updateInspection(inspection.id, 'creatingEmployer', e.target.value)}
+                          placeholder="Company name(s)"
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Supervisor of Creating/Exposing Employer(s) <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={inspection.supervisor}
+                          onChange={(e) => updateInspection(inspection.id, 'supervisor', e.target.value)}
+                          placeholder="Supervisor name"
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                        />
+                      </div>
                     </div>
                   </div>
+                ))}
 
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Creating/Exposing Employer(s) <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.creatingEmployer}
-                      onChange={(e) => setFormData({ ...formData, creatingEmployer: e.target.value })}
-                      placeholder="Company name(s)"
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Supervisor of Creating/Exposing Employer(s) <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.supervisor}
-                      onChange={(e) => setFormData({ ...formData, supervisor: e.target.value })}
-                      placeholder="Supervisor name"
-                      className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
-                    />
-                  </div>
-                </div>
+                {/* Add Inspection Button */}
+                <button
+                  type="button"
+                  onClick={addInspection}
+                  className="w-full py-4 px-6 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                >
+                  <span className="text-xl">➕</span>
+                  Add Another Inspection
+                </button>
               </div>
             </div>
 
