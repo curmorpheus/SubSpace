@@ -253,10 +253,10 @@ export async function POST(request: NextRequest) {
           emailOptions.emailSubject ||
           `Impalement Protection Inspection Form - Job #${jobNumber}`;
 
-        console.log("Getting Resend client...");
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Getting Resend client...");
+        }
         const resendClient = getResendClient();
-        console.log("Resend client status:", resendClient ? "OK" : "NULL");
-        console.log("RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
         if (!resendClient) {
           throw new Error(
             "Resend client not configured. Please set RESEND_API_KEY environment variable."
@@ -406,14 +406,10 @@ export async function POST(request: NextRequest) {
         // Use env var now that newline is fixed
         const fromEmail = process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev";
 
-        console.log("=== EMAIL DEBUG ===");
-        console.log("ENV RESEND_FROM_EMAIL:", process.env.RESEND_FROM_EMAIL);
-        console.log("ENV RESEND_FROM_EMAIL (JSON):", JSON.stringify(process.env.RESEND_FROM_EMAIL));
-        console.log("Using from:", fromEmail);
-        console.log("From bytes:", Array.from(fromEmail).map(c => c.charCodeAt(0)));
-        console.log("To:", emailOptions.recipientEmail);
-        console.log("Subject:", emailSubject);
-        console.log("===================");
+        if (process.env.NODE_ENV === 'development') {
+          console.log("Email - To:", emailOptions.recipientEmail);
+          console.log("Email - Subject:", emailSubject);
+        }
 
         // Parse CC emails if provided
         const ccEmails = emailOptions.ccEmails

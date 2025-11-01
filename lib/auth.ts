@@ -1,9 +1,24 @@
 import { SignJWT, jwtVerify } from "jose";
 import * as bcrypt from "bcryptjs";
 
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || "your-secret-key-change-this-in-production"
-);
+const JWT_SECRET = (() => {
+  const secret = process.env.JWT_SECRET;
+
+  if (!secret) {
+    throw new Error(
+      "FATAL: JWT_SECRET environment variable is not set. " +
+      "Application cannot start without a secure JWT secret."
+    );
+  }
+
+  if (secret.length < 32) {
+    throw new Error(
+      "FATAL: JWT_SECRET must be at least 32 characters long for security."
+    );
+  }
+
+  return new TextEncoder().encode(secret);
+})();
 
 const JWT_ALGORITHM = "HS256";
 const JWT_EXPIRATION = "8h"; // 8 hours
@@ -78,23 +93,32 @@ export async function verifyJWT(token: string): Promise<JWTPayload | null> {
 }
 
 /**
- * Verify admin password (simple password check for now)
- * In production, this should check against a hashed password in database
+ * Verify admin password using bcrypt
+ * Compares provided password against hashed password from environment
  */
 export function verifyAdminPassword(password: string): boolean {
-  const adminPassword = process.env.ADMIN_PASSWORD;
+  const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
 
-  console.log("🔐 Admin login attempt");
-  console.log("Password received:", password ? `[${password.length} chars]` : "empty");
-  console.log("ADMIN_PASSWORD set:", adminPassword ? `[${adminPassword.length} chars]` : "NOT SET");
-
-  if (!adminPassword) {
-    console.error("❌ ADMIN_PASSWORD not set in environment variables");
+  if (!adminPasswordHash) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error("ADMIN_PASSWORD_HASH not set in environment variables");
+    }
     return false;
   }
 
-  const isValid = password === adminPassword;
-  console.log("Password match:", isValid);
+  try {
+    // Use bcrypt to securely compare password with hash
+    const isValid = bcrypt.compareSync(password, adminPasswordHash);
 
-  return isValid;
+    if (process.env.NODE_ENV === 'development') {
+      console.log("Admin login attempt:", isValid ? "successful" : "failed");
+    }
+
+    return isValid;
+  } catch (error) {
+    if (process.env.NODE_ENV === 'development') {
+      console.error("Error verifying admin password:", error);
+    }
+    return false;
+  }
 }
