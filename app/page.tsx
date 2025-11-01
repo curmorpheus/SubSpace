@@ -17,7 +17,7 @@ export default function Home() {
           {/* Construction hard hat visual */}
           <div className="flex justify-center mb-6">
             <div className="relative">
-              <div className="text-8xl">👷</div>
+              <div className="text-8xl">⛑️</div>
               <div className="absolute -top-2 -right-2 w-6 h-6 bg-orange-500 rounded-full animate-pulse"></div>
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-center sm:justify-start bg-orange-500 hover:bg-orange-600 text-white font-bold text-xl px-8 py-5 rounded-2xl group-hover:scale-105 transition-all shadow-lg">
+              <div className="inline-flex items-center bg-orange-500 hover:bg-orange-600 text-white font-bold text-xl px-8 py-5 rounded-2xl group-hover:scale-105 transition-all shadow-lg">
                 Fill Out Form Now
                 <span className="ml-3 text-3xl">→</span>
               </div>
