@@ -264,7 +264,54 @@ export async function POST(request: NextRequest) {
         }
 
         // Create safe HTML email with sanitized user input
-        const inspection = data.inspections[0]; // Get first inspection
+        // Build inspections HTML for all inspections
+        const inspectionsHtml = data.inspections.map((inspection: any, index: number) => {
+          const escapedInspection = {
+            startTime: createSafeEmailHtml('{{value}}', { value: inspection.startTime }),
+            endTime: createSafeEmailHtml('{{value}}', { value: inspection.endTime }),
+            location: createSafeEmailHtml('{{value}}', { value: inspection.location }),
+            hazardDescription: createSafeEmailHtml('{{value}}', { value: inspection.hazardDescription }),
+            correctiveMeasures: createSafeEmailHtml('{{value}}', { value: inspection.correctiveMeasures }),
+            creatingEmployer: createSafeEmailHtml('{{value}}', { value: inspection.creatingEmployer }),
+            supervisor: createSafeEmailHtml('{{value}}', { value: inspection.supervisor }),
+          };
+
+          return `
+                <div class="section">
+                  <h2 class="section-title">Inspection #${index + 1}${data.inspections.length > 1 ? ` of ${data.inspections.length}` : ''}</h2>
+
+                  <div style="margin-bottom: 15px;">
+                    <span class="time-badge">⏰ Start: ${escapedInspection.startTime}</span>
+                    <span class="time-badge">⏱️ End: ${escapedInspection.endTime}</span>
+                  </div>
+
+                  <div class="field-box">
+                    <div class="field-label">📍 Location of Inspection</div>
+                    <div class="field-value">${escapedInspection.location}</div>
+                  </div>
+
+                  <div class="field-box">
+                    <div class="field-label">⚠️ Description of Impalement Hazard Observed</div>
+                    <div class="field-value">${escapedInspection.hazardDescription}</div>
+                  </div>
+
+                  <div class="field-box">
+                    <div class="field-label">✅ Corrective Measures Taken</div>
+                    <div class="field-value">${escapedInspection.correctiveMeasures}</div>
+                  </div>
+
+                  <div class="field-box">
+                    <div class="field-label">🏢 Creating/Exposing Employer(s)</div>
+                    <div class="field-value">${escapedInspection.creatingEmployer}</div>
+                  </div>
+
+                  <div class="field-box">
+                    <div class="field-label">👷 Supervisor of Creating/Exposing Employer(s)</div>
+                    <div class="field-value">${escapedInspection.supervisor}</div>
+                  </div>
+                </div>
+          `;
+        }).join('');
 
         const emailHtmlTemplate = `
           <!DOCTYPE html>
@@ -329,43 +376,11 @@ export async function POST(request: NextRequest) {
                   </div>
                 </div>
 
-                <div class="section">
-                  <h2 class="section-title">Inspection Details</h2>
-
-                  <div style="margin-bottom: 15px;">
-                    <span class="time-badge">⏰ Start: {{startTime}}</span>
-                    <span class="time-badge">⏱️ End: {{endTime}}</span>
-                  </div>
-
-                  <div class="field-box">
-                    <div class="field-label">📍 Location of Inspection</div>
-                    <div class="field-value">{{location}}</div>
-                  </div>
-
-                  <div class="field-box">
-                    <div class="field-label">⚠️ Description of Impalement Hazard Observed</div>
-                    <div class="field-value">{{hazardDescription}}</div>
-                  </div>
-
-                  <div class="field-box">
-                    <div class="field-label">✅ Corrective Measures Taken</div>
-                    <div class="field-value">{{correctiveMeasures}}</div>
-                  </div>
-
-                  <div class="field-box">
-                    <div class="field-label">🏢 Creating/Exposing Employer(s)</div>
-                    <div class="field-value">{{creatingEmployer}}</div>
-                  </div>
-
-                  <div class="field-box">
-                    <div class="field-label">👷 Supervisor of Creating/Exposing Employer(s)</div>
-                    <div class="field-value">{{supervisor}}</div>
-                  </div>
-                </div>
+                {{inspectionsHtml}}
 
                 <div class="attachment-notice">
                   <p><strong>📎 Complete PDF Report Attached</strong></p>
-                  <p>The full inspection form with all details is attached to this email.</p>
+                  <p>The full inspection form with all photos and details is attached to this email.</p>
                 </div>
               </div>
 
@@ -384,13 +399,7 @@ export async function POST(request: NextRequest) {
           submittedByCompany,
           submittedByEmail,
           date: data.date,
-          startTime: inspection.startTime,
-          endTime: inspection.endTime,
-          location: inspection.location,
-          hazardDescription: inspection.hazardDescription,
-          correctiveMeasures: inspection.correctiveMeasures,
-          creatingEmployer: inspection.creatingEmployer,
-          supervisor: inspection.supervisor,
+          inspectionsHtml,
           submissionTime: new Date().toLocaleString(),
         });
 
