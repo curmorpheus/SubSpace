@@ -744,35 +744,6 @@ function ImpalementProtectionFormContent() {
             className={`p-6 sm:p-8 lg:p-10 ${largeButtons ? 'large-buttons' : ''}`}
           >
 
-            {/* Accessibility Toggles */}
-            <div className="mb-8 bg-gray-50 border border-gray-200 rounded-lg p-5">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">Preferences</h3>
-              <div className="flex flex-wrap gap-4">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={largeButtons}
-                    onChange={(e) => handleLargeButtonsToggle(e.target.checked)}
-                    className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Large buttons (for gloves)
-                  </span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => handleRememberMeToggle(e.target.checked)}
-                    className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Remember my info
-                  </span>
-                </label>
-              </div>
-            </div>
-
             {/* Step 1: Basic Information Section */}
             <div className={`mb-10 ${currentStep === 1 ? 'block' : 'hidden'}`}>
               <div className="mb-8">
@@ -780,6 +751,34 @@ function ImpalementProtectionFormContent() {
                   Basic Information
                 </h2>
                 <p className="text-sm text-gray-500 mt-2">Step 1 of 3</p>
+              </div>
+
+              {/* Preferences - Only on Step 1 */}
+              <div className="mb-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="flex flex-wrap gap-3 sm:gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={largeButtons}
+                      onChange={(e) => handleLargeButtonsToggle(e.target.checked)}
+                      className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      Larger buttons
+                    </span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => handleRememberMeToggle(e.target.checked)}
+                      className="w-4 h-4 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">
+                      Remember me
+                    </span>
+                  </label>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
