@@ -43,74 +43,35 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
 
       // Setup canvas
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * 2; // 2x for retina
+      canvas.width = rect.width * 2;
       canvas.height = rect.height * 2;
 
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      ctx.scale(2, 2); // Scale for retina
+      ctx.scale(2, 2);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 2;
 
-      // Touch handlers
-      const touchStart = (e: TouchEvent) => {
+      // Pointer event handlers (works for mouse, touch, and pen)
+      const pointerDown = (e: PointerEvent) => {
         e.preventDefault();
-        e.stopPropagation();
 
-        if (e.touches.length === 0) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
-
-        lastXRef.current = touch.clientX - rect.left;
-        lastYRef.current = touch.clientY - rect.top;
-        isDrawingRef.current = true;
-        setIsEmpty(false);
-      };
-
-      const touchMove = (e: TouchEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        if (!isDrawingRef.current || e.touches.length === 0) return;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-
-        ctx.beginPath();
-        ctx.moveTo(lastXRef.current, lastYRef.current);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-
-        lastXRef.current = x;
-        lastYRef.current = y;
-      };
-
-      const touchEnd = (e: TouchEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
-        isDrawingRef.current = false;
-      };
-
-      // Mouse handlers
-      const mouseDown = (e: MouseEvent) => {
         const rect = canvas.getBoundingClientRect();
         lastXRef.current = e.clientX - rect.left;
         lastYRef.current = e.clientY - rect.top;
         isDrawingRef.current = true;
         setIsEmpty(false);
+
+        // Capture the pointer
+        canvas.setPointerCapture(e.pointerId);
       };
 
-      const mouseMove = (e: MouseEvent) => {
+      const pointerMove = (e: PointerEvent) => {
         if (!isDrawingRef.current) return;
+        e.preventDefault();
 
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
@@ -128,31 +89,29 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         lastYRef.current = y;
       };
 
-      const mouseUp = () => {
-        isDrawingRef.current = false;
+      const pointerUp = (e: PointerEvent) => {
+        if (isDrawingRef.current) {
+          e.preventDefault();
+          isDrawingRef.current = false;
+
+          // Release the pointer
+          if (canvas.hasPointerCapture(e.pointerId)) {
+            canvas.releasePointerCapture(e.pointerId);
+          }
+        }
       };
 
-      // Add listeners with non-passive for Safari
-      canvas.addEventListener('touchstart', touchStart, { passive: false });
-      canvas.addEventListener('touchmove', touchMove, { passive: false });
-      canvas.addEventListener('touchend', touchEnd, { passive: false });
-      canvas.addEventListener('touchcancel', touchEnd, { passive: false });
-
-      canvas.addEventListener('mousedown', mouseDown);
-      canvas.addEventListener('mousemove', mouseMove);
-      canvas.addEventListener('mouseup', mouseUp);
-      canvas.addEventListener('mouseleave', mouseUp);
+      // Add pointer event listeners
+      canvas.addEventListener('pointerdown', pointerDown);
+      canvas.addEventListener('pointermove', pointerMove);
+      canvas.addEventListener('pointerup', pointerUp);
+      canvas.addEventListener('pointercancel', pointerUp);
 
       return () => {
-        canvas.removeEventListener('touchstart', touchStart);
-        canvas.removeEventListener('touchmove', touchMove);
-        canvas.removeEventListener('touchend', touchEnd);
-        canvas.removeEventListener('touchcancel', touchEnd);
-
-        canvas.removeEventListener('mousedown', mouseDown);
-        canvas.removeEventListener('mousemove', mouseMove);
-        canvas.removeEventListener('mouseup', mouseUp);
-        canvas.removeEventListener('mouseleave', mouseUp);
+        canvas.removeEventListener('pointerdown', pointerDown);
+        canvas.removeEventListener('pointermove', pointerMove);
+        canvas.removeEventListener('pointerup', pointerUp);
+        canvas.removeEventListener('pointercancel', pointerUp);
       };
     }, []);
 
@@ -175,8 +134,13 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         <div className="relative bg-white border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
           <canvas
             ref={canvasRef}
-            className="w-full h-48 touch-none"
-            style={{ touchAction: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
+            className="w-full h-48"
+            style={{
+              touchAction: 'none',
+              WebkitUserSelect: 'none',
+              userSelect: 'none',
+              WebkitTouchCallout: 'none'
+            }}
           />
           <div className="absolute bottom-3 right-3 text-xs text-gray-400 pointer-events-none">
             Sign here
