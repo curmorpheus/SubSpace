@@ -26,6 +26,7 @@ function ImpalementProtectionFormContent() {
   const [error, setError] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
   const [justNavigated, setJustNavigated] = useState(false);
+  const [successData, setSuccessData] = useState<{ id: number; email: string } | null>(null);
 
   const totalSteps = 3;
 
@@ -602,9 +603,8 @@ function ImpalementProtectionFormContent() {
       };
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
 
-      alert(`Form submitted and emailed successfully! Submission ID: ${result.id}\nEmail sent to: ${emailOptions.recipientEmail}`);
-
-      router.push("/");
+      // Show success modal
+      setSuccessData({ id: result.id, email: emailOptions.recipientEmail });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit form. Please try again.");
       console.error(err);
@@ -1251,6 +1251,43 @@ function ImpalementProtectionFormContent() {
           </p>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {successData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 max-w-md w-full p-8">
+            <div className="text-center">
+              {/* Success Icon */}
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-50 border-2 border-green-500 mb-6">
+                <svg className="h-8 w-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+
+              {/* Title */}
+              <h3 className="text-xl font-bold text-gray-900 mb-3">
+                Form Submitted Successfully
+              </h3>
+
+              {/* Message */}
+              <p className="text-sm text-gray-600 mb-2">
+                Your inspection report has been generated and emailed.
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                Sent to: <span className="font-medium text-gray-700">{successData.email}</span>
+              </p>
+
+              {/* Return Button */}
+              <button
+                onClick={() => router.push("/")}
+                className="w-full py-3 px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-semibold transition-colors shadow-sm"
+              >
+                Return to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
