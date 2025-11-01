@@ -18,7 +18,8 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isEmpty, setIsEmpty] = useState(true);
     const isDrawingRef = useRef(false);
-    const lastPointRef = useRef<{ x: number; y: number } | null>(null);
+    const lastXRef = useRef<number>(0);
+    const lastYRef = useRef<number>(0);
 
     useImperativeHandle(ref, () => ({
       clear: () => {
@@ -36,148 +37,122 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
       },
     }));
 
-    // Setup canvas context
-    const setupCanvas = (canvas: HTMLCanvasElement) => {
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * window.devicePixelRatio;
-      canvas.height = rect.height * window.devicePixelRatio;
-
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 2;
-      }
-    };
-
-    // Get coordinates from event
-    const getCoordinates = (
-      canvas: HTMLCanvasElement,
-      clientX: number,
-      clientY: number
-    ) => {
-      const rect = canvas.getBoundingClientRect();
-      return {
-        x: clientX - rect.left,
-        y: clientY - rect.top,
-      };
-    };
-
-    // Draw line on canvas
-    const drawLine = (
-      canvas: HTMLCanvasElement,
-      from: { x: number; y: number },
-      to: { x: number; y: number }
-    ) => {
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      ctx.beginPath();
-      ctx.moveTo(from.x, from.y);
-      ctx.lineTo(to.x, to.y);
-      ctx.stroke();
-    };
-
-    // Initialize canvas
     useEffect(() => {
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      setupCanvas(canvas);
+      // Setup canvas
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * 2; // 2x for retina
+      canvas.height = rect.height * 2;
 
-      // Touch event handlers for Safari (non-passive)
-      const handleTouchStart = (e: TouchEvent) => {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      ctx.scale(2, 2); // Scale for retina
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+
+      // Touch handlers
+      const touchStart = (e: TouchEvent) => {
         e.preventDefault();
+        e.stopPropagation();
+
         if (e.touches.length === 0) return;
 
-        const coords = getCoordinates(
-          canvas,
-          e.touches[0].clientX,
-          e.touches[0].clientY
-        );
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
 
+        lastXRef.current = touch.clientX - rect.left;
+        lastYRef.current = touch.clientY - rect.top;
         isDrawingRef.current = true;
-        lastPointRef.current = coords;
         setIsEmpty(false);
       };
 
-      const handleTouchMove = (e: TouchEvent) => {
+      const touchMove = (e: TouchEvent) => {
         e.preventDefault();
-        if (!isDrawingRef.current || e.touches.length === 0 || !lastPointRef.current) return;
+        e.stopPropagation();
 
-        const coords = getCoordinates(
-          canvas,
-          e.touches[0].clientX,
-          e.touches[0].clientY
-        );
+        if (!isDrawingRef.current || e.touches.length === 0) return;
 
-        drawLine(canvas, lastPointRef.current, coords);
-        lastPointRef.current = coords;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const touch = e.touches[0];
+        const x = touch.clientX - rect.left;
+        const y = touch.clientY - rect.top;
+
+        ctx.beginPath();
+        ctx.moveTo(lastXRef.current, lastYRef.current);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+
+        lastXRef.current = x;
+        lastYRef.current = y;
       };
 
-      const handleTouchEnd = (e: TouchEvent) => {
+      const touchEnd = (e: TouchEvent) => {
         e.preventDefault();
+        e.stopPropagation();
         isDrawingRef.current = false;
-        lastPointRef.current = null;
       };
 
-      // Mouse event handlers
-      const handleMouseDown = (e: MouseEvent) => {
-        const coords = getCoordinates(canvas, e.clientX, e.clientY);
+      // Mouse handlers
+      const mouseDown = (e: MouseEvent) => {
+        const rect = canvas.getBoundingClientRect();
+        lastXRef.current = e.clientX - rect.left;
+        lastYRef.current = e.clientY - rect.top;
         isDrawingRef.current = true;
-        lastPointRef.current = coords;
         setIsEmpty(false);
       };
 
-      const handleMouseMove = (e: MouseEvent) => {
-        if (!isDrawingRef.current || !lastPointRef.current) return;
+      const mouseMove = (e: MouseEvent) => {
+        if (!isDrawingRef.current) return;
 
-        const coords = getCoordinates(canvas, e.clientX, e.clientY);
-        drawLine(canvas, lastPointRef.current, coords);
-        lastPointRef.current = coords;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        ctx.beginPath();
+        ctx.moveTo(lastXRef.current, lastYRef.current);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+
+        lastXRef.current = x;
+        lastYRef.current = y;
       };
 
-      const handleMouseUp = () => {
+      const mouseUp = () => {
         isDrawingRef.current = false;
-        lastPointRef.current = null;
       };
 
-      // Resize handler
-      const handleResize = () => {
-        const imageData = canvas.getContext('2d')?.getImageData(0, 0, canvas.width, canvas.height);
-        setupCanvas(canvas);
-        if (imageData) {
-          canvas.getContext('2d')?.putImageData(imageData, 0, 0);
-        }
-      };
+      // Add listeners with non-passive for Safari
+      canvas.addEventListener('touchstart', touchStart, { passive: false });
+      canvas.addEventListener('touchmove', touchMove, { passive: false });
+      canvas.addEventListener('touchend', touchEnd, { passive: false });
+      canvas.addEventListener('touchcancel', touchEnd, { passive: false });
 
-      // Add event listeners
-      canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
-      canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
-      canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
-      canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
-
-      canvas.addEventListener('mousedown', handleMouseDown);
-      canvas.addEventListener('mousemove', handleMouseMove);
-      canvas.addEventListener('mouseup', handleMouseUp);
-      canvas.addEventListener('mouseleave', handleMouseUp);
-
-      window.addEventListener('resize', handleResize);
+      canvas.addEventListener('mousedown', mouseDown);
+      canvas.addEventListener('mousemove', mouseMove);
+      canvas.addEventListener('mouseup', mouseUp);
+      canvas.addEventListener('mouseleave', mouseUp);
 
       return () => {
-        canvas.removeEventListener('touchstart', handleTouchStart);
-        canvas.removeEventListener('touchmove', handleTouchMove);
-        canvas.removeEventListener('touchend', handleTouchEnd);
-        canvas.removeEventListener('touchcancel', handleTouchEnd);
+        canvas.removeEventListener('touchstart', touchStart);
+        canvas.removeEventListener('touchmove', touchMove);
+        canvas.removeEventListener('touchend', touchEnd);
+        canvas.removeEventListener('touchcancel', touchEnd);
 
-        canvas.removeEventListener('mousedown', handleMouseDown);
-        canvas.removeEventListener('mousemove', handleMouseMove);
-        canvas.removeEventListener('mouseup', handleMouseUp);
-        canvas.removeEventListener('mouseleave', handleMouseUp);
-
-        window.removeEventListener('resize', handleResize);
+        canvas.removeEventListener('mousedown', mouseDown);
+        canvas.removeEventListener('mousemove', mouseMove);
+        canvas.removeEventListener('mouseup', mouseUp);
+        canvas.removeEventListener('mouseleave', mouseUp);
       };
     }, []);
 
@@ -200,8 +175,8 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         <div className="relative bg-white border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
           <canvas
             ref={canvasRef}
-            className="w-full h-48 cursor-crosshair touch-none"
-            style={{ touchAction: 'none' }}
+            className="w-full h-48 touch-none"
+            style={{ touchAction: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}
           />
           <div className="absolute bottom-3 right-3 text-xs text-gray-400 pointer-events-none">
             Sign here
