@@ -45,6 +45,8 @@ export default function AdminDashboard() {
   const [inviteSubName, setInviteSubName] = useState("");
   const [inviteSubEmail, setInviteSubEmail] = useState("");
   const [inviteSubCompany, setInviteSubCompany] = useState("");
+  const [inviteJobNumber, setInviteJobNumber] = useState("");
+  const [inviteSuperintendentEmail, setInviteSuperintendentEmail] = useState("");
   const [invitePersonalNote, setInvitePersonalNote] = useState("");
   const [inviteSending, setInviteSending] = useState(false);
   const [inviteSuccess, setInviteSuccess] = useState("");
@@ -252,7 +254,7 @@ export default function AdminDashboard() {
   };
 
   const sendSubcontractorInvitation = async () => {
-    if (!inviteSubEmail || !inviteSubName || !inviteSubCompany) {
+    if (!inviteSubEmail || !inviteSubName || !inviteSubCompany || !inviteJobNumber || !inviteSuperintendentEmail) {
       setInviteError("Please fill in all required fields");
       return;
     }
@@ -272,6 +274,8 @@ export default function AdminDashboard() {
           subcontractorName: inviteSubName,
           subcontractorEmail: inviteSubEmail,
           subcontractorCompany: inviteSubCompany,
+          jobNumber: inviteJobNumber,
+          superintendentEmail: inviteSuperintendentEmail,
           personalNote: invitePersonalNote,
         }),
       });
@@ -283,6 +287,8 @@ export default function AdminDashboard() {
           setInviteSubName("");
           setInviteSubEmail("");
           setInviteSubCompany("");
+          setInviteJobNumber("");
+          setInviteSuperintendentEmail("");
           setInvitePersonalNote("");
           setInviteSuccess("");
         }, 3000);
@@ -677,6 +683,33 @@ export default function AdminDashboard() {
                         value={inviteSubCompany}
                         onChange={(e) => setInviteSubCompany(e.target.value)}
                         placeholder="e.g., ABC Contractors"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Job Number *
+                      </label>
+                      <input
+                        type="text"
+                        value={inviteJobNumber}
+                        onChange={(e) => setInviteJobNumber(e.target.value)}
+                        placeholder="e.g., 2024-001"
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Your Email (for receiving forms) *
+                      </label>
+                      <input
+                        type="email"
+                        value={inviteSuperintendentEmail}
+                        onChange={(e) => setInviteSuperintendentEmail(e.target.value)}
+                        placeholder="superintendent@example.com"
                         className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
                       />
                     </div>

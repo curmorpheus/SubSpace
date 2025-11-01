@@ -33,9 +33,9 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { subcontractorName, subcontractorEmail, subcontractorCompany, personalNote } = body;
+    const { subcontractorName, subcontractorEmail, subcontractorCompany, jobNumber, superintendentEmail, personalNote } = body;
 
-    if (!subcontractorName || !subcontractorEmail || !subcontractorCompany) {
+    if (!subcontractorName || !subcontractorEmail || !subcontractorCompany || !jobNumber || !superintendentEmail) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -47,6 +47,8 @@ export async function POST(req: NextRequest) {
     formUrl.searchParams.set("name", subcontractorName);
     formUrl.searchParams.set("email", subcontractorEmail);
     formUrl.searchParams.set("company", subcontractorCompany);
+    formUrl.searchParams.set("jobNumber", jobNumber);
+    formUrl.searchParams.set("superintendentEmail", superintendentEmail);
 
     // Create beautiful HTML email template
     const htmlContent = `
