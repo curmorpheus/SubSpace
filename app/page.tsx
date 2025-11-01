@@ -14,14 +14,6 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20 relative z-10">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          {/* Construction hard hat visual */}
-          <div className="flex justify-center mb-6">
-            <div className="relative">
-              <div className="text-8xl">⛑️</div>
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-orange-500 rounded-full animate-pulse"></div>
-            </div>
-          </div>
-
           <div className="inline-block mb-6">
             <div className="bg-gradient-to-r from-orange-500 to-purple-600 text-transparent bg-clip-text">
               <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black tracking-tight">
@@ -96,9 +88,11 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="inline-flex items-center bg-orange-500 hover:bg-orange-600 text-white font-bold text-xl px-8 py-5 rounded-2xl group-hover:scale-105 transition-all shadow-lg">
-                Fill Out Form Now
-                <span className="ml-3 text-3xl">→</span>
+              <div className="flex justify-center">
+                <div className="inline-flex items-center bg-orange-500 hover:bg-orange-600 text-white font-bold text-xl px-8 py-5 rounded-2xl group-hover:scale-105 transition-all shadow-lg">
+                  Fill Out Form Now
+                  <span className="ml-3 text-3xl">→</span>
+                </div>
               </div>
             </div>
           </Link>
