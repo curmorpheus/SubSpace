@@ -16,17 +16,16 @@ export interface SignaturePadRef {
 const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
   ({ label = "Signature", required = false }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
     const [isEmpty, setIsEmpty] = useState(true);
     const isDrawingRef = useRef(false);
-    const lastXRef = useRef<number>(0);
-    const lastYRef = useRef<number>(0);
+    const lastPosRef = useRef<{ x: number; y: number } | null>(null);
 
     useImperativeHandle(ref, () => ({
       clear: () => {
         const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
+        const ctx = ctxRef.current;
+        if (canvas && ctx) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
           setIsEmpty(true);
         }
@@ -39,87 +38,103 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
 
     useEffect(() => {
       const canvas = canvasRef.current;
-      if (!canvas) return;
+      if (!canvas) {
+        console.error('Canvas not found');
+        return;
+      }
 
-      // Setup canvas
+      // Setup canvas dimensions and context
       const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * 2;
-      canvas.height = rect.height * 2;
+      const dpr = window.devicePixelRatio || 1;
 
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
 
-      ctx.scale(2, 2);
+      const ctx = canvas.getContext('2d', { willReadFrequently: false });
+      if (!ctx) {
+        console.error('Could not get 2d context');
+        return;
+      }
+
+      // Store context in ref
+      ctxRef.current = ctx;
+
+      // Setup context styling
+      ctx.scale(dpr, dpr);
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 2;
 
-      // Pointer event handlers (works for mouse, touch, and pen)
-      const pointerDown = (e: PointerEvent) => {
-        e.preventDefault();
+      console.log('Canvas initialized:', { width: canvas.width, height: canvas.height, dpr });
 
+      // Pointer event handlers
+      const handlePointerDown = (e: PointerEvent) => {
+        console.log('Pointer down');
         const rect = canvas.getBoundingClientRect();
-        lastXRef.current = e.clientX - rect.left;
-        lastYRef.current = e.clientY - rect.top;
+
+        lastPosRef.current = {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        };
+
         isDrawingRef.current = true;
         setIsEmpty(false);
 
-        // Capture the pointer
+        // Capture pointer to ensure we get all subsequent events
         canvas.setPointerCapture(e.pointerId);
       };
 
-      const pointerMove = (e: PointerEvent) => {
-        if (!isDrawingRef.current) return;
-        e.preventDefault();
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+      const handlePointerMove = (e: PointerEvent) => {
+        if (!isDrawingRef.current || !lastPosRef.current || !ctxRef.current) {
+          return;
+        }
 
         const rect = canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        ctx.beginPath();
-        ctx.moveTo(lastXRef.current, lastYRef.current);
-        ctx.lineTo(x, y);
-        ctx.stroke();
+        // Draw line
+        ctxRef.current.beginPath();
+        ctxRef.current.moveTo(lastPosRef.current.x, lastPosRef.current.y);
+        ctxRef.current.lineTo(x, y);
+        ctxRef.current.stroke();
 
-        lastXRef.current = x;
-        lastYRef.current = y;
+        lastPosRef.current = { x, y };
       };
 
-      const pointerUp = (e: PointerEvent) => {
-        if (isDrawingRef.current) {
-          e.preventDefault();
-          isDrawingRef.current = false;
+      const handlePointerUp = (e: PointerEvent) => {
+        console.log('Pointer up');
+        isDrawingRef.current = false;
+        lastPosRef.current = null;
 
-          // Release the pointer
-          if (canvas.hasPointerCapture(e.pointerId)) {
-            canvas.releasePointerCapture(e.pointerId);
-          }
+        if (canvas.hasPointerCapture(e.pointerId)) {
+          canvas.releasePointerCapture(e.pointerId);
         }
       };
 
-      // Add pointer event listeners
-      canvas.addEventListener('pointerdown', pointerDown);
-      canvas.addEventListener('pointermove', pointerMove);
-      canvas.addEventListener('pointerup', pointerUp);
-      canvas.addEventListener('pointercancel', pointerUp);
+      // Attach event listeners
+      canvas.addEventListener('pointerdown', handlePointerDown);
+      canvas.addEventListener('pointermove', handlePointerMove);
+      canvas.addEventListener('pointerup', handlePointerUp);
+      canvas.addEventListener('pointercancel', handlePointerUp);
 
+      console.log('Event listeners attached');
+
+      // Cleanup
       return () => {
-        canvas.removeEventListener('pointerdown', pointerDown);
-        canvas.removeEventListener('pointermove', pointerMove);
-        canvas.removeEventListener('pointerup', pointerUp);
-        canvas.removeEventListener('pointercancel', pointerUp);
+        console.log('Cleaning up event listeners');
+        canvas.removeEventListener('pointerdown', handlePointerDown);
+        canvas.removeEventListener('pointermove', handlePointerMove);
+        canvas.removeEventListener('pointerup', handlePointerUp);
+        canvas.removeEventListener('pointercancel', handlePointerUp);
       };
     }, []);
 
     const handleClear = () => {
       const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
+      const ctx = ctxRef.current;
+      if (canvas && ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         setIsEmpty(true);
       }
@@ -134,15 +149,12 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         <div className="relative bg-white border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
           <canvas
             ref={canvasRef}
-            className="w-full h-48"
+            className="w-full h-48 block"
             style={{
               touchAction: 'none',
-              WebkitUserSelect: 'none',
-              userSelect: 'none',
-              WebkitTouchCallout: 'none'
             }}
           />
-          <div className="absolute bottom-3 right-3 text-xs text-gray-400 pointer-events-none">
+          <div className="absolute bottom-3 right-3 text-xs text-gray-400 pointer-events-none select-none">
             Sign here
           </div>
         </div>
