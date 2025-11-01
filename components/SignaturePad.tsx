@@ -43,30 +43,40 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         return;
       }
 
-      // Setup canvas dimensions and context
-      const rect = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
+      // Initialize canvas context and event handlers
+      const initializeCanvas = () => {
+        const rect = canvas.getBoundingClientRect();
 
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
+        // Don't initialize if canvas has no dimensions yet
+        if (rect.width === 0 || rect.height === 0) {
+          console.log('Canvas has no dimensions, waiting...');
+          return false;
+        }
 
-      const ctx = canvas.getContext('2d', { willReadFrequently: false });
-      if (!ctx) {
-        console.error('Could not get 2d context');
-        return;
-      }
+        const dpr = window.devicePixelRatio || 1;
 
-      // Store context in ref
-      ctxRef.current = ctx;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
 
-      // Setup context styling
-      ctx.scale(dpr, dpr);
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 2;
+        const ctx = canvas.getContext('2d', { willReadFrequently: false });
+        if (!ctx) {
+          console.error('Could not get 2d context');
+          return false;
+        }
 
-      console.log('Canvas initialized:', { width: canvas.width, height: canvas.height, dpr });
+        // Store context in ref
+        ctxRef.current = ctx;
+
+        // Setup context styling
+        ctx.scale(dpr, dpr);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+
+        console.log('Canvas initialized:', { width: canvas.width, height: canvas.height, dpr });
+        return true;
+      };
 
       // Pointer event handlers
       const handlePointerDown = (e: PointerEvent) => {
@@ -81,7 +91,6 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         isDrawingRef.current = true;
         setIsEmpty(false);
 
-        // Capture pointer to ensure we get all subsequent events
         canvas.setPointerCapture(e.pointerId);
       };
 
@@ -94,7 +103,6 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
 
-        // Draw line
         ctxRef.current.beginPath();
         ctxRef.current.moveTo(lastPosRef.current.x, lastPosRef.current.y);
         ctxRef.current.lineTo(x, y);
@@ -113,17 +121,50 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
         }
       };
 
-      // Attach event listeners
-      canvas.addEventListener('pointerdown', handlePointerDown);
-      canvas.addEventListener('pointermove', handlePointerMove);
-      canvas.addEventListener('pointerup', handlePointerUp);
-      canvas.addEventListener('pointercancel', handlePointerUp);
+      // Use ResizeObserver to wait for canvas to have dimensions
+      const resizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.target === canvas) {
+            const rect = entry.contentRect;
+            if (rect.width > 0 && rect.height > 0) {
+              // Initialize if not already done
+              if (!ctxRef.current) {
+                if (initializeCanvas()) {
+                  // Attach event listeners after successful initialization
+                  canvas.addEventListener('pointerdown', handlePointerDown);
+                  canvas.addEventListener('pointermove', handlePointerMove);
+                  canvas.addEventListener('pointerup', handlePointerUp);
+                  canvas.addEventListener('pointercancel', handlePointerUp);
+                  console.log('Event listeners attached');
+                }
+              } else {
+                // Canvas was resized, reinitialize
+                const imageData = ctxRef.current.getImageData(0, 0, canvas.width, canvas.height);
+                initializeCanvas();
+                if (ctxRef.current && imageData) {
+                  ctxRef.current.putImageData(imageData, 0, 0);
+                }
+              }
+            }
+          }
+        }
+      });
 
-      console.log('Event listeners attached');
+      resizeObserver.observe(canvas);
+
+      // Try immediate initialization in case canvas already has dimensions
+      if (initializeCanvas()) {
+        canvas.addEventListener('pointerdown', handlePointerDown);
+        canvas.addEventListener('pointermove', handlePointerMove);
+        canvas.addEventListener('pointerup', handlePointerUp);
+        canvas.addEventListener('pointercancel', handlePointerUp);
+        console.log('Event listeners attached');
+      }
 
       // Cleanup
       return () => {
-        console.log('Cleaning up event listeners');
+        console.log('Cleaning up');
+        resizeObserver.disconnect();
         canvas.removeEventListener('pointerdown', handlePointerDown);
         canvas.removeEventListener('pointermove', handlePointerMove);
         canvas.removeEventListener('pointerup', handlePointerUp);
