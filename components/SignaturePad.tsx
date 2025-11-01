@@ -152,7 +152,7 @@ const SignaturePad = forwardRef<SignaturePadRef, SignaturePadProps>(
           {label} {required && <span className="text-red-500">*</span>}
         </label>
 
-        <div className="relative bg-white border-3 border-dashed border-purple-200 rounded-xl overflow-hidden shadow-inner">
+        <div className="relative bg-white border-2 border-dashed border-gray-300 rounded-lg overflow-hidden">
           <canvas
             ref={canvasRef}
             onMouseDown={startDrawing}
