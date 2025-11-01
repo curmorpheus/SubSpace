@@ -118,6 +118,41 @@ The architecture is designed to easily support additional form types:
 - `npm run db:push` - Push schema changes to database
 - `npm run db:studio` - Open Drizzle Studio (database GUI)
 
+## Testing
+
+### Unit Tests (Jest)
+- `npm test` - Run all unit tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Generate coverage report
+
+### End-to-End Tests (Playwright)
+- `npm run test:e2e` - Run E2E tests
+- `npm run test:e2e:ui` - Run tests with UI mode
+- `npm run test:e2e:debug` - Debug tests
+- `npm run playwright:install` - Install Playwright browsers
+
+### Playwright MCP Server
+
+This project includes configuration for the Playwright MCP (Model Context Protocol) server, which enables Claude Code to interact with browsers for testing and debugging.
+
+**Quick Start:**
+```bash
+# Install MCP server for Claude Code
+claude mcp add playwright npx @playwright/mcp@latest
+
+# Install Playwright browsers
+npm run playwright:install
+```
+
+**Documentation:**
+- Full guide: `MCP_SETUP.md`
+- Quick reference: `docs/MCP_QUICK_START.md`
+
+**Example usage with Claude:**
+- "Navigate to http://localhost:3000 and test the form submission"
+- "Check the accessibility of the dashboard page"
+- "Fill out the impalement protection form with test data"
+
 ## Security Notes
 
 - The current authentication uses a simple password stored in environment variables

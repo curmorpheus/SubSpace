@@ -1,0 +1,19 @@
+{
+  "browser": "chromium",
+  "headless": false,
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "contextOptions": {
+    "locale": "en-US",
+    "timezoneId": "America/Los_Angeles",
+    "baseURL": "http://localhost:3000",
+    "extraHTTPHeaders": {
+      "Accept-Language": "en-US,en;q=0.9"
+    }
+  },
+  "launchOptions": {
+    "slowMo": 100
+  }
+}
