@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { SafetyIcon, UserIcon, ArrowIcon } from "@/components/icons";
 
 export default function Home() {
   return (
@@ -30,8 +31,8 @@ export default function Home() {
           >
             <div className="px-8 py-16 sm:p-16">
               <div className="flex items-center justify-center mb-8">
-                <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center text-3xl">
-                  🦺
+                <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center">
+                  <SafetyIcon className="w-10 h-10 text-white" />
                 </div>
               </div>
 
@@ -45,7 +46,7 @@ export default function Home() {
               <div className="flex justify-center">
                 <div className="inline-flex items-center bg-orange-500 hover:opacity-90 text-white font-semibold text-lg px-8 py-4 rounded-xl transition-all duration-150">
                   Fill Out Form Now
-                  <span className="ml-3 text-2xl">→</span>
+                  <ArrowIcon className="ml-3 w-6 h-6" />
                 </div>
               </div>
             </div>
@@ -63,8 +64,8 @@ export default function Home() {
           >
             <div className="px-8 py-8">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gray-200 rounded-xl flex items-center justify-center text-xl flex-shrink-0">
-                  👔
+                <div className="w-12 h-12 bg-gray-200 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <UserIcon className="w-7 h-7 text-gray-700" />
                 </div>
                 <div className="flex-1">
                   <h3 className="text-xl font-semibold text-gray-900">
@@ -74,8 +75,8 @@ export default function Home() {
                     View and manage submitted forms
                   </p>
                 </div>
-                <div className="text-gray-400 font-semibold text-2xl group-hover:translate-x-1 transition-transform duration-150 flex-shrink-0">
-                  →
+                <div className="text-gray-400 group-hover:translate-x-1 transition-transform duration-150 flex-shrink-0">
+                  <ArrowIcon className="w-6 h-6" />
                 </div>
               </div>
             </div>
