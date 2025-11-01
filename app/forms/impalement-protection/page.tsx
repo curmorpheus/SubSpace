@@ -640,34 +640,36 @@ function ImpalementProtectionFormContent() {
       `}</style>
       <div className="max-w-4xl mx-auto">
         {/* Header Card */}
-        <div className="bg-white rounded-2xl shadow-lg mb-6 overflow-hidden">
-          <div className="bg-gradient-to-r from-orange-500 to-orange-600 px-6 sm:px-8 py-6">
+        <div className="bg-white rounded-lg shadow-sm mb-8 overflow-hidden border border-gray-200">
+          <div className="bg-white px-6 sm:px-8 py-8 border-b border-gray-100">
             <button
               onClick={() => router.push("/")}
-              className="text-orange-100 hover:text-white text-sm font-medium inline-flex items-center transition-colors mb-4"
+              className="text-gray-600 hover:text-gray-900 text-sm font-medium inline-flex items-center transition-colors mb-6"
             >
               ← Back to Home
             </button>
-            <h1 className="text-3xl sm:text-4xl font-bold text-white">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
               Impalement Protection
             </h1>
-            <p className="text-orange-100 mt-2 text-lg">
+            <p className="text-gray-600 mt-2 text-base font-normal">
               Safety Inspection Form
             </p>
-            <div className="mt-3 flex items-center gap-2 text-orange-50">
-              <span className="text-sm font-medium">⏱️ Estimated time: 5-10 minutes</span>
+            <div className="mt-4 flex items-center gap-2 text-gray-500">
+              <span className="text-sm">Estimated time: 5-10 minutes</span>
             </div>
           </div>
         </div>
 
         {/* Offline Mode Indicator */}
         {!isOnline && (
-          <div className="bg-amber-50 border-2 border-amber-400 rounded-xl p-4 mb-6 shadow-md">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">📴</span>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-5 mb-6">
+            <div className="flex items-start gap-4">
+              <div className="mt-0.5">
+                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+              </div>
               <div className="flex-1">
-                <p className="text-sm font-bold text-amber-900">You&apos;re currently offline</p>
-                <p className="text-xs text-amber-700 mt-1">
+                <p className="text-sm font-semibold text-gray-900">Currently offline</p>
+                <p className="text-sm text-gray-600 mt-1">
                   Forms will be saved locally and submitted automatically when you&apos;re back online.
                 </p>
               </div>
@@ -677,14 +679,16 @@ function ImpalementProtectionFormContent() {
 
         {/* Pending Submissions Indicator */}
         {isOnline && pendingCount > 0 && (
-          <div className="bg-blue-50 border-2 border-blue-400 rounded-xl p-4 mb-6 shadow-md">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{isSyncing ? "⏳" : "📤"}</span>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-5 mb-6">
+            <div className="flex items-start gap-4">
+              <div className="mt-0.5">
+                <div className={`w-2 h-2 rounded-full ${isSyncing ? 'bg-blue-400 animate-pulse' : 'bg-blue-500'}`}></div>
+              </div>
               <div className="flex-1">
-                <p className="text-sm font-bold text-blue-900">
+                <p className="text-sm font-semibold text-gray-900">
                   {isSyncing ? "Syncing pending submissions..." : `${pendingCount} pending submission${pendingCount > 1 ? 's' : ''} waiting to sync`}
                 </p>
-                <p className="text-xs text-blue-700 mt-1">
+                <p className="text-sm text-gray-600 mt-1">
                   {isSyncing ? "Please wait..." : "Your queued forms will be submitted automatically."}
                 </p>
               </div>
@@ -693,34 +697,36 @@ function ImpalementProtectionFormContent() {
         )}
 
         {/* Main Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden border border-gray-200">
           {/* Progress Indicator */}
-          <div className="bg-gray-50 px-6 sm:px-8 py-6 border-b-2 border-gray-200">
+          <div className="bg-white px-6 sm:px-8 py-8 border-b border-gray-100">
             <div className="flex items-center justify-between max-w-md mx-auto">
               {[1, 2, 3].map((step) => (
                 <div key={step} className="flex items-center">
-                  <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold transition-all ${
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold text-sm transition-all ${
                     currentStep === step
-                      ? 'bg-orange-500 text-white scale-110 shadow-lg'
+                      ? 'bg-orange-500 text-white'
                       : currentStep > step
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-200 text-gray-500'
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-100 text-gray-400'
                   }`}>
                     {currentStep > step ? '✓' : step}
                   </div>
                   {step < 3 && (
-                    <div className={`w-16 sm:w-24 h-1 mx-2 transition-all ${
-                      currentStep > step ? 'bg-green-500' : 'bg-gray-200'
+                    <div className={`w-16 sm:w-24 h-px mx-2 transition-all ${
+                      currentStep > step ? 'bg-gray-900' : 'bg-gray-200'
                     }`} />
                   )}
                 </div>
               ))}
             </div>
-            <div className="text-center mt-4">
-              <p className="text-sm font-semibold text-gray-700">
-                Step {currentStep} of {totalSteps}:{' '}
+            <div className="text-center mt-6">
+              <p className="text-sm font-medium text-gray-900">
+                Step {currentStep} of {totalSteps}
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
                 {currentStep === 1 && 'Basic Information'}
-                {currentStep === 2 && `Inspection Details (${formData.inspections.length})`}
+                {currentStep === 2 && `Inspection Details · ${formData.inspections.length} ${formData.inspections.length === 1 ? 'inspection' : 'inspections'}`}
                 {currentStep === 3 && 'Email Delivery'}
               </p>
             </div>
@@ -739,18 +745,18 @@ function ImpalementProtectionFormContent() {
           >
 
             {/* Accessibility Toggles */}
-            <div className="mb-6 bg-gray-50 border-2 border-gray-200 rounded-xl p-4">
-              <h3 className="text-sm font-bold text-gray-900 mb-3">⚙️ Preferences</h3>
-              <div className="flex flex-wrap gap-3">
+            <div className="mb-8 bg-gray-50 border border-gray-200 rounded-lg p-5">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">Preferences</h3>
+              <div className="flex flex-wrap gap-4">
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={largeButtons}
                     onChange={(e) => handleLargeButtonsToggle(e.target.checked)}
-                    className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                    className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
                   />
                   <span className="text-sm font-medium text-gray-700">
-                    👆 Large buttons (for gloves)
+                    Large buttons (for gloves)
                   </span>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer">
@@ -758,24 +764,22 @@ function ImpalementProtectionFormContent() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => handleRememberMeToggle(e.target.checked)}
-                    className="w-5 h-5 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
+                    className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
                   />
                   <span className="text-sm font-medium text-gray-700">
-                    💾 Remember my info
+                    Remember my info
                   </span>
                 </label>
               </div>
             </div>
 
             {/* Step 1: Basic Information Section */}
-            <div className={`mb-8 ${currentStep === 1 ? 'block' : 'hidden'}`}>
-              <div className="flex items-center mb-6">
-                <div className="flex-shrink-0 w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                  <span className="text-orange-600 font-bold text-lg">1</span>
-                </div>
-                <h2 className="ml-4 text-2xl font-bold text-gray-900">
+            <div className={`mb-10 ${currentStep === 1 ? 'block' : 'hidden'}`}>
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
                   Basic Information
                 </h2>
+                <p className="text-sm text-gray-500 mt-2">Step 1 of 3</p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -850,35 +854,34 @@ function ImpalementProtectionFormContent() {
             </div>
 
             {/* Step 2: Inspection Details Section */}
-            <div className={`mb-8 ${currentStep === 2 ? 'block' : 'hidden'}`}>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-bold text-lg">2</span>
+            <div className={`mb-10 ${currentStep === 2 ? 'block' : 'hidden'}`}>
+              <div className="mb-8">
+                <div className="flex items-baseline justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+                      Inspection Details
+                    </h2>
+                    <p className="text-sm text-gray-500 mt-2">
+                      Step 2 of 3 · {formData.inspections.length} {formData.inspections.length === 1 ? 'inspection' : 'inspections'}
+                    </p>
                   </div>
-                  <h2 className="ml-4 text-2xl font-bold text-gray-900">
-                    Inspection Details
-                    <span className="ml-2 text-sm font-medium text-blue-600">
-                      ({formData.inspections.length})
-                    </span>
-                  </h2>
                 </div>
               </div>
 
               <div className="space-y-6">
                 {formData.inspections.map((inspection, index) => (
-                  <div key={inspection.id} className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-100 rounded-2xl p-6 sm:p-8">
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-lg font-bold text-gray-900">
-                        📋 Inspection #{index + 1}
+                  <div key={inspection.id} className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
+                    <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-100">
+                      <h3 className="text-base font-semibold text-gray-900">
+                        Inspection {index + 1}
                       </h3>
                       {formData.inspections.length > 1 && (
                         <button
                           type="button"
                           onClick={() => deleteInspection(inspection.id)}
-                          className="text-red-600 hover:text-red-700 font-medium text-sm px-3 py-1 hover:bg-red-50 rounded-lg transition-colors"
+                          className="text-gray-400 hover:text-red-600 text-sm font-medium transition-colors"
                         >
-                          🗑️ Delete
+                          Delete
                         </button>
                       )}
                     </div>
@@ -930,7 +933,7 @@ function ImpalementProtectionFormContent() {
                         </label>
 
                         {/* Quick option for no hazards */}
-                        <div className="mb-3 bg-green-50 border-2 border-green-200 rounded-xl p-4">
+                        <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
                           <label className="flex items-start gap-3 cursor-pointer">
                             <input
                               type="checkbox"
@@ -946,11 +949,11 @@ function ImpalementProtectionFormContent() {
                                   updateInspection(inspection.id, 'correctiveMeasures', '');
                                 }
                               }}
-                              className="mt-1 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                              className="mt-0.5 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
                             />
                             <div>
-                              <span className="font-semibold text-green-900">No impalement hazards observed</span>
-                              <p className="text-xs text-green-700 mt-1">
+                              <span className="text-sm font-medium text-gray-900">No impalement hazards observed</span>
+                              <p className="text-xs text-gray-600 mt-1">
                                 Check this if no hazards were found during inspection
                               </p>
                             </div>
@@ -1052,37 +1055,34 @@ function ImpalementProtectionFormContent() {
                 <button
                   type="button"
                   onClick={addInspection}
-                  className="w-full py-4 px-6 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2"
+                  className="w-full py-4 px-6 bg-white border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
-                  <span className="text-xl">➕</span>
+                  <span className="text-lg">+</span>
                   Add Another Inspection
                 </button>
               </div>
             </div>
 
             {/* Step 3: Email Delivery Section */}
-            <div className={`space-y-8 ${currentStep === 3 ? 'block' : 'hidden'}`}>
-            <div className="mb-8">
-              <div className="flex items-center mb-6">
-                <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <span className="text-green-600 font-bold text-lg">3</span>
-                </div>
-                <h2 className="ml-4 text-2xl font-bold text-gray-900">
+            <div className={`mb-10 ${currentStep === 3 ? 'block' : 'hidden'}`}>
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
                   Email Delivery
                 </h2>
+                <p className="text-sm text-gray-500 mt-2">Step 3 of 3</p>
               </div>
 
-              <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-100 rounded-2xl p-6 sm:p-8">
-                <div className="mb-6">
-                  <p className="text-base font-semibold text-gray-900 mb-2">
-                    📧 This form will be emailed as a PDF
-                  </p>
-                  <p className="text-sm text-gray-700 font-medium">
+              <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
+                <div className="mb-8">
+                  <h3 className="text-base font-semibold text-gray-900 mb-2">
+                    This form will be emailed as a PDF
+                  </h3>
+                  <p className="text-sm text-gray-600">
                     Enter the recipient&apos;s email address below to receive the completed inspection form
                   </p>
                 </div>
 
-                <div className="space-y-5 bg-white rounded-xl p-6 border-2 border-green-200">
+                <div className="space-y-6">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Recipient Email <span className="text-red-500">*</span>
@@ -1124,13 +1124,12 @@ function ImpalementProtectionFormContent() {
                   </div>
 
                   {/* Signature Section */}
-                  <div className="mt-8 bg-gradient-to-br from-purple-50 to-violet-50 border-2 border-purple-200 rounded-2xl p-6">
-                    <div className="mb-4">
-                      <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                        <span>✍️</span>
+                  <div className="mt-8 pt-8 border-t border-gray-100">
+                    <div className="mb-6">
+                      <h3 className="text-base font-semibold text-gray-900">
                         Inspector Signature
                       </h3>
-                      <p className="text-sm text-gray-700 mt-1">
+                      <p className="text-sm text-gray-600 mt-1">
                         Sign below to certify this inspection report is accurate
                       </p>
                     </div>
@@ -1138,18 +1137,17 @@ function ImpalementProtectionFormContent() {
                   </div>
               </div>
             </div>
-            </div>
 
             {/* Error Message */}
             {error && (
-              <div className="mb-6 bg-red-50 border-2 border-red-200 rounded-xl p-4">
-                <div className="flex items-start">
-                  <div className="flex-shrink-0">
-                    <span className="text-red-600 text-xl">⚠️</span>
+              <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5">
+                    <div className="w-2 h-2 rounded-full bg-red-500"></div>
                   </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-semibold text-red-800">Error</h3>
-                    <p className="text-sm text-red-700 mt-1">{error}</p>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-gray-900">Error</h3>
+                    <p className="text-sm text-gray-600 mt-1">{error}</p>
                   </div>
                 </div>
               </div>
@@ -1162,14 +1160,14 @@ function ImpalementProtectionFormContent() {
                   <button
                     type="button"
                     onClick={() => router.push("/")}
-                    className="flex-1 py-4 px-6 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-semibold text-lg"
+                    className="flex-1 py-4 px-6 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-semibold"
                   >
                     Cancel
                   </button>
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="flex-1 py-4 px-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl"
+                    className="flex-1 py-4 px-6 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors font-semibold"
                   >
                     Next →
                   </button>
@@ -1179,14 +1177,14 @@ function ImpalementProtectionFormContent() {
                   <button
                     type="button"
                     onClick={handlePrevious}
-                    className="flex-1 py-4 px-6 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-semibold text-lg"
+                    className="flex-1 py-4 px-6 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-semibold"
                   >
                     ← Previous
                   </button>
                   <button
                     type="button"
                     onClick={handleNext}
-                    className="flex-1 py-4 px-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl"
+                    className="flex-1 py-4 px-6 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors font-semibold"
                   >
                     Next →
                   </button>
@@ -1196,14 +1194,14 @@ function ImpalementProtectionFormContent() {
                   <button
                     type="button"
                     onClick={handlePrevious}
-                    className="flex-1 py-4 px-6 border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors font-semibold text-lg"
+                    className="flex-1 py-4 px-6 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors font-semibold"
                   >
                     ← Previous
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 py-4 px-6 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 py-4 px-6 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? "Submitting & Emailing..." : "Submit & Email Form"}
                   </button>
@@ -1213,11 +1211,13 @@ function ImpalementProtectionFormContent() {
 
             {/* Saved Info Indicator - Below Buttons */}
             {hasSavedInfo && rememberMe && currentStep === 1 && (
-              <div className="mt-6 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-start justify-between">
+              <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4 flex items-start justify-between">
                 <div className="flex items-start gap-3">
-                  <span className="text-green-600 text-xl">✓</span>
+                  <div className="mt-0.5">
+                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  </div>
                   <div>
-                    <p className="text-sm font-bold text-green-900">Using saved information</p>
+                    <p className="text-sm font-semibold text-gray-900">Using saved information</p>
                     <p className="text-xs text-green-700 mt-1">
                       {formData.submittedBy && `${formData.submittedBy}`}
                       {formData.submittedByEmail && ` (${formData.submittedByEmail})`}
