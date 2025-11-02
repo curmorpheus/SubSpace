@@ -28,6 +28,7 @@ function ImpalementProtectionFormContent() {
   const [currentStep, setCurrentStep] = useState(1);
   const [justNavigated, setJustNavigated] = useState(false);
   const [successData, setSuccessData] = useState<{ id: number; email: string } | null>(null);
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false);
 
   const totalSteps = 3;
 
@@ -203,6 +204,23 @@ function ImpalementProtectionFormContent() {
     return () => clearTimeout(timeout);
   }, [isOnline, pendingCount, isSyncing]);
 
+  // Scroll detection for sticky header
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      const shouldCollapse = scrollPosition > 80;
+
+      if (shouldCollapse !== isHeaderCollapsed) {
+        setIsHeaderCollapsed(shouldCollapse);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isHeaderCollapsed]);
+
   const [emailOptions, setEmailOptions] = useState(() => {
     let cached: any = {};
 
@@ -355,11 +373,13 @@ function ImpalementProtectionFormContent() {
       for (let i = 0; i < formData.inspections.length; i++) {
         const inspection = formData.inspections[i];
         const correctiveMeasuresRequired = !inspection.noHazardsObserved;
+        const employerFieldsRequired = !inspection.noHazardsObserved;
 
         if (!inspection.startTime || !inspection.endTime || !inspection.location ||
             !inspection.hazardDescription ||
             (correctiveMeasuresRequired && !inspection.correctiveMeasures) ||
-            !inspection.creatingEmployer || !inspection.supervisor) {
+            (employerFieldsRequired && !inspection.creatingEmployer) ||
+            (employerFieldsRequired && !inspection.supervisor)) {
           setError(`Please fill in all details for Inspection #${i + 1}`);
           return false;
         }
@@ -640,8 +660,10 @@ function ImpalementProtectionFormContent() {
         }
       `}</style>
       <div className="max-w-4xl mx-auto">
-        {/* Header Card */}
-        <div className="bg-white rounded-lg shadow-sm mb-8 overflow-hidden border border-gray-200">
+        {/* Header Card - Expanded */}
+        <div className={`bg-white rounded-lg shadow-sm mb-8 overflow-hidden border border-gray-200 transition-all duration-300 ${
+          isHeaderCollapsed ? 'opacity-0 -mt-32' : 'opacity-100'
+        }`}>
           <div className="bg-white px-6 sm:px-8 py-8 border-b border-gray-100">
             <button
               onClick={() => router.push("/")}
@@ -657,6 +679,55 @@ function ImpalementProtectionFormContent() {
             </p>
             <div className="mt-4 flex items-center gap-2 text-gray-500">
               <span className="text-sm">Estimated time: 5-10 minutes</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Header - Collapsed (Sticky) */}
+        <div className={`fixed top-0 left-0 right-0 bg-white border-b border-gray-200 shadow-md z-40 transition-all duration-300 ${
+          isHeaderCollapsed ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+        }`}>
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-14 sm:h-16">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <button
+                  onClick={() => router.push("/")}
+                  className="text-gray-600 hover:text-gray-900 transition-colors flex-shrink-0"
+                  aria-label="Back to Home"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-base sm:text-lg font-bold text-gray-900 truncate">
+                    Impalement Inspection
+                  </h1>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 flex-shrink-0">
+                {formData.jobNumber && (
+                  <span className="hidden sm:inline text-xs font-medium text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
+                    Job #{formData.jobNumber}
+                  </span>
+                )}
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3].map((step) => (
+                    <div
+                      key={step}
+                      className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
+                        currentStep === step
+                          ? 'bg-orange-500 text-white'
+                          : currentStep > step
+                          ? 'bg-gray-900 text-white'
+                          : 'bg-gray-200 text-gray-400'
+                      }`}
+                    >
+                      {currentStep > step ? '✓' : step}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1074,11 +1145,15 @@ function ImpalementProtectionFormContent() {
 
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Creating/Exposing Employer(s) <span className="text-red-500">*</span>
+                          Creating/Exposing Employer(s) {inspection.noHazardsObserved ? (
+                            <span className="text-gray-700 text-xs font-medium">(Optional)</span>
+                          ) : (
+                            <span className="text-red-500">*</span>
+                          )}
                         </label>
                         <input
                           type="text"
-                          required
+                          required={!inspection.noHazardsObserved}
                           value={inspection.creatingEmployer}
                           onChange={(e) => updateInspection(inspection.id, 'creatingEmployer', e.target.value)}
                           placeholder="Company name(s)"
@@ -1088,11 +1163,15 @@ function ImpalementProtectionFormContent() {
 
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Supervisor of Creating/Exposing Employer(s) <span className="text-red-500">*</span>
+                          Supervisor of Creating/Exposing Employer(s) {inspection.noHazardsObserved ? (
+                            <span className="text-gray-700 text-xs font-medium">(Optional)</span>
+                          ) : (
+                            <span className="text-red-500">*</span>
+                          )}
                         </label>
                         <input
                           type="text"
-                          required
+                          required={!inspection.noHazardsObserved}
                           value={inspection.supervisor}
                           onChange={(e) => updateInspection(inspection.id, 'supervisor', e.target.value)}
                           placeholder="Supervisor name"
