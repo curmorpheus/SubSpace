@@ -19,8 +19,18 @@ function ProcoreProvider(options: {
     id: "procore",
     name: "Procore",
     type: "oauth" as const,
-    authorization: "https://login.procore.com/oauth/authorize",
-    token: "https://login.procore.com/oauth/token",
+    authorization: {
+      url: "https://login.procore.com/oauth/authorize",
+      params: {
+        response_type: "code",
+      },
+    },
+    token: {
+      url: "https://login.procore.com/oauth/token",
+      params: {
+        grant_type: "authorization_code",
+      },
+    },
     userinfo: "https://api.procore.com/rest/v1.0/me",
     profile(profile: any) {
       return {
