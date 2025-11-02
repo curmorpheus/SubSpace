@@ -29,9 +29,13 @@ function ProcoreProvider(options: {
     userinfo: {
       url: "https://api.procore.com/rest/v1.0/me",
       async request({ tokens }: any) {
+        console.log("[Procore OAuth] Tokens received:", JSON.stringify(tokens, null, 2));
+        const accessToken = tokens.access_token || tokens.accessToken;
+        console.log("[Procore OAuth] Using access token:", accessToken ? `${accessToken.substring(0, 20)}...` : "MISSING");
+
         const response = await fetch("https://api.procore.com/rest/v1.0/me", {
           headers: {
-            Authorization: `Bearer ${tokens.access_token}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         });
 
