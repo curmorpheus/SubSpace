@@ -113,47 +113,61 @@ export const authConfig: NextAuthConfig = {
     async signIn({ user, account, profile }) {
       // Handle Procore OAuth sign-in
       if (account?.provider === "procore") {
-        const procoreUserId = (profile as any)?.id?.toString();
-        const procoreCompanyId = (profile as any)?.company?.id?.toString();
-        const email = user.email || "";
-        const name = user.name || "";
+        try {
+          console.log("[Procore OAuth] User:", user);
+          console.log("[Procore OAuth] Profile:", profile);
 
-        if (!procoreUserId || !email) {
-          return false;
-        }
+          const procoreUserId = (profile as any)?.id?.toString();
+          const procoreCompanyId = (profile as any)?.company?.id?.toString();
+          const email = user.email || "";
+          const name = user.name || "";
 
-        // Check if user exists
-        const existingUser = await db
-          .select()
-          .from(superintendents)
-          .where(eq(superintendents.email, email))
-          .limit(1);
+          console.log("[Procore OAuth] Extracted - ID:", procoreUserId, "Email:", email, "Name:", name);
 
-        if (existingUser.length > 0) {
-          // Update existing user with Procore info
-          await db
-            .update(superintendents)
-            .set({
+          if (!procoreUserId || !email) {
+            console.error("[Procore OAuth] Missing required fields - ID:", procoreUserId, "Email:", email);
+            return false;
+          }
+
+          // Check if user exists
+          const existingUser = await db
+            .select()
+            .from(superintendents)
+            .where(eq(superintendents.email, email))
+            .limit(1);
+
+          if (existingUser.length > 0) {
+            console.log("[Procore OAuth] Updating existing user:", email);
+            // Update existing user with Procore info
+            await db
+              .update(superintendents)
+              .set({
+                authProvider: "procore",
+                procoreUserId,
+                procoreCompanyId,
+                lastLoginAt: new Date(),
+              })
+              .where(eq(superintendents.id, existingUser[0].id));
+          } else {
+            console.log("[Procore OAuth] Creating new user:", email);
+            // Create new user from Procore
+            await db.insert(superintendents).values({
+              email,
+              name,
               authProvider: "procore",
               procoreUserId,
               procoreCompanyId,
+              password: null, // No password for OAuth users
               lastLoginAt: new Date(),
-            })
-            .where(eq(superintendents.id, existingUser[0].id));
-        } else {
-          // Create new user from Procore
-          await db.insert(superintendents).values({
-            email,
-            name,
-            authProvider: "procore",
-            procoreUserId,
-            procoreCompanyId,
-            password: null, // No password for OAuth users
-            lastLoginAt: new Date(),
-          });
-        }
+            });
+          }
 
-        return true;
+          console.log("[Procore OAuth] Sign-in successful for:", email);
+          return true;
+        } catch (error) {
+          console.error("[Procore OAuth] Error during sign-in:", error);
+          return false;
+        }
       }
 
       return true;
