@@ -22,15 +22,10 @@ function ProcoreProvider(options: {
     authorization: {
       url: "https://login.procore.com/oauth/authorize",
       params: {
-        response_type: "code",
+        scope: "", // Procore doesn't use scopes - uses app-level permissions
       },
     },
-    token: {
-      url: "https://login.procore.com/oauth/token",
-      params: {
-        grant_type: "authorization_code",
-      },
-    },
+    token: "https://login.procore.com/oauth/token",
     userinfo: "https://api.procore.com/rest/v1.0/me",
     profile(profile: any) {
       return {
