@@ -84,6 +84,12 @@ export function useVoiceInput(
   const isSupported = typeof window !== 'undefined' &&
     !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 
+  // Store the callback in a ref to avoid recreating the recognition instance
+  const onTranscriptChangeRef = useRef(onTranscriptChange);
+  useEffect(() => {
+    onTranscriptChangeRef.current = onTranscriptChange;
+  }, [onTranscriptChange]);
+
   // Initialize Speech Recognition
   useEffect(() => {
     if (!isSupported) {
@@ -100,6 +106,7 @@ export function useVoiceInput(
     recognition.lang = options?.lang ?? 'en-US';
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
+      console.log('[useVoiceInput] Recognition result event:', event);
       let interimTranscript = '';
       let finalTranscript = '';
 
@@ -113,10 +120,12 @@ export function useVoiceInput(
       }
 
       const newTranscript = (finalTranscript || interimTranscript).trim();
+      console.log('[useVoiceInput] New transcript:', newTranscript);
       setTranscript(newTranscript);
 
-      if (onTranscriptChange) {
-        onTranscriptChange(newTranscript);
+      if (onTranscriptChangeRef.current) {
+        console.log('[useVoiceInput] Calling onTranscriptChange callback');
+        onTranscriptChangeRef.current(newTranscript);
       }
 
       if (finalTranscript) {
@@ -171,7 +180,7 @@ export function useVoiceInput(
         recognitionRef.current.abort();
       }
     };
-  }, [isSupported, options?.continuous, options?.interimResults, options?.lang, onTranscriptChange, status]);
+  }, [isSupported, options?.continuous, options?.interimResults, options?.lang, status]);
 
   const startListening = useCallback(() => {
     if (!isSupported) {

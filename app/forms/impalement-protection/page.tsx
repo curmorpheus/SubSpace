@@ -331,14 +331,19 @@ function ImpalementProtectionFormContent() {
   };
 
   const updateInspection = (inspectionId: string, field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
-      inspections: prev.inspections.map(inspection =>
-        inspection.id === inspectionId
-          ? { ...inspection, [field]: value }
-          : inspection
-      )
-    }));
+    console.log('[updateInspection] Called with:', { inspectionId, field, value });
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        inspections: prev.inspections.map(inspection =>
+          inspection.id === inspectionId
+            ? { ...inspection, [field]: value }
+            : inspection
+        )
+      };
+      console.log('[updateInspection] Updated inspection:', updated.inspections.find(i => i.id === inspectionId));
+      return updated;
+    });
   };
 
   const deleteInspection = (inspectionId: string) => {

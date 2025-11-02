@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useVoiceInput } from '@/hooks/useVoiceInput';
 
 interface VoiceInputButtonProps {
@@ -14,6 +14,13 @@ export default function VoiceInputButton({
   currentValue = '',
   className = '',
 }: VoiceInputButtonProps) {
+  // Use ref to always have fresh currentValue in callback
+  const currentValueRef = useRef(currentValue);
+
+  useEffect(() => {
+    currentValueRef.current = currentValue;
+  }, [currentValue]);
+
   const {
     transcript,
     isListening,
@@ -23,10 +30,16 @@ export default function VoiceInputButton({
     resetTranscript,
     isSupported,
   } = useVoiceInput((newTranscript) => {
+    console.log('[VoiceInputButton] Received transcript:', newTranscript);
+    console.log('[VoiceInputButton] Current value:', currentValueRef.current);
+
     // Append to existing value if there's content
-    if (currentValue && newTranscript) {
-      onTranscript(`${currentValue} ${newTranscript}`);
+    if (currentValueRef.current && newTranscript) {
+      const updatedValue = `${currentValueRef.current} ${newTranscript}`;
+      console.log('[VoiceInputButton] Calling onTranscript with:', updatedValue);
+      onTranscript(updatedValue);
     } else if (newTranscript) {
+      console.log('[VoiceInputButton] Calling onTranscript with:', newTranscript);
       onTranscript(newTranscript);
     }
   });
