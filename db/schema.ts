@@ -37,8 +37,18 @@ export const superintendents = pgTable("superintendents", {
   id: serial("id").primaryKey(),
   email: text("email").notNull().unique(),
   name: text("name").notNull(),
-  password: text("password").notNull(), // Will be hashed
+
+  // Password auth (nullable for OAuth users)
+  password: text("password"), // Will be hashed for local auth users
+
+  // OAuth fields
+  authProvider: text("auth_provider").notNull().default("local"), // 'local' or 'procore'
+  procoreUserId: text("procore_user_id"), // Unique Procore user ID
+  procoreCompanyId: text("procore_company_id"), // Procore company ID
+
+  // Metadata
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastLoginAt: timestamp("last_login_at"),
 });
 
 export type FormType = typeof formTypes.$inferSelect;

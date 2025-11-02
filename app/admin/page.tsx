@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import QRCode from "qrcode";
 import {
   DataGrid,
@@ -76,6 +77,18 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       setAuthError("Authentication failed");
+    }
+  };
+
+  const handleProcoreLogin = async () => {
+    setAuthError("");
+    try {
+      await signIn("procore", {
+        callbackUrl: "/admin",
+        redirect: true,
+      });
+    } catch (error) {
+      setAuthError("Procore authentication failed");
     }
   };
 
@@ -370,6 +383,28 @@ export default function AdminDashboard() {
               Superintendent Login
             </h1>
 
+            {/* Procore OAuth Login */}
+            <button
+              onClick={handleProcoreLogin}
+              className="w-full py-3 px-6 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors font-medium flex items-center justify-center gap-3 mb-6"
+            >
+              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
+              </svg>
+              Sign in with Procore
+            </button>
+
+            {/* Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Or continue with password</span>
+              </div>
+            </div>
+
+            {/* Password Login Form */}
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
