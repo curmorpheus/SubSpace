@@ -44,3 +44,6 @@ next-env.d.ts
 /playwright-report/
 /playwright/.cache/
 /playwright-data/
+
+# test files
+test-output.pdf

@@ -38,7 +38,7 @@ interface SubmissionInfo {
 }
 
 /**
- * Helper function to add images to PDF
+ * Helper function to add images to PDF - Apple aesthetic
  * Returns the new Y position after adding images
  */
 function addImagesToPDF(
@@ -50,11 +50,16 @@ function addImagesToPDF(
 ): number {
   if (!images || images.length === 0) return yPosition;
 
-  const imageWidth = 70; // Width of each image
-  const imageHeight = 50; // Height of each image
-  const imageSpacing = 10; // Space between images
+  // Apple style: Larger images with generous spacing
+  const imageWidth = 75;
+  const imageHeight = 56;
+  const imageSpacing = 15; // More breathing room between images
   const imagesPerRow = 2;
   const pageHeight = doc.internal.pageSize.getHeight();
+
+  // Apple colors
+  const GRAY_LIGHT = [142, 142, 147] as const;
+  const BLACK = [0, 0, 0] as const;
 
   let currentY = yPosition;
 
@@ -63,9 +68,9 @@ function addImagesToPDF(
     const xPosition = margin + col * (imageWidth + imageSpacing);
 
     // Check if we need a new page
-    if (currentY + imageHeight > pageHeight - 20) {
+    if (currentY + imageHeight > pageHeight - 25) {
       doc.addPage();
-      currentY = 20;
+      currentY = 25;
     }
 
     try {
@@ -74,23 +79,23 @@ function addImagesToPDF(
       // Embed base64 image directly into PDF
       doc.addImage(image.dataUrl, "JPEG", xPosition, currentY, imageWidth, imageHeight);
 
-      // Add image number label
-      doc.setFontSize(8);
+      // Apple style: Subtle image caption
+      doc.setFontSize(7);
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(100, 100, 100);
+      doc.setTextColor(...GRAY_LIGHT);
       doc.text(`Photo ${i + 1}`, xPosition, currentY + imageHeight + 4);
-      doc.setTextColor(0, 0, 0);
+      doc.setTextColor(...BLACK);
     } catch (error) {
       console.error(`Error adding image ${i + 1} to PDF:`, error);
     }
 
     // Move to next row if needed
     if (col === imagesPerRow - 1 || i === images.length - 1) {
-      currentY += imageHeight + 8;
+      currentY += imageHeight + 12; // Apple spacing
     }
   }
 
-  return currentY + 5; // Add extra spacing after images
+  return currentY + 10; // Extra breathing room after image section
 }
 
 export function generateImpalementProtectionPDF(
@@ -101,263 +106,245 @@ export function generateImpalementProtectionPDF(
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  const margin = 15;
+
+  // Apple aesthetic: Generous margins (2.5x normal)
+  const margin = 25;
   const contentWidth = pageWidth - 2 * margin;
-  let yPosition = 15;
+  let yPosition = 25;
 
-  // Helper function to add a section header with subtle styling
+  // Apple Design System: Only 2 font sizes, 2 weights
+  const TITLE_SIZE = 16;
+  const BODY_SIZE = 10;
+
+  // Apple Color Palette: Black, Gray, Orange accent
+  const BLACK = [0, 0, 0] as const;
+  const GRAY_LIGHT = [142, 142, 147] as const; // Apple system gray
+  const ORANGE = [255, 149, 0] as const; // Apple orange
+
+  // Helper function to add section header - Apple minimal style
   const addSectionHeader = (text: string, y: number): number => {
-    // Draw subtle left border accent
-    doc.setFillColor(249, 115, 22); // Orange-500
-    doc.rect(margin, y - 2, 2, 6, "F");
+    // Single hairline divider above section (no colored accents, no boxes)
+    doc.setDrawColor(...GRAY_LIGHT);
+    doc.setLineWidth(0.25);
+    doc.line(margin, y, margin + contentWidth, y);
 
-    // Add section header text
-    doc.setTextColor(31, 41, 55); // Gray-800
-    doc.setFontSize(10);
+    // Section header - simple, clean typography
+    doc.setTextColor(...BLACK);
+    doc.setFontSize(BODY_SIZE);
     doc.setFont("helvetica", "bold");
-    doc.text(text, margin + 5, y + 2);
+    doc.text(text, margin, y + 8);
 
-    // Add subtle bottom border
-    doc.setDrawColor(229, 231, 235); // Gray-200
-    doc.setLineWidth(0.5);
-    doc.line(margin, y + 5, margin + contentWidth, y + 5);
+    doc.setTextColor(...BLACK);
+    doc.setDrawColor(...BLACK);
 
-    // Reset
-    doc.setTextColor(0, 0, 0);
-    doc.setDrawColor(0, 0, 0);
-
-    return y + 8;
+    // Apple spacing: 3x normal breathing room
+    return y + 18;
   };
 
-  // Helper function to add a field with label - consistent formatting
-  const addField = (label: string, value: string, y: number, bold: boolean = false): number => {
-    // Label styling - uppercase, larger, darker for better visibility
-    doc.setFontSize(9);
-    doc.setTextColor(75, 85, 99); // Gray-600 (darker than before)
-    doc.setFont("helvetica", "bold");
+  // Helper function to add a field - extreme simplicity
+  const addField = (label: string, value: string, y: number): number => {
+    // Label: smaller, uppercase, gray
+    doc.setFontSize(8);
+    doc.setTextColor(...GRAY_LIGHT);
+    doc.setFont("helvetica", "normal");
     doc.text(label.toUpperCase(), margin, y);
 
-    // Value styling
-    doc.setTextColor(31, 41, 55); // Gray-800
-    doc.setFont("helvetica", bold ? "bold" : "normal");
-    doc.setFontSize(10);
-    const lines = doc.splitTextToSize(value, contentWidth - 3);
-    doc.text(lines, margin, y + 4.5);
+    // Value: body size, black, regular weight
+    doc.setTextColor(...BLACK);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(BODY_SIZE);
+    const lines = doc.splitTextToSize(value, contentWidth);
+    doc.text(lines, margin, y + 6);
 
-    return y + (lines.length * 4.5) + 6;
+    // Apple spacing: generous vertical rhythm
+    return y + (lines.length * 5) + 12;
   };
 
-  // Elegant Header - White background with subtle orange accent
-  // Top accent bar
-  doc.setFillColor(249, 115, 22); // Orange-500
-  doc.rect(0, 0, pageWidth, 3, "F");
+  // Apple Header: Absolute minimalism - no bars, no boxes, no borders
+  doc.setTextColor(...BLACK);
+  doc.setFontSize(TITLE_SIZE);
+  doc.setFont("helvetica", "normal"); // Regular weight, not bold
+  doc.text("Impalement Protection", margin, yPosition);
 
-  // Add subtle border at bottom of header
-  doc.setDrawColor(229, 231, 235); // Gray-200
-  doc.setLineWidth(0.5);
-  doc.line(0, 20, pageWidth, 20);
-
-  // Main title
-  doc.setTextColor(31, 41, 55); // Gray-800
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text("Impalement Protection Form", margin, 12);
-
-  // Subtitle
-  doc.setTextColor(107, 114, 128); // Gray-500
-  doc.setFontSize(8);
+  // Subtitle in gray - minimal hierarchy
+  doc.setTextColor(...GRAY_LIGHT);
+  doc.setFontSize(BODY_SIZE);
   doc.setFont("helvetica", "normal");
-  doc.text("SAFETY INSPECTION REPORT", margin, 16);
+  doc.text("Safety Inspection Report", margin, yPosition + 7);
 
   // Reset
-  doc.setTextColor(0, 0, 0);
-  doc.setDrawColor(0, 0, 0);
-  yPosition = 26;
+  doc.setTextColor(...BLACK);
+
+  // Apple spacing: Massive breathing room after header
+  yPosition = yPosition + 30;
 
   // Form Information Section
   yPosition = addSectionHeader("Form Information", yPosition);
 
-  // Two-column layout for basic info - consistent formatting
+  // Apple grid: precise two-column layout with generous gutter
   const col1X = margin;
-  const col2X = pageWidth / 2 + 5;
-  let infoY = yPosition;
+  const col2X = pageWidth / 2 + 10;
 
-  // Column 1 - Job Number
-  doc.setFontSize(9);
-  doc.setTextColor(75, 85, 99); // Gray-600 (darker)
-  doc.setFont("helvetica", "bold");
-  doc.text("JOB NUMBER", col1X, infoY);
-  doc.setTextColor(31, 41, 55); // Gray-800
-  doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.text(submissionInfo.jobNumber, col1X, infoY + 5);
-
-  // Column 2 - Inspection Date
-  doc.setFontSize(9);
-  doc.setTextColor(75, 85, 99); // Gray-600 (darker)
-  doc.setFont("helvetica", "bold");
-  doc.text("INSPECTION DATE", col2X, infoY);
-  doc.setTextColor(31, 41, 55); // Gray-800
-  doc.setFontSize(10);
+  // Row 1: Job Number and Date on same baseline - no stacking
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY_LIGHT);
   doc.setFont("helvetica", "normal");
-  doc.text(formData.date, col2X, infoY + 5);
+  doc.text("JOB NUMBER", col1X, yPosition);
+  doc.text("INSPECTION DATE", col2X, yPosition);
 
-  infoY += 10;
-
-  // Column 1 - Submitted By
-  doc.setFontSize(9);
-  doc.setTextColor(75, 85, 99); // Gray-600 (darker)
-  doc.setFont("helvetica", "bold");
-  doc.text("SUBMITTED BY", col1X, infoY);
-  doc.setTextColor(31, 41, 55); // Gray-800
-  doc.setFontSize(10);
+  doc.setTextColor(...BLACK);
+  doc.setFontSize(BODY_SIZE);
   doc.setFont("helvetica", "normal");
-  doc.text(submissionInfo.submittedBy, col1X, infoY + 5);
+  doc.text(submissionInfo.jobNumber, col1X, yPosition + 6);
+  doc.text(formData.date, col2X, yPosition + 6);
 
-  // Column 2 - Email
-  doc.setFontSize(9);
-  doc.setTextColor(75, 85, 99); // Gray-600 (darker)
-  doc.setFont("helvetica", "bold");
-  doc.text("EMAIL", col2X, infoY);
-  doc.setTextColor(31, 41, 55); // Gray-800
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text(submissionInfo.submittedByEmail, col2X, infoY + 5);
+  yPosition += 20; // Apple spacing
 
-  infoY += 10;
+  // Row 2: Submitted By and Email
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY_LIGHT);
+  doc.text("SUBMITTED BY", col1X, yPosition);
+  doc.text("EMAIL", col2X, yPosition);
 
-  // Column 1 - Company
-  doc.setFontSize(9);
-  doc.setTextColor(75, 85, 99); // Gray-600 (darker)
-  doc.setFont("helvetica", "bold");
-  doc.text("COMPANY", col1X, infoY);
-  doc.setTextColor(31, 41, 55); // Gray-800
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.text(submissionInfo.submittedByCompany, col1X, infoY + 5);
+  doc.setTextColor(...BLACK);
+  doc.setFontSize(BODY_SIZE);
+  doc.text(submissionInfo.submittedBy, col1X, yPosition + 6);
+  doc.text(submissionInfo.submittedByEmail, col2X, yPosition + 6);
 
-  yPosition = infoY + 11;
+  yPosition += 20; // Apple spacing
+
+  // Row 3: Company (full width for better readability)
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY_LIGHT);
+  doc.text("COMPANY", col1X, yPosition);
+
+  doc.setTextColor(...BLACK);
+  doc.setFontSize(BODY_SIZE);
+  doc.text(submissionInfo.submittedByCompany, col1X, yPosition + 6);
+
+  yPosition += 28; // Extra breathing room before inspections
 
   // Inspections
   formData.inspections.forEach((inspection, index) => {
-    // Check if we need a new page
-    if (yPosition > 250) {
+    // Check if we need a new page - Apple uses more generous page breaks
+    if (yPosition > 230) {
       doc.addPage();
-      yPosition = 20;
+      yPosition = 25; // Consistent top margin
     }
 
     // Inspection Header
-    yPosition = addSectionHeader(`Inspection Details #${index + 1}`, yPosition);
+    yPosition = addSectionHeader(`Inspection ${index + 1}`, yPosition);
 
-    // Time Information - consistent formatting
-    doc.setFontSize(9);
-    doc.setTextColor(75, 85, 99); // Gray-600 (darker)
-    doc.setFont("helvetica", "bold");
+    // Time Information - aligned to grid
+    doc.setFontSize(8);
+    doc.setTextColor(...GRAY_LIGHT);
+    doc.setFont("helvetica", "normal");
     doc.text("START TIME", col1X, yPosition);
     doc.text("END TIME", col2X, yPosition);
 
-    doc.setTextColor(31, 41, 55); // Gray-800
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text(inspection.startTime, col1X, yPosition + 4.5);
-    doc.text(inspection.endTime, col2X, yPosition + 4.5);
-    yPosition += 10;
+    doc.setTextColor(...BLACK);
+    doc.setFontSize(BODY_SIZE);
+    doc.text(inspection.startTime, col1X, yPosition + 6);
+    doc.text(inspection.endTime, col2X, yPosition + 6);
+    yPosition += 20;
 
-    // Location
-    yPosition = addField("Location of Inspection", inspection.location, yPosition, true);
+    // Location - full width for emphasis
+    yPosition = addField("Location", inspection.location, yPosition);
 
     // Add location photos if available
     if (inspection.locationPhotos && inspection.locationPhotos.length > 0) {
-      if (yPosition > pageHeight - 70) {
+      if (yPosition > pageHeight - 80) {
         doc.addPage();
-        yPosition = 20;
+        yPosition = 25;
       }
       yPosition = addImagesToPDF(doc, inspection.locationPhotos, yPosition, margin, pageWidth);
     }
 
     // Check for new page before hazard section
-    if (yPosition > pageHeight - 40) {
+    if (yPosition > pageHeight - 50) {
       doc.addPage();
-      yPosition = 20;
+      yPosition = 25;
     }
 
-    // Hazard Description
-    yPosition = addField("Description of Impalement Hazard Observed", inspection.hazardDescription, yPosition);
+    // Hazard Description - concise label
+    yPosition = addField("Hazard Observed", inspection.hazardDescription, yPosition);
 
     // Add hazard photos if available
     if (inspection.hazardPhotos && inspection.hazardPhotos.length > 0) {
-      if (yPosition > pageHeight - 70) {
+      if (yPosition > pageHeight - 80) {
         doc.addPage();
-        yPosition = 20;
+        yPosition = 25;
       }
       yPosition = addImagesToPDF(doc, inspection.hazardPhotos, yPosition, margin, pageWidth);
     }
 
     // Check for new page before corrective measures
-    if (yPosition > pageHeight - 40) {
+    if (yPosition > pageHeight - 50) {
       doc.addPage();
-      yPosition = 20;
+      yPosition = 25;
     }
 
-    // Corrective Measures
-    yPosition = addField("Corrective Measures Taken", inspection.correctiveMeasures, yPosition);
+    // Corrective Measures - concise label
+    yPosition = addField("Corrective Action", inspection.correctiveMeasures, yPosition);
 
     // Add corrective measures photos if available
     if (inspection.measuresPhotos && inspection.measuresPhotos.length > 0) {
-      if (yPosition > pageHeight - 70) {
+      if (yPosition > pageHeight - 80) {
         doc.addPage();
-        yPosition = 20;
+        yPosition = 25;
       }
       yPosition = addImagesToPDF(doc, inspection.measuresPhotos, yPosition, margin, pageWidth);
     }
 
     // Check for new page before employer info
-    if (yPosition > pageHeight - 25) {
+    if (yPosition > pageHeight - 35) {
       doc.addPage();
-      yPosition = 20;
+      yPosition = 25;
     }
 
     // Employer Information
-    yPosition = addField("Creating/Exposing Employer(s)", inspection.creatingEmployer, yPosition);
-    yPosition = addField("Supervisor of Creating/Exposing Employer(s)", inspection.supervisor, yPosition);
+    yPosition = addField("Employer", inspection.creatingEmployer, yPosition);
+    yPosition = addField("Supervisor", inspection.supervisor, yPosition);
 
-    yPosition += 5;
+    yPosition += 12; // Apple spacing between inspections
   });
 
   // Add signature if available
   if (formData.signature) {
     // Check if we need a new page for signature
-    if (yPosition > 220) {
+    if (yPosition > 210) {
       doc.addPage();
-      yPosition = 20;
+      yPosition = 25;
     }
 
-    doc.setFontSize(9);
-    doc.setTextColor(75, 85, 99); // Gray-600 (darker)
-    doc.setFont("helvetica", "bold");
+    yPosition += 12; // Apple spacing before signature
+
+    doc.setFontSize(8);
+    doc.setTextColor(...GRAY_LIGHT);
+    doc.setFont("helvetica", "normal");
     doc.text("INSPECTOR SIGNATURE", margin, yPosition);
-    doc.setTextColor(31, 41, 55); // Reset color
-    yPosition += 6;
+    doc.setTextColor(...BLACK);
+    yPosition += 8;
 
     try {
-      doc.addImage(formData.signature, "PNG", margin, yPosition, 60, 20);
-      yPosition += 25;
+      // Apple style: Larger, more prominent signature
+      doc.addImage(formData.signature, "PNG", margin, yPosition, 80, 24);
+      yPosition += 30;
     } catch (error) {
       console.error("Error adding signature to PDF:", error);
     }
   }
 
-  // Add footer with timestamp
+  // Apple footer: Minimal, centered, gray
   if (submissionInfo.submittedAt) {
     doc.setFontSize(8);
-    doc.setFont("helvetica", "italic");
-    doc.setTextColor(128, 128, 128);
-    // Use the submitted time string directly (already formatted as local time on device)
-    const footerText = `Submitted: ${submissionInfo.submittedAt}`;
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...GRAY_LIGHT);
+    const footerText = `Submitted ${submissionInfo.submittedAt}`;
     doc.text(
       footerText,
       pageWidth / 2,
-      doc.internal.pageSize.getHeight() - 10,
+      pageHeight - 15,
       { align: "center" }
     );
   }
