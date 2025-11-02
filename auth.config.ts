@@ -21,10 +21,29 @@ function ProcoreProvider(options: {
     type: "oauth" as const,
     authorization: {
       url: "https://login.procore.com/oauth/authorize",
-      params: { scope: "openid profile email" },
+      params: {
+        scope: "openid profile email",
+        response_type: "code"
+      },
     },
-    token: "https://login.procore.com/oauth/token",
-    userinfo: "https://api.procore.com/rest/v1.0/me",
+    token: {
+      url: "https://login.procore.com/oauth/token",
+      params: {
+        grant_type: "authorization_code"
+      }
+    },
+    userinfo: {
+      url: "https://api.procore.com/rest/v1.0/me",
+      async request({ tokens, provider }: any) {
+        const response = await fetch(provider.userinfo.url, {
+          headers: {
+            Authorization: `Bearer ${tokens.access_token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        return await response.json();
+      }
+    },
     profile(profile: any) {
       return {
         id: profile.id.toString(),
@@ -36,6 +55,10 @@ function ProcoreProvider(options: {
     },
     clientId: options.clientId,
     clientSecret: options.clientSecret,
+    client: {
+      token_endpoint_auth_method: "client_secret_post"
+    },
+    checks: ["state" as const],
   };
 }
 
@@ -43,8 +66,8 @@ export const authConfig: NextAuthConfig = {
   providers: [
     // Procore OAuth Provider
     ProcoreProvider({
-      clientId: process.env.PROCORE_CLIENT_ID || "",
-      clientSecret: process.env.PROCORE_CLIENT_SECRET || "",
+      clientId: process.env.PROCORE_CLIENT_ID!,
+      clientSecret: process.env.PROCORE_CLIENT_SECRET!,
     }),
 
     // Password-based authentication (fallback)
