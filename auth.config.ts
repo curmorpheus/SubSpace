@@ -22,7 +22,6 @@ function ProcoreProvider(options: {
     authorization: {
       url: "https://login.procore.com/oauth/authorize",
       params: {
-        scope: "openid profile email",
         response_type: "code"
       },
     },
