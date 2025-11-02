@@ -372,16 +372,32 @@ function ImpalementProtectionFormContent() {
 
       for (let i = 0; i < formData.inspections.length; i++) {
         const inspection = formData.inspections[i];
-        const correctiveMeasuresRequired = !inspection.noHazardsObserved;
-        const employerFieldsRequired = !inspection.noHazardsObserved;
+        const hazardsPresent = !inspection.noHazardsObserved;
 
-        if (!inspection.startTime || !inspection.endTime || !inspection.location ||
-            !inspection.hazardDescription ||
-            (correctiveMeasuresRequired && !inspection.correctiveMeasures) ||
-            (employerFieldsRequired && !inspection.creatingEmployer) ||
-            (employerFieldsRequired && !inspection.supervisor)) {
-          setError(`Please fill in all details for Inspection #${i + 1}`);
+        // Time and location are always required
+        if (!inspection.startTime || !inspection.endTime || !inspection.location) {
+          setError(`Please fill in time and location for Inspection #${i + 1}`);
           return false;
+        }
+
+        // Only validate these fields if hazards were actually observed
+        if (hazardsPresent) {
+          if (!inspection.hazardDescription || inspection.hazardDescription.trim() === '') {
+            setError(`Please describe the hazard for Inspection #${i + 1}`);
+            return false;
+          }
+          if (!inspection.correctiveMeasures || inspection.correctiveMeasures.trim() === '') {
+            setError(`Please describe corrective measures for Inspection #${i + 1}`);
+            return false;
+          }
+          if (!inspection.creatingEmployer || inspection.creatingEmployer.trim() === '') {
+            setError(`Please provide the creating employer for Inspection #${i + 1}`);
+            return false;
+          }
+          if (!inspection.supervisor || inspection.supervisor.trim() === '') {
+            setError(`Please provide the supervisor name for Inspection #${i + 1}`);
+            return false;
+          }
         }
       }
     } else if (step === 3) {
@@ -1069,7 +1085,7 @@ function ImpalementProtectionFormContent() {
 
                         <div className="flex gap-2">
                           <textarea
-                            required
+                            {...(!inspection.noHazardsObserved && { required: true })}
                             rows={4}
                             value={inspection.hazardDescription}
                             onChange={(e) => {
@@ -1111,7 +1127,7 @@ function ImpalementProtectionFormContent() {
                         </label>
                         <div className="flex gap-2">
                           <textarea
-                            required={!inspection.noHazardsObserved}
+                            {...(!inspection.noHazardsObserved && { required: true })}
                             rows={4}
                             value={inspection.correctiveMeasures}
                             onChange={(e) => {
@@ -1153,11 +1169,12 @@ function ImpalementProtectionFormContent() {
                         </label>
                         <input
                           type="text"
-                          required={!inspection.noHazardsObserved}
+                          {...(!inspection.noHazardsObserved && { required: true })}
                           value={inspection.creatingEmployer}
                           onChange={(e) => updateInspection(inspection.id, 'creatingEmployer', e.target.value)}
                           placeholder="Company name(s)"
-                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                          disabled={inspection.noHazardsObserved}
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
                         />
                       </div>
 
@@ -1171,11 +1188,12 @@ function ImpalementProtectionFormContent() {
                         </label>
                         <input
                           type="text"
-                          required={!inspection.noHazardsObserved}
+                          {...(!inspection.noHazardsObserved && { required: true })}
                           value={inspection.supervisor}
                           onChange={(e) => updateInspection(inspection.id, 'supervisor', e.target.value)}
                           placeholder="Supervisor name"
-                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                          disabled={inspection.noHazardsObserved}
+                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
                         />
                       </div>
                     </div>
