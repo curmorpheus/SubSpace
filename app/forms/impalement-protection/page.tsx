@@ -552,7 +552,7 @@ function ImpalementProtectionFormContent() {
         emailOptions: {
           recipientEmail: emailOptions.recipientEmail,
           ccEmails: emailOptions.ccEmails,
-          emailSubject: emailOptions.emailSubject || `Impalement Protection Form - Job #${formData.jobNumber}`,
+          emailSubject: emailOptions.emailSubject || `Impalement Inspection - ${formData.jobNumber} - ${formData.submittedBy.split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}`,
         },
       };
 
@@ -1220,7 +1220,7 @@ function ImpalementProtectionFormContent() {
                         type="text"
                         value={emailOptions.emailSubject}
                         onChange={(e) => setEmailOptions({ ...emailOptions, emailSubject: e.target.value })}
-                        placeholder={`Impalement Protection Form - Job #${formData.jobNumber || '...'}`}
+                        placeholder={`Impalement Inspection - ${formData.jobNumber || '...'} - ${formData.submittedBy || 'Your Name'}`}
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-gray-900"
                       />
                     </div>
