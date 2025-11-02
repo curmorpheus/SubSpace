@@ -83,7 +83,7 @@ export const authConfig: NextAuthConfig = {
       },
       async authorize(credentials) {
         const parsedCredentials = z
-          .object({ email: z.string().email(), password: z.string().min(6) })
+          .object({ email: z.string(), password: z.string().min(1) })
           .safeParse(credentials);
 
         if (!parsedCredentials.success) {
@@ -92,7 +92,21 @@ export const authConfig: NextAuthConfig = {
 
         const { email, password } = parsedCredentials.data;
 
-        // Find user in database
+        // Check for admin password authentication (no email required)
+        if (email === "admin@subspace.local") {
+          const adminPassword = process.env.ADMIN_PASSWORD;
+          if (adminPassword && password === adminPassword) {
+            return {
+              id: "admin",
+              email: "admin@subspace.local",
+              name: "Admin",
+              authProvider: "local",
+            };
+          }
+          return null;
+        }
+
+        // Find superintendent user in database
         const user = await db
           .select()
           .from(superintendents)

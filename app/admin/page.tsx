@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import QRCode from "qrcode";
 import {
   DataGrid,
@@ -27,7 +27,7 @@ interface FormSubmission {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { data: session, status } = useSession();
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
@@ -58,22 +58,17 @@ export default function AdminDashboard() {
     setAuthError("");
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ password }),
-        credentials: "include", // Important for cookies
+      const result = await signIn("credentials", {
+        email: "admin@subspace.local", // Dummy email for password-only auth
+        password,
+        redirect: false,
       });
 
-      if (response.ok) {
-        setIsAuthenticated(true);
+      if (result?.ok) {
         setPassword(""); // Clear password from state
-        fetchSubmissions();
+        // Session will update automatically, triggering useEffect
       } else {
-        const data = await response.json();
-        setAuthError(data.error || "Invalid password");
+        setAuthError(result?.error || "Invalid password");
       }
     } catch (error) {
       setAuthError("Authentication failed");
@@ -103,8 +98,7 @@ export default function AdminDashboard() {
         const data = await response.json();
         setSubmissions(data.submissions);
       } else {
-        // If unauthorized, redirect to login
-        setIsAuthenticated(false);
+        console.error("Failed to fetch submissions:", response.status);
       }
     } catch (error) {
       console.error("Error fetching submissions:", error);
@@ -114,38 +108,15 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    // Check if user is already authenticated
-    const checkAuth = async () => {
-      try {
-        const response = await fetch("/api/auth/verify", {
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          setIsAuthenticated(true);
-          fetchSubmissions();
-        }
-      } catch (error) {
-        console.error("Auth check failed:", error);
-      }
-    };
-
-    checkAuth();
-  }, []);
+    // Fetch submissions when authenticated
+    if (status === "authenticated") {
+      fetchSubmissions();
+    }
+  }, [status]);
 
   const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-
-    setIsAuthenticated(false);
-    setPassword("");
     setSubmissions([]);
+    await signOut({ redirect: false });
   };
 
   const filteredSubmissions = submissions.filter(
@@ -374,7 +345,17 @@ export default function AdminDashboard() {
     }
   };
 
-  if (!isAuthenticated) {
+  // Show loading while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-100 flex items-center justify-center">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show login form if not authenticated
+  if (status === "unauthenticated") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-gray-100 py-12 px-4">
         <div className="max-w-md mx-auto">
