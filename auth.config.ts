@@ -55,7 +55,7 @@ function ProcoreProvider(options: {
     clientId: options.clientId,
     clientSecret: options.clientSecret,
     client: {
-      token_endpoint_auth_method: "client_secret_post"
+      token_endpoint_auth_method: "client_secret_basic"
     },
     checks: ["state" as const],
   };
