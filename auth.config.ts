@@ -19,30 +19,9 @@ function ProcoreProvider(options: {
     id: "procore",
     name: "Procore",
     type: "oauth" as const,
-    authorization: {
-      url: "https://login.procore.com/oauth/authorize",
-      params: {
-        response_type: "code"
-      },
-    },
-    token: {
-      url: "https://login.procore.com/oauth/token",
-      params: {
-        grant_type: "authorization_code"
-      }
-    },
-    userinfo: {
-      url: "https://api.procore.com/rest/v1.0/me",
-      async request({ tokens, provider }: any) {
-        const response = await fetch(provider.userinfo.url, {
-          headers: {
-            Authorization: `Bearer ${tokens.access_token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        return await response.json();
-      }
-    },
+    authorization: "https://login.procore.com/oauth/authorize",
+    token: "https://login.procore.com/oauth/token",
+    userinfo: "https://api.procore.com/rest/v1.0/me",
     profile(profile: any) {
       return {
         id: profile.id.toString(),
@@ -54,10 +33,6 @@ function ProcoreProvider(options: {
     },
     clientId: options.clientId,
     clientSecret: options.clientSecret,
-    client: {
-      token_endpoint_auth_method: "client_secret_basic"
-    },
-    checks: ["state" as const],
   };
 }
 
