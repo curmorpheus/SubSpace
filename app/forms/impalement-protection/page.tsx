@@ -6,6 +6,7 @@ import DatePicker from "@/components/DatePicker";
 import TimePicker from "@/components/TimePicker";
 import ImageUpload from "@/components/ImageUpload";
 import SignaturePad, { SignaturePadRef } from "@/components/SignaturePad";
+import VoiceInputButton from "@/components/VoiceInputButton";
 import type { CompressedImage } from "@/lib/image-compression";
 import {
   queueSubmission,
@@ -660,6 +661,36 @@ function ImpalementProtectionFormContent() {
           </div>
         </div>
 
+        {/* Voice Input Indicator - Mobile Only */}
+        <div className="md:hidden bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-lg p-4 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0">
+              <svg
+                className="w-5 h-5 text-orange-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
+                />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900">
+                Voice input available
+              </p>
+              <p className="text-xs text-gray-600 mt-0.5">
+                Use your device&apos;s microphone to fill out text fields
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Offline Mode Indicator */}
         {!isOnline && (
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-5 mb-6">
@@ -906,14 +937,20 @@ function ImpalementProtectionFormContent() {
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                           Location of Inspection <span className="text-red-500">*</span>
                         </label>
-                        <input
-                          type="text"
-                          required
-                          value={inspection.location}
-                          onChange={(e) => updateInspection(inspection.id, 'location', e.target.value)}
-                          placeholder="e.g., Building A, 3rd Floor, North Wing"
-                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
-                        />
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            required
+                            value={inspection.location}
+                            onChange={(e) => updateInspection(inspection.id, 'location', e.target.value)}
+                            placeholder="e.g., Building A, 3rd Floor, North Wing"
+                            className="flex-1 px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
+                          />
+                          <VoiceInputButton
+                            currentValue={inspection.location}
+                            onTranscript={(text) => updateInspection(inspection.id, 'location', text)}
+                          />
+                        </div>
 
                         <div className="mt-3">
                           <ImageUpload
@@ -959,20 +996,28 @@ function ImpalementProtectionFormContent() {
                           </label>
                         </div>
 
-                        <textarea
-                          required
-                          rows={4}
-                          value={inspection.hazardDescription}
-                          onChange={(e) => {
-                            updateInspection(inspection.id, 'hazardDescription', e.target.value);
-                            if (inspection.noHazardsObserved) {
-                              updateInspection(inspection.id, 'noHazardsObserved', false);
-                            }
-                          }}
-                          placeholder="Describe the hazard in detail..."
-                          disabled={inspection.noHazardsObserved}
-                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
-                        />
+                        <div className="flex gap-2">
+                          <textarea
+                            required
+                            rows={4}
+                            value={inspection.hazardDescription}
+                            onChange={(e) => {
+                              updateInspection(inspection.id, 'hazardDescription', e.target.value);
+                              if (inspection.noHazardsObserved) {
+                                updateInspection(inspection.id, 'noHazardsObserved', false);
+                              }
+                            }}
+                            placeholder="Describe the hazard in detail..."
+                            disabled={inspection.noHazardsObserved}
+                            className="flex-1 px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
+                          />
+                          {!inspection.noHazardsObserved && (
+                            <VoiceInputButton
+                              currentValue={inspection.hazardDescription}
+                              onTranscript={(text) => updateInspection(inspection.id, 'hazardDescription', text)}
+                            />
+                          )}
+                        </div>
 
                         <div className="mt-3">
                           <ImageUpload
@@ -993,20 +1038,28 @@ function ImpalementProtectionFormContent() {
                             <span className="text-red-500">*</span>
                           )}
                         </label>
-                        <textarea
-                          required={!inspection.noHazardsObserved}
-                          rows={4}
-                          value={inspection.correctiveMeasures}
-                          onChange={(e) => {
-                            updateInspection(inspection.id, 'correctiveMeasures', e.target.value);
-                            if (inspection.noHazardsObserved && e.target.value !== "N/A - No hazards present") {
-                              updateInspection(inspection.id, 'noHazardsObserved', false);
-                            }
-                          }}
-                          placeholder="Describe what actions were taken to address the hazard..."
-                          disabled={inspection.noHazardsObserved}
-                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
-                        />
+                        <div className="flex gap-2">
+                          <textarea
+                            required={!inspection.noHazardsObserved}
+                            rows={4}
+                            value={inspection.correctiveMeasures}
+                            onChange={(e) => {
+                              updateInspection(inspection.id, 'correctiveMeasures', e.target.value);
+                              if (inspection.noHazardsObserved && e.target.value !== "N/A - No hazards present") {
+                                updateInspection(inspection.id, 'noHazardsObserved', false);
+                              }
+                            }}
+                            placeholder="Describe what actions were taken to address the hazard..."
+                            disabled={inspection.noHazardsObserved}
+                            className="flex-1 px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
+                          />
+                          {!inspection.noHazardsObserved && (
+                            <VoiceInputButton
+                              currentValue={inspection.correctiveMeasures}
+                              onTranscript={(text) => updateInspection(inspection.id, 'correctiveMeasures', text)}
+                            />
+                          )}
+                        </div>
 
                         <div className="mt-3">
                           <ImageUpload
