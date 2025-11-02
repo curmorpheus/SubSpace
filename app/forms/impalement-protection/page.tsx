@@ -418,6 +418,7 @@ function ImpalementProtectionFormContent() {
     if (validateStep(currentStep)) {
       setJustNavigated(true);
       setCurrentStep(current => Math.min(current + 1, totalSteps));
+      setIsHeaderCollapsed(false); // Reset header to expanded state
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
       // Reset the flag after a short delay to prevent accidental submission
@@ -430,6 +431,7 @@ function ImpalementProtectionFormContent() {
   const handlePrevious = () => {
     setJustNavigated(true);
     setCurrentStep(current => Math.max(current - 1, 1));
+    setIsHeaderCollapsed(false); // Reset header to expanded state
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // Reset the flag after a short delay
