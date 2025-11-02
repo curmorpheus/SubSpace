@@ -77,13 +77,27 @@ export default function AdminDashboard() {
 
   const handleProcoreLogin = async () => {
     setAuthError("");
+    console.log("[Client] Starting Procore sign-in...");
     try {
-      await signIn("procore", {
+      const result = await signIn("procore", {
         callbackUrl: "/admin",
-        redirect: true,
+        redirect: false,
       });
+      console.log("[Client] Procore sign-in result:", result);
+
+      if (result?.error) {
+        console.error("[Client] Procore sign-in error:", result.error);
+        setAuthError(`Procore authentication failed: ${result.error}`);
+      } else if (result?.ok) {
+        console.log("[Client] Procore sign-in successful, redirecting...");
+        window.location.href = "/admin";
+      } else if (result?.url) {
+        console.log("[Client] Redirecting to:", result.url);
+        window.location.href = result.url;
+      }
     } catch (error) {
-      setAuthError("Procore authentication failed");
+      console.error("[Client] Procore authentication exception:", error);
+      setAuthError(`Procore authentication failed: ${error}`);
     }
   };
 
