@@ -26,15 +26,40 @@ function ProcoreProvider(options: {
       },
     },
     token: "https://login.procore.com/oauth/token",
-    userinfo: "https://api.procore.com/rest/v1.0/me",
+    userinfo: {
+      url: "https://api.procore.com/rest/v1.0/me",
+      async request({ tokens }: any) {
+        const response = await fetch("https://api.procore.com/rest/v1.0/me", {
+          headers: {
+            Authorization: `Bearer ${tokens.access_token}`,
+          },
+        });
+
+        if (!response.ok) {
+          console.error("[Procore OAuth] Userinfo request failed:", response.status, response.statusText);
+          const text = await response.text();
+          console.error("[Procore OAuth] Response body:", text);
+          throw new Error(`Failed to fetch user info: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log("[Procore OAuth] Userinfo response:", JSON.stringify(data, null, 2));
+        return data;
+      },
+    },
     profile(profile: any) {
-      return {
-        id: profile.id.toString(),
-        name: profile.name || `${profile.first_name} ${profile.last_name}`,
-        email: profile.login || profile.email,
-        procoreUserId: profile.id.toString(),
+      console.log("[Procore OAuth] Profile function called with:", JSON.stringify(profile, null, 2));
+
+      const result = {
+        id: profile.id?.toString() || "",
+        name: profile.name || `${profile.first_name || ""} ${profile.last_name || ""}`.trim(),
+        email: profile.login || profile.email || "",
+        procoreUserId: profile.id?.toString(),
         procoreCompanyId: profile.company?.id?.toString(),
       };
+
+      console.log("[Procore OAuth] Profile function returning:", JSON.stringify(result, null, 2));
+      return result;
     },
     clientId: options.clientId,
     clientSecret: options.clientSecret,
