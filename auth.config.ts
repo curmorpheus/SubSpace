@@ -229,9 +229,15 @@ export const authConfig: NextAuthConfig = {
         token.id = user.id;
         token.authProvider = (user as any).authProvider;
       }
-      // Store Procore access token for API calls
-      if (account?.provider === "procore" && account.access_token) {
-        token.procoreAccessToken = account.access_token;
+      // Set authProvider based on OAuth provider
+      if (account?.provider === "procore") {
+        token.authProvider = "procore";
+        // Store Procore access token for API calls
+        if (account.access_token) {
+          token.procoreAccessToken = account.access_token;
+        }
+      } else if (account?.provider === "credentials") {
+        token.authProvider = "local";
       }
       return token;
     },
