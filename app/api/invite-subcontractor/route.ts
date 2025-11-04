@@ -36,6 +36,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Get superintendent name from session
+    const superintendentName = session.user?.name || "Your Superintendent";
+
     // Generate the form URL with pre-filled subcontractor info
     const formUrl = new URL("/forms/impalement-protection", req.nextUrl.origin);
     formUrl.searchParams.set("name", subcontractorName);
@@ -86,43 +89,27 @@ export async function POST(req: NextRequest) {
                 Hello <strong>${subcontractorName}</strong>,
               </p>
 
-              ${
-                personalNote
-                  ? `
-              <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
-                <p style="margin: 0; font-size: 15px; color: #78350f; line-height: 1.6;">
-                  ${personalNote.replace(/\n/g, "<br>")}
-                </p>
-              </div>
-              `
-                  : ""
-              }
-
               <p style="margin: 0 0 20px; font-size: 16px; color: #374151; line-height: 1.6;">
                 We're inviting <strong>${subcontractorCompany}</strong> to participate in our <strong>Impalement Protection Safety Program</strong>.
                 Your participation helps us maintain the highest safety standards on our job sites.
               </p>
 
-              <div style="background-color: #f0fdf4; border-radius: 8px; padding: 20px; margin: 24px 0;">
-                <h2 style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: #166534;">
-                  📋 What's This About?
-                </h2>
-                <p style="margin: 0; font-size: 15px; color: #166534; line-height: 1.6;">
-                  The Impalement Protection Form helps us identify and correct hazards related to exposed rebar, stakes,
-                  and other sharp objects on construction sites. It's quick, easy, and can be completed right from your phone.
+              ${
+                personalNote
+                  ? `
+              <div style="margin-bottom: 24px;">
+                <p style="margin: 0 0 8px; font-size: 14px; font-weight: 600; color: #6b7280;">
+                  Message from ${superintendentName}
                 </p>
+                <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 4px;">
+                  <p style="margin: 0; font-size: 15px; color: #78350f; line-height: 1.6;">
+                    ${personalNote.replace(/\n/g, "<br>")}
+                  </p>
+                </div>
               </div>
-
-              <h2 style="margin: 24px 0 12px; font-size: 18px; font-weight: 600; color: #1f2937;">
-                ✅ Getting Started
-              </h2>
-              <ul style="margin: 0 0 24px; padding-left: 24px; font-size: 15px; color: #374151; line-height: 1.8;">
-                <li>Click the button below to access the form</li>
-                <li>Your information is pre-filled for convenience</li>
-                <li>Complete inspections as needed on site</li>
-                <li>Submit forms with photos and details</li>
-                <li>Reports are automatically emailed to the superintendent</li>
-              </ul>
+              `
+                  : ""
+              }
 
               <!-- CTA Button -->
               <table width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
@@ -135,12 +122,6 @@ export async function POST(req: NextRequest) {
                   </td>
                 </tr>
               </table>
-
-              <div style="background-color: #eff6ff; border-radius: 8px; padding: 16px; margin: 24px 0;">
-                <p style="margin: 0; font-size: 14px; color: #1e40af; line-height: 1.6;">
-                  <strong>💡 Pro Tip:</strong> Bookmark this link for quick access, or save it to your phone's home screen for easy one-tap access.
-                </p>
-              </div>
             </td>
           </tr>
 
@@ -157,21 +138,10 @@ export async function POST(req: NextRequest) {
     const textContent = `
 Hello ${subcontractorName},
 
-${personalNote ? `${personalNote}\n\n` : ""}
-
 We're inviting ${subcontractorCompany} to participate in our Impalement Protection Safety Program. Your participation helps us maintain the highest safety standards on our job sites.
 
-WHAT'S THIS ABOUT?
-The Impalement Protection Form helps us identify and correct hazards related to exposed rebar, stakes, and other sharp objects on construction sites. It's quick, easy, and can be completed right from your phone.
-
-GETTING STARTED:
-- Access the form using this link: ${formUrl.toString()}
-- Your information is pre-filled for convenience
-- Complete inspections as needed on site
-- Submit forms with photos and details
-- Reports are automatically emailed to the superintendent
-
-PRO TIP: Bookmark this link for quick access, or save it to your phone's home screen for easy one-tap access.
+${personalNote ? `Message from ${superintendentName}\n${personalNote}\n\n` : ""}
+Access the form using this link: ${formUrl.toString()}
     `;
 
     // Send the email using Resend
