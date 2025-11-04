@@ -177,15 +177,21 @@ export const authConfig: NextAuthConfig = {
           const email = user.email || "";
           const name = user.name || "";
 
-          console.log("[Procore OAuth] Extracted - ID:", procoreUserId, "Email:", email, "Name:", name);
+          console.log("[Procore OAuth] Extracted - ID:", procoreUserId, "Email:", email, "Name:", name, "Company:", procoreCompanyId);
 
           if (!email) {
             console.error("[Procore OAuth] Email is required but missing");
             return false;
           }
 
-          // Allow sign-in even without procoreUserId - we'll store it if available
-          console.log("[Procore OAuth] Email found, proceeding with sign-in");
+          // Restrict access to specific Procore company only
+          const ALLOWED_COMPANY_ID = "562949953430360";
+          if (procoreCompanyId !== ALLOWED_COMPANY_ID) {
+            console.error("[Procore OAuth] Access denied - Company ID mismatch. User company:", procoreCompanyId, "Required:", ALLOWED_COMPANY_ID);
+            return false;
+          }
+
+          console.log("[Procore OAuth] Company ID verified, proceeding with sign-in");
 
           // Check if user exists
           const existingUser = await db

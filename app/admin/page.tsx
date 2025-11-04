@@ -662,25 +662,32 @@ export default function AdminDashboard() {
                           </span>
                         )}
                       </label>
-                      <input
-                        type="text"
-                        list="procore-projects-qr"
-                        value={qrJobNumber}
-                        onChange={(e) => setQrJobNumber(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && generateQRCode()}
-                        placeholder={procoreProjects.length > 0 ? "Select or type a job number" : "e.g., 2025-001"}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 font-medium"
-                      />
-                      <datalist id="procore-projects-qr">
-                        {procoreProjects.map((project) => (
-                          <option
-                            key={project.id}
-                            value={project.project_number || project.name}
-                          >
-                            {project.name} {project.company_name && `- ${project.company_name}`}
-                          </option>
-                        ))}
-                      </datalist>
+                      {procoreProjects.length > 0 ? (
+                        <select
+                          value={qrJobNumber}
+                          onChange={(e) => setQrJobNumber(e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 font-medium bg-white"
+                        >
+                          <option value="">Select a project...</option>
+                          {procoreProjects.map((project) => (
+                            <option
+                              key={project.id}
+                              value={project.project_number || project.name}
+                            >
+                              {project.project_number || project.name} - {project.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={qrJobNumber}
+                          onChange={(e) => setQrJobNumber(e.target.value)}
+                          onKeyPress={(e) => e.key === "Enter" && generateQRCode()}
+                          placeholder="e.g., 2025-001"
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 font-medium"
+                        />
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -823,24 +830,31 @@ export default function AdminDashboard() {
                           </span>
                         )}
                       </label>
-                      <input
-                        type="text"
-                        list="procore-projects-invite"
-                        value={inviteJobNumber}
-                        onChange={(e) => setInviteJobNumber(e.target.value)}
-                        placeholder={procoreProjects.length > 0 ? "Select or type a job number" : "e.g., 2024-001"}
-                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
-                      />
-                      <datalist id="procore-projects-invite">
-                        {procoreProjects.map((project) => (
-                          <option
-                            key={project.id}
-                            value={project.project_number || project.name}
-                          >
-                            {project.name} {project.company_name && `- ${project.company_name}`}
-                          </option>
-                        ))}
-                      </datalist>
+                      {procoreProjects.length > 0 ? (
+                        <select
+                          value={inviteJobNumber}
+                          onChange={(e) => setInviteJobNumber(e.target.value)}
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium bg-white"
+                        >
+                          <option value="">Select a project...</option>
+                          {procoreProjects.map((project) => (
+                            <option
+                              key={project.id}
+                              value={project.project_number || project.name}
+                            >
+                              {project.project_number || project.name} - {project.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={inviteJobNumber}
+                          onChange={(e) => setInviteJobNumber(e.target.value)}
+                          placeholder="e.g., 2024-001"
+                          className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
+                        />
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
