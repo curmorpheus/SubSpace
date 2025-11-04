@@ -236,6 +236,7 @@ function ImpalementProtectionFormContent() {
       recipientEmail: cached.recipientEmail || "",
       ccEmails: "",
       emailSubject: "",
+      projectEmail: "",
     };
   });
 
@@ -260,10 +261,11 @@ function ImpalementProtectionFormContent() {
     });
   }, []);
 
-  // Read job number, superintendent email, and subcontractor info from URL parameters
+  // Read job number, superintendent email, project email, and subcontractor info from URL parameters
   useEffect(() => {
     const jobNumberParam = searchParams.get('jobNumber');
     const superintendentEmailParam = searchParams.get('superintendentEmail');
+    const projectEmailParam = searchParams.get('projectEmail');
     const nameParam = searchParams.get('name');
     const emailParam = searchParams.get('email');
     const companyParam = searchParams.get('company');
@@ -298,9 +300,16 @@ function ImpalementProtectionFormContent() {
     }
 
     if (superintendentEmailParam) {
-      setFormData(prev => ({
+      setEmailOptions(prev => ({
         ...prev,
         recipientEmail: superintendentEmailParam,
+      }));
+    }
+
+    if (projectEmailParam) {
+      setEmailOptions(prev => ({
+        ...prev,
+        projectEmail: projectEmailParam,
       }));
     }
   }, [searchParams]);
@@ -553,6 +562,7 @@ function ImpalementProtectionFormContent() {
           recipientEmail: emailOptions.recipientEmail,
           ccEmails: emailOptions.ccEmails,
           emailSubject: emailOptions.emailSubject || `Impalement Inspection - ${formData.jobNumber} - ${formData.submittedBy.split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}`,
+          projectEmail: emailOptions.projectEmail,
         },
       };
 
