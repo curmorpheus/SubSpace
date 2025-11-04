@@ -500,6 +500,7 @@ function ImpalementProtectionFormContent() {
       recipientEmail: "curt.mills@deacon.com",
       ccEmails: "",
       emailSubject: "TEST - Impalement Protection Form - Job #TEST-2025-001",
+      projectEmail: "",
     });
     setCurrentStep(3);
     alert("Form autofilled with test data! Click 'Submit & Email Form' to test.");
