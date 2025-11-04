@@ -434,9 +434,16 @@ export async function POST(request: NextRequest) {
           emailPayload.cc = ccEmails;
         }
 
+        // Add project email to BCC if provided
+        if (emailOptions.projectEmail) {
+          emailPayload.bcc = [emailOptions.projectEmail];
+        }
+
         console.log("Email payload (without html/attachments):", {
           from: emailPayload.from,
           to: emailPayload.to,
+          cc: emailPayload.cc,
+          bcc: emailPayload.bcc,
           subject: emailPayload.subject,
         });
 

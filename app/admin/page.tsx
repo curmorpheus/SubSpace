@@ -31,6 +31,7 @@ interface ProcoreProject {
   project_number?: string;
   display_name?: string;
   company_name?: string;
+  origin_data?: string;
 }
 
 export default function AdminDashboard() {
@@ -50,6 +51,7 @@ export default function AdminDashboard() {
   // QR Code Generator state
   const [qrJobNumber, setQrJobNumber] = useState("");
   const [qrSuperintendentEmail, setQrSuperintendentEmail] = useState("");
+  const [qrProjectEmail, setQrProjectEmail] = useState("");
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("");
   const [showQrGenerator, setShowQrGenerator] = useState(false);
 
@@ -59,6 +61,7 @@ export default function AdminDashboard() {
   const [inviteSubEmail, setInviteSubEmail] = useState("");
   const [inviteSubCompany, setInviteSubCompany] = useState("");
   const [inviteJobNumber, setInviteJobNumber] = useState("");
+  const [inviteProjectEmail, setInviteProjectEmail] = useState("");
   const [inviteSuperintendentEmail, setInviteSuperintendentEmail] = useState("");
   const [invitePersonalNote, setInvitePersonalNote] = useState("");
   const [inviteSending, setInviteSending] = useState(false);
@@ -246,9 +249,14 @@ export default function AdminDashboard() {
       const params = new URLSearchParams();
       params.append("jobNumber", qrJobNumber);
 
-      // Add email parameter if provided
+      // Add email parameters if provided
       if (qrSuperintendentEmail.trim()) {
         params.append("superintendentEmail", qrSuperintendentEmail.trim());
+      }
+
+      // Add project email if available
+      if (qrProjectEmail.trim()) {
+        params.append("projectEmail", qrProjectEmail.trim());
       }
 
       const formUrl = `${window.location.origin}/forms/impalement-protection?${params.toString()}`;
@@ -302,6 +310,7 @@ export default function AdminDashboard() {
           subcontractorCompany: inviteSubCompany,
           jobNumber: inviteJobNumber,
           superintendentEmail: inviteSuperintendentEmail,
+          projectEmail: inviteProjectEmail,
           personalNote: invitePersonalNote,
         }),
       });
@@ -665,7 +674,13 @@ export default function AdminDashboard() {
                       {procoreProjects.length > 0 ? (
                         <select
                           value={qrJobNumber}
-                          onChange={(e) => setQrJobNumber(e.target.value)}
+                          onChange={(e) => {
+                            const selectedProject = procoreProjects.find(
+                              p => (p.project_number || p.name) === e.target.value
+                            );
+                            setQrJobNumber(e.target.value);
+                            setQrProjectEmail(selectedProject?.origin_data || "");
+                          }}
                           className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 font-medium bg-white"
                         >
                           <option value="">Select a project...</option>
@@ -833,7 +848,13 @@ export default function AdminDashboard() {
                       {procoreProjects.length > 0 ? (
                         <select
                           value={inviteJobNumber}
-                          onChange={(e) => setInviteJobNumber(e.target.value)}
+                          onChange={(e) => {
+                            const selectedProject = procoreProjects.find(
+                              p => (p.project_number || p.name) === e.target.value
+                            );
+                            setInviteJobNumber(e.target.value);
+                            setInviteProjectEmail(selectedProject?.origin_data || "");
+                          }}
                           className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium bg-white"
                         >
                           <option value="">Select a project...</option>

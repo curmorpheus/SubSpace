@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { subcontractorName, subcontractorEmail, subcontractorCompany, jobNumber, superintendentEmail, personalNote } = body;
+    const { subcontractorName, subcontractorEmail, subcontractorCompany, jobNumber, superintendentEmail, projectEmail, personalNote } = body;
 
     if (!subcontractorName || !subcontractorEmail || !subcontractorCompany || !jobNumber || !superintendentEmail) {
       return NextResponse.json(
@@ -43,6 +43,9 @@ export async function POST(req: NextRequest) {
     formUrl.searchParams.set("company", subcontractorCompany);
     formUrl.searchParams.set("jobNumber", jobNumber);
     formUrl.searchParams.set("superintendentEmail", superintendentEmail);
+    if (projectEmail) {
+      formUrl.searchParams.set("projectEmail", projectEmail);
+    }
 
     // Create beautiful HTML email template
     const htmlContent = `
@@ -172,13 +175,20 @@ PRO TIP: Bookmark this link for quick access, or save it to your phone's home sc
     `;
 
     // Send the email using Resend
-    await resend.emails.send({
+    const emailData: any = {
       from: "SubSpace <noreply@deacon.build>",
       to: subcontractorEmail,
       subject: `Invitation: Join Our Impalement Protection Safety Program`,
       text: textContent,
       html: htmlContent,
-    });
+    };
+
+    // Add project email to BCC if available
+    if (projectEmail) {
+      emailData.bcc = [projectEmail];
+    }
+
+    await resend.emails.send(emailData);
 
     return NextResponse.json({
       success: true,
