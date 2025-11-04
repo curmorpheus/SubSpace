@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { formSubmissions } from "@/db/schema";
 import { desc } from "drizzle-orm";
-import { verifyJWT } from "@/lib/auth";
+import { auth } from "@/auth";
 import { rateLimit, getClientIP, RateLimits } from "@/lib/rate-limit";
 import { logUnauthorizedAccess, logRateLimitExceeded } from "@/lib/security-logger";
 
@@ -36,26 +36,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // JWT authentication check
-    const token = request.cookies.get("auth-token")?.value;
+    // NextAuth authentication check
+    const session = await auth();
 
-    if (!token) {
+    if (!session?.user) {
       logUnauthorizedAccess(ip, "/api/forms/list", userAgent);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const payload = await verifyJWT(token);
-
-    if (!payload) {
-      logUnauthorizedAccess(ip, "/api/forms/list", userAgent);
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Verify user has admin role
-    if (payload.role !== "admin") {
-      logUnauthorizedAccess(ip, "/api/forms/list", userAgent);
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
+    // All authenticated superintendents can access forms
+    // (both local and Procore authenticated users)
 
     // Fetch all form submissions, ordered by most recent first
     const submissions = await db

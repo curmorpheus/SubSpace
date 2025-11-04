@@ -25,6 +25,14 @@ interface FormSubmission {
   submittedAt: string;
 }
 
+interface ProcoreProject {
+  id: number;
+  name: string;
+  project_number?: string;
+  display_name?: string;
+  company_name?: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -34,6 +42,10 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubmission, setSelectedSubmission] = useState<FormSubmission | null>(null);
+
+  // Procore integration
+  const [procoreProjects, setProcoreProjects] = useState<ProcoreProject[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(false);
 
   // QR Code Generator state
   const [qrJobNumber, setQrJobNumber] = useState("");
@@ -106,12 +118,43 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchProcoreProjects = async () => {
+    if ((session?.user as any)?.authProvider !== "procore") {
+      return; // Only fetch for Procore users
+    }
+
+    setLoadingProjects(true);
+    try {
+      const response = await fetch("/api/procore/projects", {
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProcoreProjects(data.projects || []);
+      } else {
+        console.error("Failed to fetch Procore projects:", response.status);
+      }
+    } catch (error) {
+      console.error("Error fetching Procore projects:", error);
+    } finally {
+      setLoadingProjects(false);
+    }
+  };
+
   useEffect(() => {
     // Fetch submissions when authenticated
     if (status === "authenticated") {
       fetchSubmissions();
+      fetchProcoreProjects();
+
+      // Pre-populate superintendent email from session
+      if (session?.user?.email) {
+        setQrSuperintendentEmail(session.user.email);
+        setInviteSuperintendentEmail(session.user.email);
+      }
     }
-  }, [status]);
+  }, [status, session]);
 
   const handleLogout = async () => {
     setSubmissions([]);
@@ -526,20 +569,63 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm print:hidden">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex justify-between items-center">
+            {/* Left: Logo */}
+            <div className="flex items-center gap-2">
+              <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1.5 rounded-md font-black tracking-wider text-sm">
+                SUBSPACE
+              </div>
+              <span className="text-gray-400 text-sm hidden sm:inline">by DEACON</span>
+            </div>
+
+            {/* Right: User Profile */}
+            <div className="flex items-center gap-4">
+              <div className="hidden md:flex flex-col items-end">
+                <span className="text-sm font-semibold text-gray-900">
+                  {session?.user?.name || session?.user?.email}
+                </span>
+                <span className="text-xs text-gray-500">
+                  {(session?.user as any)?.authProvider === "procore" ? "Procore Account" : "Local Account"}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* User Initials Circle */}
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                  {session?.user?.name
+                    ? session.user.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)
+                    : session?.user?.email?.[0].toUpperCase() || "U"}
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Regular dashboard view */}
       <div className="min-h-screen bg-gray-50 py-8 px-4 print:hidden">
         <div className="max-w-7xl mx-auto">
           <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
-            <div className="flex justify-between items-center mb-6">
+            <div className="mb-6">
               <h1 className="text-3xl font-bold text-gray-900">
                 Superintendent Dashboard
               </h1>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                Logout
-              </button>
+              <p className="text-sm text-gray-600 mt-1">
+                Manage safety forms, QR codes, and subcontractor invitations
+              </p>
             </div>
 
           {/* QR Code Generator Section */}
@@ -561,23 +647,47 @@ export default function AdminDashboard() {
             {showQrGenerator && (
               <div className="p-6 bg-orange-50">
                 <div className="max-w-2xl mx-auto">
+                  {loadingProjects && (
+                    <div className="mb-4 text-center text-sm text-gray-600">
+                      Loading your Procore projects...
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Job Number *
+                        {procoreProjects.length > 0 && (
+                          <span className="ml-2 text-xs font-normal text-gray-500">
+                            ({procoreProjects.length} projects from Procore)
+                          </span>
+                        )}
                       </label>
                       <input
                         type="text"
+                        list="procore-projects-qr"
                         value={qrJobNumber}
                         onChange={(e) => setQrJobNumber(e.target.value)}
                         onKeyPress={(e) => e.key === "Enter" && generateQRCode()}
-                        placeholder="e.g., 2025-001"
+                        placeholder={procoreProjects.length > 0 ? "Select or type a job number" : "e.g., 2025-001"}
                         className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 font-medium"
                       />
+                      <datalist id="procore-projects-qr">
+                        {procoreProjects.map((project) => (
+                          <option
+                            key={project.id}
+                            value={project.project_number || project.name}
+                          >
+                            {project.name} {project.company_name && `- ${project.company_name}`}
+                          </option>
+                        ))}
+                      </datalist>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Your Email (Optional)
+                        Your Email
+                        {session?.user?.email && (
+                          <span className="ml-2 text-xs font-normal text-gray-500">(Pre-filled)</span>
+                        )}
                       </label>
                       <input
                         type="email"
@@ -707,18 +817,37 @@ export default function AdminDashboard() {
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Job Number *
+                        {procoreProjects.length > 0 && (
+                          <span className="ml-2 text-xs font-normal text-gray-500">
+                            ({procoreProjects.length} projects from Procore)
+                          </span>
+                        )}
                       </label>
                       <input
                         type="text"
+                        list="procore-projects-invite"
                         value={inviteJobNumber}
                         onChange={(e) => setInviteJobNumber(e.target.value)}
-                        placeholder="e.g., 2024-001"
+                        placeholder={procoreProjects.length > 0 ? "Select or type a job number" : "e.g., 2024-001"}
                         className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 font-medium"
                       />
+                      <datalist id="procore-projects-invite">
+                        {procoreProjects.map((project) => (
+                          <option
+                            key={project.id}
+                            value={project.project_number || project.name}
+                          >
+                            {project.name} {project.company_name && `- ${project.company_name}`}
+                          </option>
+                        ))}
+                      </datalist>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Your Email (for receiving forms) *
+                        Your Email (for receiving forms)
+                        {session?.user?.email && (
+                          <span className="ml-2 text-xs font-normal text-gray-500">(Pre-filled)</span>
+                        )}
                       </label>
                       <input
                         type="email"

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
-import { verifyJWT } from "@/lib/auth";
+import { auth } from "@/auth";
 
 const resend = new Resend(process.env.RESEND_API_KEY!);
 
@@ -19,16 +19,10 @@ export async function OPTIONS() {
 
 export async function POST(req: NextRequest) {
   try {
-    // Check JWT authentication
-    const token = req.cookies.get("auth-token")?.value;
+    // Check NextAuth authentication
+    const session = await auth();
 
-    if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const payload = await verifyJWT(token);
-
-    if (!payload) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

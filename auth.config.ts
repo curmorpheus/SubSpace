@@ -229,12 +229,17 @@ export const authConfig: NextAuthConfig = {
         token.id = user.id;
         token.authProvider = (user as any).authProvider;
       }
+      // Store Procore access token for API calls
+      if (account?.provider === "procore" && account.access_token) {
+        token.procoreAccessToken = account.access_token;
+      }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).authProvider = token.authProvider;
+        (session.user as any).procoreAccessToken = token.procoreAccessToken;
       }
       return session;
     },
