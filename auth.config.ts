@@ -54,10 +54,20 @@ function ProcoreProvider(options: {
     profile(profile: any) {
       console.log("[Procore OAuth] Profile function called with:", JSON.stringify(profile, null, 2));
 
+      // Handle empty/whitespace names from Procore
+      const firstName = profile.first_name?.trim() || "";
+      const lastName = profile.last_name?.trim() || "";
+      const fullName = profile.name?.trim() || "";
+      const combinedName = `${firstName} ${lastName}`.trim();
+      const email = profile.login || profile.email || "";
+
+      // Use full name if available, otherwise first+last, otherwise email prefix
+      const displayName = fullName || combinedName || email.split('@')[0] || "Procore User";
+
       const result = {
         id: profile.id?.toString() || "",
-        name: profile.name || `${profile.first_name || ""} ${profile.last_name || ""}`.trim(),
-        email: profile.login || profile.email || "",
+        name: displayName,
+        email,
         procoreUserId: profile.id?.toString(),
         procoreCompanyId: profile.company?.id?.toString(),
       };
