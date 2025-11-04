@@ -78,27 +78,12 @@ export default function AdminDashboard() {
   const handleProcoreLogin = async () => {
     setAuthError("");
     console.log("[Client] Starting Procore sign-in...");
-    try {
-      const result = await signIn("procore", {
-        callbackUrl: "/admin",
-        redirect: false,
-      });
-      console.log("[Client] Procore sign-in result:", result);
-
-      if (result?.error) {
-        console.error("[Client] Procore sign-in error:", result.error);
-        setAuthError(`Procore authentication failed: ${result.error}`);
-      } else if (result?.ok) {
-        console.log("[Client] Procore sign-in successful, redirecting...");
-        window.location.href = "/admin";
-      } else if (result?.url) {
-        console.log("[Client] Redirecting to:", result.url);
-        window.location.href = result.url;
-      }
-    } catch (error) {
-      console.error("[Client] Procore authentication exception:", error);
-      setAuthError(`Procore authentication failed: ${error}`);
-    }
+    // For OAuth providers, we must allow NextAuth to redirect to the provider
+    await signIn("procore", {
+      callbackUrl: "/admin",
+    });
+    // Note: The above will redirect the browser to Procore's login page,
+    // so code after this won't execute until the user returns from Procore
   };
 
   const fetchSubmissions = async () => {
