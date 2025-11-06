@@ -172,12 +172,14 @@ export const authConfig: NextAuthConfig = {
       // Handle Procore OAuth sign-in
       if (account?.provider === "procore") {
         try {
-          const procoreUserId = (profile as any)?.id?.toString();
-          const procoreCompanyId = (profile as any)?.company?.id?.toString();
+          // Read from user object (transformed by profile function), not raw profile
+          const procoreUserId = (user as any)?.procoreUserId;
+          const procoreCompanyId = (user as any)?.procoreCompanyId;
           const email = user.email || "";
           const name = user.name || "";
 
           console.log("[Procore OAuth] Extracted - ID:", procoreUserId, "Email:", email, "Name:", name, "Company:", procoreCompanyId);
+          console.log("[Procore OAuth] Company ID type:", typeof procoreCompanyId, "Value:", procoreCompanyId);
 
           if (!email) {
             console.error("[Procore OAuth] Email is required but missing");
@@ -187,7 +189,12 @@ export const authConfig: NextAuthConfig = {
           // Restrict access to specific Procore company only
           const ALLOWED_COMPANY_ID = "562949953430360";
           if (procoreCompanyId !== ALLOWED_COMPANY_ID) {
-            console.error("[Procore OAuth] Access denied - Company ID mismatch. User company:", procoreCompanyId, "Required:", ALLOWED_COMPANY_ID);
+            console.error(
+              `[Procore OAuth] Access denied - Company ID mismatch.\n` +
+              `User company: "${procoreCompanyId}" (type: ${typeof procoreCompanyId})\n` +
+              `Required: "${ALLOWED_COMPANY_ID}"\n` +
+              `Match result: ${procoreCompanyId === ALLOWED_COMPANY_ID}`
+            );
             return false;
           }
 
