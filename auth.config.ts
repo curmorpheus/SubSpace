@@ -33,22 +33,46 @@ function ProcoreProvider(options: {
         const accessToken = tokens.access_token || tokens.accessToken;
         console.log("[Procore OAuth] Using access token:", accessToken ? `${accessToken.substring(0, 20)}...` : "MISSING");
 
-        const response = await fetch("https://api.procore.com/rest/v1.0/me", {
+        // Fetch user info
+        const userResponse = await fetch("https://api.procore.com/rest/v1.0/me", {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         });
 
-        if (!response.ok) {
-          console.error("[Procore OAuth] Userinfo request failed:", response.status, response.statusText);
-          const text = await response.text();
+        if (!userResponse.ok) {
+          console.error("[Procore OAuth] Userinfo request failed:", userResponse.status, userResponse.statusText);
+          const text = await userResponse.text();
           console.error("[Procore OAuth] Response body:", text);
-          throw new Error(`Failed to fetch user info: ${response.status} ${response.statusText}`);
+          throw new Error(`Failed to fetch user info: ${userResponse.status} ${userResponse.statusText}`);
         }
 
-        const data = await response.json();
-        console.log("[Procore OAuth] Userinfo response:", JSON.stringify(data, null, 2));
-        return data;
+        const userData = await userResponse.json();
+        console.log("[Procore OAuth] User data response:", JSON.stringify(userData, null, 2));
+
+        // Fetch user's companies
+        const companiesResponse = await fetch("https://api.procore.com/rest/v1.0/companies", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!companiesResponse.ok) {
+          console.error("[Procore OAuth] Companies request failed:", companiesResponse.status, companiesResponse.statusText);
+          const text = await companiesResponse.text();
+          console.error("[Procore OAuth] Companies response body:", text);
+          // Don't throw, just return user data without company
+          return userData;
+        }
+
+        const companies = await companiesResponse.json();
+        console.log("[Procore OAuth] Companies response:", JSON.stringify(companies, null, 2));
+
+        // Add companies array to user data
+        return {
+          ...userData,
+          companies: companies,
+        };
       },
     },
     profile(profile: any) {
@@ -64,12 +88,16 @@ function ProcoreProvider(options: {
       // Use full name if available, otherwise first+last, otherwise email prefix
       const displayName = fullName || combinedName || email.split('@')[0] || "Procore User";
 
+      // Extract company IDs from companies array
+      const companyIds = profile.companies?.map((c: any) => c.id?.toString()).filter(Boolean) || [];
+      console.log("[Procore OAuth] Extracted company IDs:", companyIds);
+
       const result = {
         id: profile.id?.toString() || "",
         name: displayName,
         email,
         procoreUserId: profile.id?.toString(),
-        procoreCompanyId: profile.company?.id?.toString(),
+        procoreCompanyIds: companyIds, // Array of all company IDs user has access to
       };
 
       console.log("[Procore OAuth] Profile function returning:", JSON.stringify(result, null, 2));
@@ -174,12 +202,12 @@ export const authConfig: NextAuthConfig = {
         try {
           // Read from user object (transformed by profile function), not raw profile
           const procoreUserId = (user as any)?.procoreUserId;
-          const procoreCompanyId = (user as any)?.procoreCompanyId;
+          const procoreCompanyIds = (user as any)?.procoreCompanyIds || [];
           const email = user.email || "";
           const name = user.name || "";
 
-          console.log("[Procore OAuth] Extracted - ID:", procoreUserId, "Email:", email, "Name:", name, "Company:", procoreCompanyId);
-          console.log("[Procore OAuth] Company ID type:", typeof procoreCompanyId, "Value:", procoreCompanyId);
+          console.log("[Procore OAuth] Extracted - ID:", procoreUserId, "Email:", email, "Name:", name);
+          console.log("[Procore OAuth] User has access to companies:", procoreCompanyIds);
 
           if (!email) {
             console.error("[Procore OAuth] Email is required but missing");
@@ -188,17 +216,21 @@ export const authConfig: NextAuthConfig = {
 
           // Restrict access to specific Procore company only
           const ALLOWED_COMPANY_ID = "562949953430360";
-          if (procoreCompanyId !== ALLOWED_COMPANY_ID) {
+          const hasAccess = procoreCompanyIds.includes(ALLOWED_COMPANY_ID);
+
+          if (!hasAccess) {
             console.error(
-              `[Procore OAuth] Access denied - Company ID mismatch.\n` +
-              `User company: "${procoreCompanyId}" (type: ${typeof procoreCompanyId})\n` +
-              `Required: "${ALLOWED_COMPANY_ID}"\n` +
-              `Match result: ${procoreCompanyId === ALLOWED_COMPANY_ID}`
+              `[Procore OAuth] Access denied - User does not have access to required company.\n` +
+              `User companies: ${JSON.stringify(procoreCompanyIds)}\n` +
+              `Required company: "${ALLOWED_COMPANY_ID}"`
             );
             return false;
           }
 
-          console.log("[Procore OAuth] Company ID verified, proceeding with sign-in");
+          console.log("[Procore OAuth] Company access verified, proceeding with sign-in");
+
+          // Store the allowed company ID for this user
+          const procoreCompanyId = ALLOWED_COMPANY_ID;
 
           // Check if user exists
           const existingUser = await db
