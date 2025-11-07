@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, jsonb, integer } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, jsonb, integer, boolean } from "drizzle-orm/pg-core";
 
 // Form types table - defines available form templates
 export const formTypes = pgTable("form_types", {
@@ -21,11 +21,20 @@ export const formSubmissions = pgTable("form_submissions", {
   submittedByEmail: text("submitted_by_email"),
   submittedByCompany: text("submitted_by_company"),
 
+  // Superintendent tracking - who should receive this submission
+  superintendentEmail: text("superintendent_email"),
+  projectEmail: text("project_email"),
+
   // Form data stored as JSON for flexibility
   data: jsonb("data").notNull(),
 
   // PDF storage - the generated PDF that was emailed (stored as base64)
   pdfData: text("pdf_data"),
+
+  // Review tracking
+  reviewed: boolean("reviewed").default(false).notNull(),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: text("reviewed_by"),
 
   // Timestamps
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),

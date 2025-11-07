@@ -206,6 +206,10 @@ export async function POST(request: NextRequest) {
     // Insert the form submission (including signature in data)
     const submissionData = { ...processedData, signature };
 
+    // Extract superintendent and project emails for database storage
+    const superintendentEmail = emailOptions?.recipientEmail || null;
+    const projectEmail = emailOptions?.projectEmail || null;
+
     const [submission] = await db
       .insert(formSubmissions)
       .values({
@@ -214,6 +218,8 @@ export async function POST(request: NextRequest) {
         submittedBy,
         submittedByEmail,
         submittedByCompany,
+        superintendentEmail,
+        projectEmail,
         data: submissionData,
       })
       .returning();

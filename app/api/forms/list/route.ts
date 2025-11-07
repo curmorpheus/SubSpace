@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { formSubmissions } from "@/db/schema";
-import { desc } from "drizzle-orm";
+import { desc, eq, or, isNull } from "drizzle-orm";
 import { auth } from "@/auth";
 import { rateLimit, getClientIP, RateLimits } from "@/lib/rate-limit";
 import { logUnauthorizedAccess, logRateLimitExceeded } from "@/lib/security-logger";
@@ -44,18 +44,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // All authenticated superintendents can access forms
-    // (both local and Procore authenticated users)
+    // Get the user's email from the session
+    const userEmail = session.user.email;
 
-    // Fetch all form submissions, ordered by most recent first
+    if (!userEmail) {
+      return NextResponse.json(
+        { error: "User email not found in session" },
+        { status: 400 }
+      );
+    }
+
+    // Filter submissions by superintendent email
+    // Include submissions where:
+    // 1. superintendentEmail matches the user's email
+    // 2. superintendentEmail is null (legacy data before tracking was implemented)
     const submissions = await db
       .select()
       .from(formSubmissions)
+      .where(
+        or(
+          eq(formSubmissions.superintendentEmail, userEmail),
+          isNull(formSubmissions.superintendentEmail)
+        )
+      )
       .orderBy(desc(formSubmissions.submittedAt));
 
     return NextResponse.json({
       success: true,
       submissions,
+      count: submissions.length,
     });
   } catch (error) {
     console.error("Error fetching forms:", error);
