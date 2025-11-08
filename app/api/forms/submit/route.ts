@@ -144,64 +144,32 @@ export async function POST(request: NextRequest) {
 
     // Upload photos to Vercel Blob storage before saving to database
     console.log("Uploading photos to Vercel Blob...");
-    const processedInspections = await Promise.all(
-      data.inspections.map(async (inspection: any, inspectionIndex: number) => {
-        const processed = { ...inspection };
 
-        // Upload location photos
-        if (inspection.locationPhotos && inspection.locationPhotos.length > 0) {
-          try {
-            const locationBlobPhotos = await uploadImagesToBlob(
-              inspection.locationPhotos,
-              `${jobNumber}/inspection-${inspectionIndex}/location`
-            );
-            processed.locationPhotos = locationBlobPhotos;
-          } catch (error) {
-            console.error("Error uploading location photos:", error);
-            // Keep original photos if upload fails
-          }
-        }
+    // Process Buck Sanders inspection data structure
+    const processedData = { ...data };
 
-        // Upload hazard photos
-        if (inspection.hazardPhotos && inspection.hazardPhotos.length > 0) {
-          try {
-            const hazardBlobPhotos = await uploadImagesToBlob(
-              inspection.hazardPhotos,
-              `${jobNumber}/inspection-${inspectionIndex}/hazard`
-            );
-            processed.hazardPhotos = hazardBlobPhotos;
-          } catch (error) {
-            console.error("Error uploading hazard photos:", error);
-            // Keep original photos if upload fails
-          }
-        }
+    // Upload site photos if they exist
+    if (data.inspectionItems?.sitePhotos && data.inspectionItems.sitePhotos.length > 0) {
+      try {
+        const siteBlobPhotos = await uploadImagesToBlob(
+          data.inspectionItems.sitePhotos,
+          `${jobNumber}/site-photos`
+        );
+        processedData.inspectionItems = {
+          ...processedData.inspectionItems,
+          sitePhotos: siteBlobPhotos,
+        };
+        console.log("Site photos uploaded to Vercel Blob");
+      } catch (error) {
+        console.error("Error uploading site photos:", error);
+        // Keep original photos if upload fails
+      }
+    } else {
+      console.log("No site photos to upload");
+    }
 
-        // Upload measures photos
-        if (inspection.measuresPhotos && inspection.measuresPhotos.length > 0) {
-          try {
-            const measuresBlobPhotos = await uploadImagesToBlob(
-              inspection.measuresPhotos,
-              `${jobNumber}/inspection-${inspectionIndex}/measures`
-            );
-            processed.measuresPhotos = measuresBlobPhotos;
-          } catch (error) {
-            console.error("Error uploading measures photos:", error);
-            // Keep original photos if upload fails
-          }
-        }
-
-        return processed;
-      })
-    );
-
-    console.log("Photos uploaded to Vercel Blob");
-
-    // Prepare submission data with blob URLs instead of base64
-    const processedData = {
-      ...data,
-      inspections: processedInspections,
-      submittedAtLocal, // Store local device time
-    };
+    // Add local submission time
+    processedData.submittedAtLocal = submittedAtLocal;
 
     // Insert the form submission (including signature in data)
     const submissionData = { ...processedData, signature };
