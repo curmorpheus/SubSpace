@@ -213,54 +213,43 @@ export async function POST(request: NextRequest) {
         }
 
         // Create safe HTML email with sanitized user input
-        // Build inspections HTML for all inspections
-        const inspectionsHtml = data.inspections.map((inspection: any, index: number) => {
-          const escapedInspection = {
-            startTime: createSafeEmailHtml('{{value}}', { value: inspection.startTime }),
-            endTime: createSafeEmailHtml('{{value}}', { value: inspection.endTime }),
-            location: createSafeEmailHtml('{{value}}', { value: inspection.location }),
-            hazardDescription: createSafeEmailHtml('{{value}}', { value: inspection.hazardDescription }),
-            correctiveMeasures: createSafeEmailHtml('{{value}}', { value: inspection.correctiveMeasures }),
-            creatingEmployer: createSafeEmailHtml('{{value}}', { value: inspection.creatingEmployer }),
-            supervisor: createSafeEmailHtml('{{value}}', { value: inspection.supervisor }),
-          };
+        // Build inspection summary for Buck Sanders format
+        const escapedData = {
+          date: createSafeEmailHtml('{{value}}', { value: data.date }),
+          whoCompleting: createSafeEmailHtml('{{value}}', { value: data.whoCompleting }),
+          location: createSafeEmailHtml('{{value}}', { value: data.location }),
+          inspectedWith: createSafeEmailHtml('{{value}}', { value: data.inspectedWith }),
+        };
 
-          return `
-                <div class="section">
-                  <h2 class="section-title">Inspection #${index + 1}${data.inspections.length > 1 ? ` of ${data.inspections.length}` : ''}</h2>
+        const inspectionsHtml = `
+          <div class="section">
+            <h2 class="section-title">Inspection Summary</h2>
 
-                  <div style="margin-bottom: 15px;">
-                    <span class="time-badge">⏰ Start: ${escapedInspection.startTime}</span>
-                    <span class="time-badge">⏱️ End: ${escapedInspection.endTime}</span>
-                  </div>
+            <div class="field-box">
+              <div class="field-label">📅 Date</div>
+              <div class="field-value">${escapedData.date}</div>
+            </div>
 
-                  <div class="field-box">
-                    <div class="field-label">📍 Location of Inspection</div>
-                    <div class="field-value">${escapedInspection.location}</div>
-                  </div>
+            <div class="field-box">
+              <div class="field-label">👤 Who Completing</div>
+              <div class="field-value">${escapedData.whoCompleting}</div>
+            </div>
 
-                  <div class="field-box">
-                    <div class="field-label">⚠️ Description of Impalement Hazard Observed</div>
-                    <div class="field-value">${escapedInspection.hazardDescription}</div>
-                  </div>
+            <div class="field-box">
+              <div class="field-label">📍 Location</div>
+              <div class="field-value">${escapedData.location}</div>
+            </div>
 
-                  <div class="field-box">
-                    <div class="field-label">✅ Corrective Measures Taken</div>
-                    <div class="field-value">${escapedInspection.correctiveMeasures}</div>
-                  </div>
+            <div class="field-box">
+              <div class="field-label">👥 Inspected With</div>
+              <div class="field-value">${escapedData.inspectedWith}</div>
+            </div>
 
-                  <div class="field-box">
-                    <div class="field-label">🏢 Creating/Exposing Employer(s)</div>
-                    <div class="field-value">${escapedInspection.creatingEmployer}</div>
-                  </div>
-
-                  <div class="field-box">
-                    <div class="field-label">👷 Supervisor of Creating/Exposing Employer(s)</div>
-                    <div class="field-value">${escapedInspection.supervisor}</div>
-                  </div>
-                </div>
-          `;
-        }).join('');
+            <div class="attachment-notice">
+              <p>📎 <strong>Please see attached PDF for complete inspection details</strong></p>
+            </div>
+          </div>
+        `;
 
         const emailHtmlTemplate = `
           <!DOCTYPE html>
@@ -294,8 +283,8 @@ export async function POST(request: NextRequest) {
           <body>
             <div class="container">
               <div class="header">
-                <h1>IMPALEMENT PROTECTION</h1>
-                <p>Safety Inspection Form</p>
+                <h1>SAFETY INSPECTION</h1>
+                <p>Buck Sanders Inspection Survey Report</p>
               </div>
 
               <div class="content">

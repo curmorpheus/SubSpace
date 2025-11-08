@@ -32,52 +32,52 @@ export const formSubmissionSchema = z.object({
 
     // General Hazard Management (3 questions)
     generalHazardManagement: z.object({
-      ahasAvailable: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      ahasAvailable: z.enum(["Yes", "No", "N/A"]),
       ahasAvailableComment: z.string().max(500).optional(),
 
-      ahasReviewedWithEmployees: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      ahasReviewedWithEmployees: z.enum(["Yes", "No", "N/A"]),
       ahasReviewedComment: z.string().max(500).optional(),
 
-      discussedInMeetings: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      discussedInMeetings: z.enum(["Yes", "No", "N/A"]),
       discussedInMeetingsComment: z.string().max(500).optional(),
     }),
 
     // Inspection Items (11 questions)
     inspectionItems: z.object({
-      generalComments: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      generalComments: z.enum(["Yes", "No", "N/A"]),
       generalCommentsText: z.string().max(1000).optional(),
 
-      generalSitePhotos: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      generalSitePhotos: z.enum(["Yes", "No", "N/A"]),
       sitePhotos: z.array(compressedImageSchema).optional(),
 
-      eliminateRebarReviewed: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      eliminateRebarReviewed: z.enum(["Yes", "No", "N/A"]),
       eliminateRebarComment: z.string().max(500).optional(),
 
-      ahaCompleted: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      ahaCompleted: z.enum(["Yes", "No", "N/A"]),
       ahaCompletedComment: z.string().max(500).optional(),
 
-      engineeringControls: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      engineeringControls: z.enum(["Yes", "No", "N/A"]),
       engineeringControlsComment: z.string().max(500).optional(),
 
-      workAreaIsolated: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      workAreaIsolated: z.enum(["Yes", "No", "N/A"]),
       workAreaIsolatedComment: z.string().max(500).optional(),
 
-      warningSignage: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      warningSignage: z.enum(["Yes", "No", "N/A"]),
       warningSignageComment: z.string().max(500).optional(),
 
-      workAreaInspected: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      workAreaInspected: z.enum(["Yes", "No", "N/A"]),
       workAreaInspectedComment: z.string().max(500).optional(),
 
-      devicesReplaced: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      devicesReplaced: z.enum(["Yes", "No", "N/A"]),
       devicesReplacedComment: z.string().max(500).optional(),
 
-      proceduresReviewed: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      proceduresReviewed: z.enum(["Yes", "No", "N/A"]),
       proceduresReviewedComment: z.string().max(500).optional(),
 
-      adequateProtection: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      adequateProtection: z.enum(["Yes", "No", "N/A"]),
       adequateProtectionComment: z.string().max(500).optional(),
 
-      rebarStorageInspected: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      rebarStorageInspected: z.enum(["Yes", "No", "N/A"]),
       rebarStorageComment: z.string().max(500).optional(),
     }),
 

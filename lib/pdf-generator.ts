@@ -28,30 +28,26 @@ interface BuckSandersData {
     generalCommentsText?: string;
     generalSitePhotos: "Yes" | "No" | "N/A";
     sitePhotos?: CompressedImage[];
-    question4: "Yes" | "No" | "N/A";
-    question4Comment?: string;
-    question5: "Yes" | "No" | "N/A";
-    question5Comment?: string;
-    question6: "Yes" | "No" | "N/A";
-    question6Comment?: string;
-    question7: "Yes" | "No" | "N/A";
-    question7Comment?: string;
-    question8: "Yes" | "No" | "N/A";
-    question8Comment?: string;
-    question9: "Yes" | "No" | "N/A";
-    question9Comment?: string;
-    question10: "Yes" | "No" | "N/A";
-    question10Comment?: string;
-    question11: "Yes" | "No" | "N/A";
-    question11Comment?: string;
-    question12: "Yes" | "No" | "N/A";
-    question12Comment?: string;
-    question13: "Yes" | "No" | "N/A";
-    question13Comment?: string;
-    question14: "Yes" | "No" | "N/A";
-    question14Comment?: string;
-    question15: "Yes" | "No" | "N/A";
-    question15Comment?: string;
+    eliminateRebarReviewed: "Yes" | "No" | "N/A";
+    eliminateRebarComment?: string;
+    ahaCompleted: "Yes" | "No" | "N/A";
+    ahaCompletedComment?: string;
+    engineeringControls: "Yes" | "No" | "N/A";
+    engineeringControlsComment?: string;
+    workAreaIsolated: "Yes" | "No" | "N/A";
+    workAreaIsolatedComment?: string;
+    warningSignage: "Yes" | "No" | "N/A";
+    warningSignageComment?: string;
+    workAreaInspected: "Yes" | "No" | "N/A";
+    workAreaInspectedComment?: string;
+    devicesReplaced: "Yes" | "No" | "N/A";
+    devicesReplacedComment?: string;
+    proceduresReviewed: "Yes" | "No" | "N/A";
+    proceduresReviewedComment?: string;
+    adequateProtection: "Yes" | "No" | "N/A";
+    adequateProtectionComment?: string;
+    rebarStorageInspected: "Yes" | "No" | "N/A";
+    rebarStorageComment?: string;
   };
   safetyObservations: {
     observation1?: string;
@@ -383,18 +379,16 @@ export function generateBuckSandersPDF(
   const questionTexts: { [key: string]: string } = {
     "generalComments": "General Comments",
     "generalSitePhotos": "General Site Photos",
-    "question4": "Rebar caps installed on all exposed rebar",
-    "question5": "Impalement hazards identified and protected",
-    "question6": "Work areas clear of protruding materials",
-    "question7": "Elevated work platforms properly secured",
-    "question8": "Fall protection systems in place",
-    "question9": "PPE properly used by all workers",
-    "question10": "Housekeeping standards maintained",
-    "question11": "Material storage areas safe and organized",
-    "question12": "Access routes clear and safe",
-    "question13": "Emergency equipment accessible",
-    "question14": "Safety signage posted and visible",
-    "question15": "Hazard communication adequate"
+    "eliminateRebarReviewed": "Rebar/stakes/sharp objects removed or capped",
+    "ahaCompleted": "AHA completed for impalement hazards",
+    "engineeringControls": "Engineering controls in place",
+    "workAreaIsolated": "Work area isolated/barricaded as needed",
+    "warningSignage": "Warning signage posted appropriately",
+    "workAreaInspected": "Work area inspected before work begins",
+    "devicesReplaced": "Protection devices replaced after removal",
+    "proceduresReviewed": "Procedures reviewed with crew",
+    "adequateProtection": "Adequate protection for identified hazards",
+    "rebarStorageInspected": "Rebar storage areas inspected"
   };
 
   const inspectionRows: Array<Array<string>> = [];
@@ -419,12 +413,23 @@ export function generateBuckSandersPDF(
     items.sitePhotos && items.sitePhotos.length > 0 ? `${items.sitePhotos.length} photo(s) attached` : ""
   ]);
 
-  // Questions 4-15
-  for (let i = 4; i <= 15; i++) {
-    const questionKey = `question${i}` as keyof typeof items;
-    const commentKey = `question${i}Comment` as keyof typeof items;
-    const answer = items[questionKey] as "Yes" | "No" | "N/A";
-    const comment = items[commentKey] as string | undefined;
+  // Other inspection items
+  const inspectionFields: Array<[string, string]> = [
+    ["eliminateRebarReviewed", "eliminateRebarComment"],
+    ["ahaCompleted", "ahaCompletedComment"],
+    ["engineeringControls", "engineeringControlsComment"],
+    ["workAreaIsolated", "workAreaIsolatedComment"],
+    ["warningSignage", "warningSignageComment"],
+    ["workAreaInspected", "workAreaInspectedComment"],
+    ["devicesReplaced", "devicesReplacedComment"],
+    ["proceduresReviewed", "proceduresReviewedComment"],
+    ["adequateProtection", "adequateProtectionComment"],
+    ["rebarStorageInspected", "rebarStorageComment"]
+  ];
+
+  for (const [questionKey, commentKey] of inspectionFields) {
+    const answer = items[questionKey as keyof typeof items] as "Yes" | "No" | "N/A";
+    const comment = items[commentKey as keyof typeof items] as string | undefined;
 
     inspectionRows.push([
       String(questionNumber++),
