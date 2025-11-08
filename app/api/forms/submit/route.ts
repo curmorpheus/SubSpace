@@ -3,7 +3,7 @@ import { Resend } from "resend";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { formSubmissions } from "@/db/schema";
-import { generateBuckSandersPDF } from "@/lib/pdf-generator";
+import { generateImpalementProtectionPDF } from "@/lib/pdf-generator";
 import { rateLimit, getClientIP, RateLimits } from "@/lib/rate-limit";
 import {
   formSubmissionSchema,
@@ -142,9 +142,9 @@ export async function POST(request: NextRequest) {
     // For now, we'll use formTypeId: 1 for impalement-protection
     const formTypeId = 1;
 
-    // For Buck Sanders form, keep photos as base64 since PDF generator needs them
+    // Keep photos as base64 since PDF generator needs them
     // (No blob upload needed - photos are embedded in PDF)
-    console.log("Processing Buck Sanders inspection data...");
+    console.log("Processing impalement protection inspection data...");
 
     // Prepare submission data with local device time
     const processedData = {
@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
         console.log("Generating PDF...");
         // Generate PDF using original base64 data (still in memory)
         // Use local device time if provided, otherwise fall back to database time
-        const pdfBuffer = generateBuckSandersPDF(
+        const pdfBuffer = generateImpalementProtectionPDF(
           {
             jobNumber,
             submittedBy,
@@ -284,7 +284,7 @@ export async function POST(request: NextRequest) {
             <div class="container">
               <div class="header">
                 <h1>SAFETY INSPECTION</h1>
-                <p>Buck Sanders Inspection Survey Report</p>
+                <p>Impalement Protection Inspection Report</p>
               </div>
 
               <div class="content">

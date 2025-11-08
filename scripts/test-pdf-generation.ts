@@ -1,4 +1,4 @@
-import { generateBuckSandersPDF } from '../lib/pdf-generator';
+import { generateImpalementProtectionPDF } from '../lib/pdf-generator';
 import fs from 'fs';
 import path from 'path';
 
@@ -70,7 +70,7 @@ function testPDFGeneration() {
   try {
     console.log('Generating PDF with Apple aesthetic...');
 
-    const pdfBuffer = generateBuckSandersPDF(submissionInfo, sampleFormData);
+    const pdfBuffer = generateImpalementProtectionPDF(submissionInfo, sampleFormData);
 
     // Save to local file
     const outputPath = path.join(__dirname, '..', 'test-output.pdf');

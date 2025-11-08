@@ -10,7 +10,7 @@ interface CompressedImage {
 // PDF generation always uses base64 images for reliable embedding
 type ImageData = CompressedImage;
 
-interface BuckSandersData {
+interface ImpalementProtectionData {
   date: string;
   whoCompleting: string;
   location: string;
@@ -131,9 +131,9 @@ function addThumbnailImages(
   return currentY + (totalRows * (thumbnailHeight + thumbnailSpacing)) + 8;
 }
 
-export function generateBuckSandersPDF(
+export function generateImpalementProtectionPDF(
   submissionInfo: SubmissionInfo,
-  formData: BuckSandersData
+  formData: ImpalementProtectionData
 ): Buffer {
   const doc = new jsPDF();
 
