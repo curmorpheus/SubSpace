@@ -3,7 +3,7 @@ import { Resend } from "resend";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { formSubmissions } from "@/db/schema";
-import { generateImpalementProtectionPDF } from "@/lib/pdf-generator";
+import { generateBuckSandersPDF } from "@/lib/pdf-generator";
 import { rateLimit, getClientIP, RateLimits } from "@/lib/rate-limit";
 import {
   formSubmissionSchema,
@@ -228,7 +228,7 @@ export async function POST(request: NextRequest) {
         console.log("Generating PDF...");
         // Generate PDF using original base64 data (still in memory)
         // Use local device time if provided, otherwise fall back to database time
-        const pdfBuffer = generateImpalementProtectionPDF(
+        const pdfBuffer = generateBuckSandersPDF(
           {
             jobNumber,
             submittedBy,

@@ -11,7 +11,7 @@ import {
   GridToolbarContainer,
   GridToolbarQuickFilter
 } from "@mui/x-data-grid";
-import { generateImpalementProtectionPDF } from "@/lib/pdf-generator";
+import { generateBuckSandersPDF } from "@/lib/pdf-generator";
 
 interface FormSubmission {
   id: number;
@@ -357,7 +357,7 @@ export default function AdminDashboard() {
       } else {
         console.log("Generating PDF on the fly");
         // Generate PDF on the fly (backwards compatibility)
-        const pdfBuffer = generateImpalementProtectionPDF(
+        const pdfBuffer = generateBuckSandersPDF(
           {
             jobNumber: submission.jobNumber,
             submittedBy: submission.submittedBy,
