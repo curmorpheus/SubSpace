@@ -142,34 +142,15 @@ export async function POST(request: NextRequest) {
     // For now, we'll use formTypeId: 1 for impalement-protection
     const formTypeId = 1;
 
-    // Upload photos to Vercel Blob storage before saving to database
-    console.log("Uploading photos to Vercel Blob...");
+    // For Buck Sanders form, keep photos as base64 since PDF generator needs them
+    // (No blob upload needed - photos are embedded in PDF)
+    console.log("Processing Buck Sanders inspection data...");
 
-    // Process Buck Sanders inspection data structure
-    const processedData = { ...data };
-
-    // Upload site photos if they exist
-    if (data.inspectionItems?.sitePhotos && data.inspectionItems.sitePhotos.length > 0) {
-      try {
-        const siteBlobPhotos = await uploadImagesToBlob(
-          data.inspectionItems.sitePhotos,
-          `${jobNumber}/site-photos`
-        );
-        processedData.inspectionItems = {
-          ...processedData.inspectionItems,
-          sitePhotos: siteBlobPhotos,
-        };
-        console.log("Site photos uploaded to Vercel Blob");
-      } catch (error) {
-        console.error("Error uploading site photos:", error);
-        // Keep original photos if upload fails
-      }
-    } else {
-      console.log("No site photos to upload");
-    }
-
-    // Add local submission time
-    processedData.submittedAtLocal = submittedAtLocal;
+    // Prepare submission data with local device time
+    const processedData = {
+      ...data,
+      submittedAtLocal,
+    };
 
     // Insert the form submission (including signature in data)
     const submissionData = { ...processedData, signature };
