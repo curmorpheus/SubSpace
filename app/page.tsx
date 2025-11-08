@@ -32,7 +32,7 @@ export default function Home() {
                 Stop chasing paper.<br />Start protecting workers.
               </p>
               <p className="text-xl sm:text-2xl text-white/90 mb-8 leading-relaxed max-w-2xl">
-                Digital impalement protection forms that anyone can submit from their phone—no app required.
+                Digital safety inspection forms that anyone can submit from their phone—no app required.
               </p>
               <Link
                 href="/forms/impalement-protection"

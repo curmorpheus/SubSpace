@@ -10,22 +10,54 @@ interface CompressedImage {
 // PDF generation always uses base64 images for reliable embedding
 type ImageData = CompressedImage;
 
-interface InspectionData {
-  startTime: string;
-  endTime: string;
-  location: string;
-  locationPhotos?: ImageData[];
-  hazardDescription: string;
-  hazardPhotos?: ImageData[];
-  correctiveMeasures: string;
-  measuresPhotos?: ImageData[];
-  creatingEmployer: string;
-  supervisor: string;
-}
-
-interface FormData {
+interface BuckSandersData {
   date: string;
-  inspections: InspectionData[];
+  whoCompleting: string;
+  location: string;
+  inspectedWith: string;
+  generalHazardManagement: {
+    ahasAvailable: "Yes" | "No" | "N/A";
+    ahasAvailableComment?: string;
+    ahasReviewedWithEmployees: "Yes" | "No" | "N/A";
+    ahasReviewedComment?: string;
+    discussedInMeetings: "Yes" | "No" | "N/A";
+    discussedInMeetingsComment?: string;
+  };
+  inspectionItems: {
+    generalComments: "Yes" | "No" | "N/A";
+    generalCommentsText?: string;
+    generalSitePhotos: "Yes" | "No" | "N/A";
+    sitePhotos?: CompressedImage[];
+    question4: "Yes" | "No" | "N/A";
+    question4Comment?: string;
+    question5: "Yes" | "No" | "N/A";
+    question5Comment?: string;
+    question6: "Yes" | "No" | "N/A";
+    question6Comment?: string;
+    question7: "Yes" | "No" | "N/A";
+    question7Comment?: string;
+    question8: "Yes" | "No" | "N/A";
+    question8Comment?: string;
+    question9: "Yes" | "No" | "N/A";
+    question9Comment?: string;
+    question10: "Yes" | "No" | "N/A";
+    question10Comment?: string;
+    question11: "Yes" | "No" | "N/A";
+    question11Comment?: string;
+    question12: "Yes" | "No" | "N/A";
+    question12Comment?: string;
+    question13: "Yes" | "No" | "N/A";
+    question13Comment?: string;
+    question14: "Yes" | "No" | "N/A";
+    question14Comment?: string;
+    question15: "Yes" | "No" | "N/A";
+    question15Comment?: string;
+  };
+  safetyObservations: {
+    observation1?: string;
+    observation2?: string;
+    observation3?: string;
+  };
   signature?: string;
 }
 
@@ -38,296 +70,445 @@ interface SubmissionInfo {
 }
 
 /**
- * Helper function to add images to PDF - Apple aesthetic
+ * Convert answer to symbol
+ */
+function getAnswerSymbol(answer: string): string {
+  if (answer === "Yes") return "✓";
+  if (answer === "No") return "✗";
+  if (answer === "N/A") return "—";
+  return "";
+}
+
+/**
+ * Helper function to add thumbnail images to PDF
  * Returns the new Y position after adding images
  */
-function addImagesToPDF(
+function addThumbnailImages(
   doc: jsPDF,
   images: ImageData[],
   yPosition: number,
   margin: number,
-  pageWidth: number
+  maxWidth: number
 ): number {
   if (!images || images.length === 0) return yPosition;
 
-  // Apple style: Larger images with generous spacing
-  const imageWidth = 75;
-  const imageHeight = 56;
-  const imageSpacing = 15; // More breathing room between images
-  const imagesPerRow = 2;
+  // Thumbnail style: smaller images in a row
+  const thumbnailWidth = 30;
+  const thumbnailHeight = 22.5;
+  const thumbnailSpacing = 5;
+  const thumbnailsPerRow = 4;
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Apple colors
   const GRAY_LIGHT = [142, 142, 147] as const;
   const BLACK = [0, 0, 0] as const;
 
   let currentY = yPosition;
 
   for (let i = 0; i < images.length; i++) {
-    const col = i % imagesPerRow;
-    const xPosition = margin + col * (imageWidth + imageSpacing);
+    const col = i % thumbnailsPerRow;
+    const row = Math.floor(i / thumbnailsPerRow);
+    const xPosition = margin + col * (thumbnailWidth + thumbnailSpacing);
+    const yPos = currentY + row * (thumbnailHeight + thumbnailSpacing);
 
     // Check if we need a new page
-    if (currentY + imageHeight > pageHeight - 25) {
+    if (yPos + thumbnailHeight > pageHeight - 25) {
       doc.addPage();
       currentY = 25;
     }
 
     try {
       const image = images[i];
+      doc.addImage(image.dataUrl, "JPEG", xPosition, yPos, thumbnailWidth, thumbnailHeight);
 
-      // Embed base64 image directly into PDF
-      doc.addImage(image.dataUrl, "JPEG", xPosition, currentY, imageWidth, imageHeight);
-
-      // Apple style: Subtle image caption
-      doc.setFontSize(7);
+      // Subtle image caption
+      doc.setFontSize(6);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(...GRAY_LIGHT);
-      doc.text(`Photo ${i + 1}`, xPosition, currentY + imageHeight + 4);
+      doc.text(`Photo ${i + 1}`, xPosition, yPos + thumbnailHeight + 3);
       doc.setTextColor(...BLACK);
     } catch (error) {
-      console.error(`Error adding image ${i + 1} to PDF:`, error);
-    }
-
-    // Move to next row if needed
-    if (col === imagesPerRow - 1 || i === images.length - 1) {
-      currentY += imageHeight + 12; // Apple spacing
+      console.error(`Error adding thumbnail ${i + 1} to PDF:`, error);
     }
   }
 
-  return currentY + 10; // Extra breathing room after image section
+  const totalRows = Math.ceil(images.length / thumbnailsPerRow);
+  return currentY + (totalRows * (thumbnailHeight + thumbnailSpacing)) + 8;
 }
 
-export function generateImpalementProtectionPDF(
+export function generateBuckSandersPDF(
   submissionInfo: SubmissionInfo,
-  formData: FormData
+  formData: BuckSandersData
 ): Buffer {
   const doc = new jsPDF();
 
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
 
-  // Apple aesthetic: Generous margins (2.5x normal)
-  const margin = 25;
+  // Margins: 0.75" = 19.05mm (we'll use 19)
+  const margin = 19;
   const contentWidth = pageWidth - 2 * margin;
-  let yPosition = 25;
+  let yPosition = margin;
 
-  // Apple Design System: Only 2 font sizes, 2 weights
+  // Font sizes
   const TITLE_SIZE = 16;
+  const SUBTITLE_SIZE = 14;
   const BODY_SIZE = 10;
+  const LABEL_SIZE = 8;
 
-  // Apple Color Palette: Black, Gray, Orange accent
+  // Apple Color Palette
   const BLACK = [0, 0, 0] as const;
-  const GRAY_LIGHT = [142, 142, 147] as const; // Apple system gray
-  const ORANGE = [255, 149, 0] as const; // Apple orange
+  const GRAY_DARK = [60, 60, 67] as const;
+  const GRAY_LIGHT = [142, 142, 147] as const;
+  const GRAY_BG = [242, 242, 247] as const;
+  const ORANGE = [255, 149, 0] as const;
 
-  // Helper function to add section header - Apple minimal style
-  const addSectionHeader = (text: string, y: number): number => {
-    // Single hairline divider above section (no colored accents, no boxes)
-    doc.setDrawColor(...GRAY_LIGHT);
-    doc.setLineWidth(0.25);
-    doc.line(margin, y, margin + contentWidth, y);
-
-    // Section header - simple, clean typography
-    doc.setTextColor(...BLACK);
-    doc.setFontSize(BODY_SIZE);
-    doc.setFont("helvetica", "bold");
-    doc.text(text, margin, y + 8);
-
-    doc.setTextColor(...BLACK);
-    doc.setDrawColor(...BLACK);
-
-    // Apple spacing: 3x normal breathing room
-    return y + 18;
+  // Helper function to check if we need a new page
+  const checkNewPage = (requiredSpace: number): void => {
+    if (yPosition + requiredSpace > pageHeight - margin) {
+      doc.addPage();
+      yPosition = margin;
+    }
   };
 
-  // Helper function to add a field - extreme simplicity
-  const addField = (label: string, value: string, y: number): number => {
-    // Label: smaller, uppercase, gray
-    doc.setFontSize(8);
+  // Helper function to add section header with orange accent
+  const addSectionHeader = (text: string): void => {
+    checkNewPage(20);
+
+    // Orange accent bar
+    doc.setFillColor(...ORANGE);
+    doc.rect(margin, yPosition, 3, 8, "F");
+
+    // Section header text
+    doc.setTextColor(...GRAY_DARK);
+    doc.setFontSize(SUBTITLE_SIZE);
+    doc.setFont("helvetica", "bold");
+    doc.text(text, margin + 6, yPosition + 6);
+
+    yPosition += 14;
+    doc.setTextColor(...BLACK);
+  };
+
+  // Helper function to add a labeled field
+  const addField = (label: string, value: string): void => {
+    doc.setFontSize(LABEL_SIZE);
     doc.setTextColor(...GRAY_LIGHT);
     doc.setFont("helvetica", "normal");
-    doc.text(label.toUpperCase(), margin, y);
+    doc.text(label.toUpperCase(), margin, yPosition);
 
-    // Value: body size, black, regular weight
     doc.setTextColor(...BLACK);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(BODY_SIZE);
     const lines = doc.splitTextToSize(value, contentWidth);
-    doc.text(lines, margin, y + 6);
+    doc.text(lines, margin, yPosition + 5);
 
-    // Apple spacing: generous vertical rhythm
-    return y + (lines.length * 5) + 12;
+    yPosition += (lines.length * 5) + 8;
   };
 
-  // Apple Header: Absolute minimalism - no bars, no boxes, no borders
+  // Helper function to draw table
+  const drawTable = (headers: string[], rows: Array<Array<string>>, columnWidths: number[]): void => {
+    const rowHeight = 10;
+    const headerHeight = 12;
+
+    // Check if table fits on page
+    const tableHeight = headerHeight + (rows.length * rowHeight);
+    checkNewPage(tableHeight);
+
+    const tableStartY = yPosition;
+
+    // Draw header row
+    doc.setFillColor(...GRAY_BG);
+    doc.rect(margin, tableStartY, contentWidth, headerHeight, "F");
+
+    doc.setDrawColor(...GRAY_LIGHT);
+    doc.setLineWidth(0.25);
+    doc.rect(margin, tableStartY, contentWidth, headerHeight, "S");
+
+    // Header text
+    doc.setFontSize(BODY_SIZE);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...GRAY_DARK);
+
+    let xPos = margin + 2;
+    headers.forEach((header, i) => {
+      doc.text(header, xPos, tableStartY + 8);
+      xPos += columnWidths[i];
+    });
+
+    yPosition = tableStartY + headerHeight;
+
+    // Draw data rows
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...BLACK);
+
+    rows.forEach((row, rowIndex) => {
+      // Alternating row colors
+      if (rowIndex % 2 === 1) {
+        doc.setFillColor(250, 250, 250);
+        doc.rect(margin, yPosition, contentWidth, rowHeight, "F");
+      }
+
+      // Row border
+      doc.setDrawColor(...GRAY_LIGHT);
+      doc.setLineWidth(0.1);
+      doc.rect(margin, yPosition, contentWidth, rowHeight, "S");
+
+      // Cell content
+      let xPos = margin + 2;
+      row.forEach((cell, cellIndex) => {
+        const cellWidth = columnWidths[cellIndex] - 4;
+        const lines = doc.splitTextToSize(cell, cellWidth);
+        doc.text(lines[0], xPos, yPosition + 7); // Only show first line for table cells
+        xPos += columnWidths[cellIndex];
+      });
+
+      yPosition += rowHeight;
+    });
+
+    yPosition += 8; // Spacing after table
+  };
+
+  // ==================== HEADER SECTION ====================
+
+  // Main title
   doc.setTextColor(...BLACK);
   doc.setFontSize(TITLE_SIZE);
-  doc.setFont("helvetica", "normal"); // Regular weight, not bold
-  doc.text("Impalement Protection", margin, yPosition);
+  doc.setFont("helvetica", "bold");
+  doc.text("Buck Sanders Inspection Survey Report", margin, yPosition);
+  yPosition += 8;
 
-  // Subtitle in gray - minimal hierarchy
+  // Subtitle
   doc.setTextColor(...GRAY_LIGHT);
   doc.setFontSize(BODY_SIZE);
   doc.setFont("helvetica", "normal");
-  doc.text("Safety Inspection Report", margin, yPosition + 7);
+  doc.text("Deacon Construction LLC - Impalement Protection", margin, yPosition);
+  yPosition += 18;
 
-  // Reset
   doc.setTextColor(...BLACK);
 
-  // Apple spacing: Massive breathing room after header
-  yPosition = yPosition + 30;
-
-  // Form Information Section
-  yPosition = addSectionHeader("Form Information", yPosition);
-
-  // Apple grid: precise two-column layout with generous gutter
+  // Header information in two columns
   const col1X = margin;
-  const col2X = pageWidth / 2 + 10;
+  const col2X = pageWidth / 2 + 5;
 
-  // Row 1: Job Number and Date on same baseline - no stacking
-  doc.setFontSize(8);
+  // Column 1
+  doc.setFontSize(LABEL_SIZE);
   doc.setTextColor(...GRAY_LIGHT);
-  doc.setFont("helvetica", "normal");
-  doc.text("JOB NUMBER", col1X, yPosition);
-  doc.text("INSPECTION DATE", col2X, yPosition);
-
+  doc.text("DATE OF SURVEY", col1X, yPosition);
   doc.setTextColor(...BLACK);
   doc.setFontSize(BODY_SIZE);
-  doc.setFont("helvetica", "normal");
-  doc.text(submissionInfo.jobNumber, col1X, yPosition + 6);
-  doc.text(formData.date, col2X, yPosition + 6);
+  doc.text(formData.date, col1X, yPosition + 5);
 
-  yPosition += 20; // Apple spacing
-
-  // Row 2: Submitted By and Email
-  doc.setFontSize(8);
+  doc.setFontSize(LABEL_SIZE);
   doc.setTextColor(...GRAY_LIGHT);
-  doc.text("SUBMITTED BY", col1X, yPosition);
-  doc.text("EMAIL", col2X, yPosition);
-
+  doc.text("WHO IS COMPLETING", col1X, yPosition + 14);
   doc.setTextColor(...BLACK);
   doc.setFontSize(BODY_SIZE);
-  doc.text(submissionInfo.submittedBy, col1X, yPosition + 6);
-  doc.text(submissionInfo.submittedByEmail, col2X, yPosition + 6);
+  doc.text(formData.whoCompleting, col1X, yPosition + 19);
 
-  yPosition += 20; // Apple spacing
-
-  // Row 3: Company (full width for better readability)
-  doc.setFontSize(8);
+  doc.setFontSize(LABEL_SIZE);
   doc.setTextColor(...GRAY_LIGHT);
-  doc.text("COMPANY", col1X, yPosition);
-
+  doc.text("LOCATION", col1X, yPosition + 28);
   doc.setTextColor(...BLACK);
   doc.setFontSize(BODY_SIZE);
-  doc.text(submissionInfo.submittedByCompany, col1X, yPosition + 6);
+  const locationLines = doc.splitTextToSize(formData.location, (pageWidth / 2) - margin - 10);
+  doc.text(locationLines, col1X, yPosition + 33);
 
-  yPosition += 28; // Extra breathing room before inspections
+  // Column 2
+  doc.setFontSize(LABEL_SIZE);
+  doc.setTextColor(...GRAY_LIGHT);
+  doc.text("INSPECTED WITH", col2X, yPosition);
+  doc.setTextColor(...BLACK);
+  doc.setFontSize(BODY_SIZE);
+  doc.text(formData.inspectedWith, col2X, yPosition + 5);
 
-  // Inspections
-  formData.inspections.forEach((inspection, index) => {
-    // Check if we need a new page - Apple uses more generous page breaks
-    if (yPosition > 230) {
-      doc.addPage();
-      yPosition = 25; // Consistent top margin
-    }
+  doc.setFontSize(LABEL_SIZE);
+  doc.setTextColor(...GRAY_LIGHT);
+  doc.text("SUBMITTED BY", col2X, yPosition + 14);
+  doc.setTextColor(...BLACK);
+  doc.setFontSize(BODY_SIZE);
+  doc.text(submissionInfo.submittedBy, col2X, yPosition + 19);
 
-    // Inspection Header
-    yPosition = addSectionHeader(`Inspection ${index + 1}`, yPosition);
+  doc.setFontSize(LABEL_SIZE);
+  doc.setTextColor(...GRAY_LIGHT);
+  doc.text("COMPANY", col2X, yPosition + 28);
+  doc.setTextColor(...BLACK);
+  doc.setFontSize(BODY_SIZE);
+  doc.text(submissionInfo.submittedByCompany, col2X, yPosition + 33);
 
-    // Time Information - aligned to grid
-    doc.setFontSize(8);
-    doc.setTextColor(...GRAY_LIGHT);
-    doc.setFont("helvetica", "normal");
-    doc.text("START TIME", col1X, yPosition);
-    doc.text("END TIME", col2X, yPosition);
+  yPosition += Math.max(38 + (locationLines.length - 1) * 5, 47);
 
-    doc.setTextColor(...BLACK);
+  // Job Number (full width)
+  doc.setFontSize(LABEL_SIZE);
+  doc.setTextColor(...GRAY_LIGHT);
+  doc.text("JOB NUMBER", margin, yPosition);
+  doc.setTextColor(...BLACK);
+  doc.setFontSize(BODY_SIZE);
+  doc.text(submissionInfo.jobNumber, margin, yPosition + 5);
+
+  yPosition += 18;
+
+  // ==================== SECTION 1: GENERAL HAZARD MANAGEMENT ====================
+
+  addSectionHeader("Section 1: General Hazard Management");
+
+  const hazardHeaders = ["Question", "Answer", "Comments"];
+  const hazardColumnWidths = [90, 20, contentWidth - 110];
+  const hazardRows: Array<Array<string>> = [
+    [
+      "AHAs/JHAs/JSAs available",
+      getAnswerSymbol(formData.generalHazardManagement.ahasAvailable),
+      formData.generalHazardManagement.ahasAvailableComment || ""
+    ],
+    [
+      "Reviewed with employees",
+      getAnswerSymbol(formData.generalHazardManagement.ahasReviewedWithEmployees),
+      formData.generalHazardManagement.ahasReviewedComment || ""
+    ],
+    [
+      "Discussed in meetings",
+      getAnswerSymbol(formData.generalHazardManagement.discussedInMeetings),
+      formData.generalHazardManagement.discussedInMeetingsComment || ""
+    ]
+  ];
+
+  drawTable(hazardHeaders, hazardRows, hazardColumnWidths);
+
+  // ==================== SECTION 2: INSPECTION ITEMS ====================
+
+  addSectionHeader("Section 2: Inspection Items");
+
+  const inspectionHeaders = ["#", "Question", "Answer", "Comments/Details"];
+  const inspectionColumnWidths = [10, 70, 20, contentWidth - 100];
+
+  // Question mapping
+  const questionTexts: { [key: string]: string } = {
+    "generalComments": "General Comments",
+    "generalSitePhotos": "General Site Photos",
+    "question4": "Rebar caps installed on all exposed rebar",
+    "question5": "Impalement hazards identified and protected",
+    "question6": "Work areas clear of protruding materials",
+    "question7": "Elevated work platforms properly secured",
+    "question8": "Fall protection systems in place",
+    "question9": "PPE properly used by all workers",
+    "question10": "Housekeeping standards maintained",
+    "question11": "Material storage areas safe and organized",
+    "question12": "Access routes clear and safe",
+    "question13": "Emergency equipment accessible",
+    "question14": "Safety signage posted and visible",
+    "question15": "Hazard communication adequate"
+  };
+
+  const inspectionRows: Array<Array<string>> = [];
+  let questionNumber = 1;
+
+  // Add all inspection items
+  const items = formData.inspectionItems;
+
+  // General Comments
+  inspectionRows.push([
+    String(questionNumber++),
+    questionTexts.generalComments,
+    getAnswerSymbol(items.generalComments),
+    items.generalCommentsText || ""
+  ]);
+
+  // General Site Photos
+  inspectionRows.push([
+    String(questionNumber++),
+    questionTexts.generalSitePhotos,
+    getAnswerSymbol(items.generalSitePhotos),
+    items.sitePhotos && items.sitePhotos.length > 0 ? `${items.sitePhotos.length} photo(s) attached` : ""
+  ]);
+
+  // Questions 4-15
+  for (let i = 4; i <= 15; i++) {
+    const questionKey = `question${i}` as keyof typeof items;
+    const commentKey = `question${i}Comment` as keyof typeof items;
+    const answer = items[questionKey] as "Yes" | "No" | "N/A";
+    const comment = items[commentKey] as string | undefined;
+
+    inspectionRows.push([
+      String(questionNumber++),
+      questionTexts[questionKey],
+      getAnswerSymbol(answer),
+      comment || ""
+    ]);
+  }
+
+  drawTable(inspectionHeaders, inspectionRows, inspectionColumnWidths);
+
+  // Add site photos if present
+  if (items.sitePhotos && items.sitePhotos.length > 0) {
+    checkNewPage(30);
     doc.setFontSize(BODY_SIZE);
-    doc.text(inspection.startTime, col1X, yPosition + 6);
-    doc.text(inspection.endTime, col2X, yPosition + 6);
-    yPosition += 20;
+    doc.setTextColor(...GRAY_DARK);
+    doc.setFont("helvetica", "bold");
+    doc.text("Site Photos:", margin, yPosition);
+    yPosition += 8;
 
-    // Location - full width for emphasis
-    yPosition = addField("Location", inspection.location, yPosition);
+    yPosition = addThumbnailImages(doc, items.sitePhotos, yPosition, margin, contentWidth);
+  }
 
-    // Add location photos if available
-    if (inspection.locationPhotos && inspection.locationPhotos.length > 0) {
-      if (yPosition > pageHeight - 80) {
-        doc.addPage();
-        yPosition = 25;
-      }
-      yPosition = addImagesToPDF(doc, inspection.locationPhotos, yPosition, margin, pageWidth);
-    }
+  // ==================== SECTION 3: SAFETY OBSERVATIONS ====================
 
-    // Check for new page before hazard section
-    if (yPosition > pageHeight - 50) {
-      doc.addPage();
-      yPosition = 25;
-    }
+  addSectionHeader("Section 3: Safety Observations");
 
-    // Hazard Description - concise label
-    yPosition = addField("Hazard Observed", inspection.hazardDescription, yPosition);
+  // Observation 1
+  doc.setFontSize(BODY_SIZE);
+  doc.setTextColor(...GRAY_DARK);
+  doc.setFont("helvetica", "bold");
+  doc.text("Safety Observation 1:", margin, yPosition);
+  yPosition += 6;
 
-    // Add hazard photos if available
-    if (inspection.hazardPhotos && inspection.hazardPhotos.length > 0) {
-      if (yPosition > pageHeight - 80) {
-        doc.addPage();
-        yPosition = 25;
-      }
-      yPosition = addImagesToPDF(doc, inspection.hazardPhotos, yPosition, margin, pageWidth);
-    }
+  doc.setTextColor(...BLACK);
+  doc.setFont("helvetica", "normal");
+  const obs1Text = formData.safetyObservations.observation1 || "N/A";
+  const obs1Lines = doc.splitTextToSize(obs1Text, contentWidth);
+  doc.text(obs1Lines, margin, yPosition);
+  yPosition += (obs1Lines.length * 5) + 8;
 
-    // Check for new page before corrective measures
-    if (yPosition > pageHeight - 50) {
-      doc.addPage();
-      yPosition = 25;
-    }
+  checkNewPage(30);
 
-    // Corrective Measures - concise label
-    yPosition = addField("Corrective Action", inspection.correctiveMeasures, yPosition);
+  // Observation 2
+  doc.setTextColor(...GRAY_DARK);
+  doc.setFont("helvetica", "bold");
+  doc.text("Safety Observation 2:", margin, yPosition);
+  yPosition += 6;
 
-    // Add corrective measures photos if available
-    if (inspection.measuresPhotos && inspection.measuresPhotos.length > 0) {
-      if (yPosition > pageHeight - 80) {
-        doc.addPage();
-        yPosition = 25;
-      }
-      yPosition = addImagesToPDF(doc, inspection.measuresPhotos, yPosition, margin, pageWidth);
-    }
+  doc.setTextColor(...BLACK);
+  doc.setFont("helvetica", "normal");
+  const obs2Text = formData.safetyObservations.observation2 || "N/A";
+  const obs2Lines = doc.splitTextToSize(obs2Text, contentWidth);
+  doc.text(obs2Lines, margin, yPosition);
+  yPosition += (obs2Lines.length * 5) + 8;
 
-    // Check for new page before employer info
-    if (yPosition > pageHeight - 35) {
-      doc.addPage();
-      yPosition = 25;
-    }
+  checkNewPage(30);
 
-    // Employer Information
-    yPosition = addField("Employer", inspection.creatingEmployer, yPosition);
-    yPosition = addField("Supervisor", inspection.supervisor, yPosition);
+  // Observation 3
+  doc.setTextColor(...GRAY_DARK);
+  doc.setFont("helvetica", "bold");
+  doc.text("Safety Observation 3:", margin, yPosition);
+  yPosition += 6;
 
-    yPosition += 12; // Apple spacing between inspections
-  });
+  doc.setTextColor(...BLACK);
+  doc.setFont("helvetica", "normal");
+  const obs3Text = formData.safetyObservations.observation3 || "N/A";
+  const obs3Lines = doc.splitTextToSize(obs3Text, contentWidth);
+  doc.text(obs3Lines, margin, yPosition);
+  yPosition += (obs3Lines.length * 5) + 12;
+
+  // ==================== FOOTER SECTION ====================
 
   // Add signature if available
   if (formData.signature) {
-    // Check if we need a new page for signature
-    if (yPosition > 210) {
-      doc.addPage();
-      yPosition = 25;
-    }
+    checkNewPage(40);
 
-    yPosition += 12; // Apple spacing before signature
-
-    doc.setFontSize(8);
+    doc.setFontSize(LABEL_SIZE);
     doc.setTextColor(...GRAY_LIGHT);
     doc.setFont("helvetica", "normal");
     doc.text("INSPECTOR SIGNATURE", margin, yPosition);
-    doc.setTextColor(...BLACK);
     yPosition += 8;
 
     try {
-      // Apple style: Larger, more prominent signature
       doc.addImage(formData.signature, "PNG", margin, yPosition, 80, 24);
       yPosition += 30;
     } catch (error) {
@@ -335,18 +516,24 @@ export function generateImpalementProtectionPDF(
     }
   }
 
-  // Apple footer: Minimal, centered, gray
-  if (submissionInfo.submittedAt) {
-    doc.setFontSize(8);
+  // Timestamp and generator info at bottom of page
+  const currentPage = (doc as any).internal.getCurrentPageInfo().pageNumber;
+  const totalPages = (doc as any).internal.getNumberOfPages();
+
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+
+    doc.setFontSize(LABEL_SIZE);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...GRAY_LIGHT);
-    const footerText = `Submitted ${submissionInfo.submittedAt}`;
-    doc.text(
-      footerText,
-      pageWidth / 2,
-      pageHeight - 15,
-      { align: "center" }
-    );
+
+    if (submissionInfo.submittedAt) {
+      const timestamp = `Submitted on ${submissionInfo.submittedAt}`;
+      doc.text(timestamp, margin, pageHeight - 12);
+    }
+
+    const generatorText = "Generated by SubSpace - Deacon Construction";
+    doc.text(generatorText, pageWidth - margin, pageHeight - 12, { align: "right" });
   }
 
   // Convert to buffer

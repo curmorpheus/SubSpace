@@ -26,29 +26,67 @@ export const formSubmissionSchema = z.object({
   signature: z.string().optional(),
   data: z.object({
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
-    inspections: z.array(
-      z.object({
-        startTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format"),
-        endTime: z.string().regex(/^\d{2}:\d{2}$/, "Invalid time format"),
-        location: z.string().min(1, "Location is required").max(500),
-        locationPhotos: z.array(compressedImageSchema).optional(),
-        hazardDescription: z
-          .string()
-          .min(1, "Hazard description is required")
-          .max(2000),
-        hazardPhotos: z.array(compressedImageSchema).optional(),
-        correctiveMeasures: z
-          .string()
-          .min(1, "Corrective measures are required")
-          .max(2000),
-        measuresPhotos: z.array(compressedImageSchema).optional(),
-        creatingEmployer: z
-          .string()
-          .min(1, "Creating employer is required")
-          .max(200),
-        supervisor: z.string().min(1, "Supervisor is required").max(100),
-      })
-    ),
+    whoCompleting: z.string().min(1, "Required").max(200),
+    location: z.string().min(1, "Location is required").max(500),
+    inspectedWith: z.string().min(1, "Required").max(200),
+
+    // General Hazard Management (3 questions)
+    generalHazardManagement: z.object({
+      ahasAvailable: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      ahasAvailableComment: z.string().max(500).optional(),
+
+      ahasReviewedWithEmployees: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      ahasReviewedComment: z.string().max(500).optional(),
+
+      discussedInMeetings: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      discussedInMeetingsComment: z.string().max(500).optional(),
+    }),
+
+    // Inspection Items (11 questions)
+    inspectionItems: z.object({
+      generalComments: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      generalCommentsText: z.string().max(1000).optional(),
+
+      generalSitePhotos: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      sitePhotos: z.array(compressedImageSchema).optional(),
+
+      eliminateRebarReviewed: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      eliminateRebarComment: z.string().max(500).optional(),
+
+      ahaCompleted: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      ahaCompletedComment: z.string().max(500).optional(),
+
+      engineeringControls: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      engineeringControlsComment: z.string().max(500).optional(),
+
+      workAreaIsolated: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      workAreaIsolatedComment: z.string().max(500).optional(),
+
+      warningSignage: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      warningSignageComment: z.string().max(500).optional(),
+
+      workAreaInspected: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      workAreaInspectedComment: z.string().max(500).optional(),
+
+      devicesReplaced: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      devicesReplacedComment: z.string().max(500).optional(),
+
+      proceduresReviewed: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      proceduresReviewedComment: z.string().max(500).optional(),
+
+      adequateProtection: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      adequateProtectionComment: z.string().max(500).optional(),
+
+      rebarStorageInspected: z.enum(["Yes", "No", "N/A"], { required_error: "Required" }),
+      rebarStorageComment: z.string().max(500).optional(),
+    }),
+
+    // Safety Observations (3 free-form fields)
+    safetyObservations: z.object({
+      observation1: z.string().max(1000).optional(),
+      observation2: z.string().max(1000).optional(),
+      observation3: z.string().max(1000).optional(),
+    }),
   }),
   emailOptions: z
     .object({

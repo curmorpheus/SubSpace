@@ -3,9 +3,10 @@
 import { useState, useEffect, Suspense, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DatePicker from "@/components/DatePicker";
-import TimePicker from "@/components/TimePicker";
 import ImageUpload from "@/components/ImageUpload";
 import SignaturePad, { SignaturePadRef } from "@/components/SignaturePad";
+import RadioButtonGroup from "@/components/RadioButtonGroup";
+import ConditionalTextArea from "@/components/ConditionalTextArea";
 import type { CompressedImage } from "@/lib/image-compression";
 import {
   queueSubmission,
@@ -15,10 +16,7 @@ import {
 
 const CACHE_KEY = "subspace-form-cache";
 
-// Generate unique ID for inspections
-const generateInspectionId = () => `insp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-function ImpalementProtectionFormContent() {
+function BuckSandersFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const signaturePadRef = useRef<SignaturePadRef>(null);
@@ -40,23 +38,6 @@ function ImpalementProtectionFormContent() {
     return `${year}-${month}-${day}`;
   };
 
-  // Get current time in HH:mm format
-  const getCurrentTime = () => {
-    const now = new Date();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return `${hours}:${minutes}`;
-  };
-
-  // Get current time + 10 minutes in HH:mm format
-  const getTimeAfter10Minutes = () => {
-    const now = new Date();
-    now.setMinutes(now.getMinutes() + 10);
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return `${hours}:${minutes}`;
-  };
-
   // Load cached values from localStorage (only once on mount)
   const [formData, setFormData] = useState(() => {
     let cached: any = {};
@@ -73,26 +54,52 @@ function ImpalementProtectionFormContent() {
 
     return {
       date: isClient ? getTodayDate() : "",
+      whoCompleting: "",
+      location: "",
+      inspectedWith: "",
       jobNumber: cached.jobNumber || "",
       submittedBy: cached.submittedBy || "",
       submittedByEmail: cached.submittedByEmail || "",
       submittedByCompany: cached.submittedByCompany || "",
-      inspections: [
-        {
-          id: generateInspectionId(),
-          startTime: isClient ? getCurrentTime() : "",
-          endTime: isClient ? getTimeAfter10Minutes() : "",
-          location: "",
-          hazardDescription: "",
-          correctiveMeasures: "",
-          creatingEmployer: "",
-          supervisor: "",
-          locationPhotos: [],
-          hazardPhotos: [],
-          measuresPhotos: [],
-          noHazardsObserved: false,
-        }
-      ],
+      generalHazardManagement: {
+        ahasAvailable: "",
+        ahasAvailableComment: "",
+        ahasReviewedWithEmployees: "",
+        ahasReviewedComment: "",
+        discussedInMeetings: "",
+        discussedInMeetingsComment: "",
+      },
+      inspectionItems: {
+        generalComments: "",
+        generalCommentsText: "",
+        generalSitePhotos: "",
+        sitePhotos: [] as CompressedImage[],
+        eliminateRebarReviewed: "",
+        eliminateRebarComment: "",
+        ahaCompleted: "",
+        ahaCompletedComment: "",
+        engineeringControls: "",
+        engineeringControlsComment: "",
+        workAreaIsolated: "",
+        workAreaIsolatedComment: "",
+        warningSignage: "",
+        warningSignageComment: "",
+        workAreaInspected: "",
+        workAreaInspectedComment: "",
+        devicesReplaced: "",
+        devicesReplacedComment: "",
+        proceduresReviewed: "",
+        proceduresReviewedComment: "",
+        adequateProtection: "",
+        adequateProtectionComment: "",
+        rebarStorageInspected: "",
+        rebarStorageComment: "",
+      },
+      safetyObservations: {
+        observation1: "",
+        observation2: "",
+        observation3: "",
+      },
     };
   });
 
@@ -240,62 +247,27 @@ function ImpalementProtectionFormContent() {
     };
   });
 
-  // Set date/time values after mount to avoid hydration mismatch
+  // Set date value after mount to avoid hydration mismatch
   useEffect(() => {
     setFormData(prev => {
-      // Only update if values are actually empty to avoid unnecessary re-renders
-      const needsUpdate = !prev.date || (prev.inspections[0] && (!prev.inspections[0].startTime || !prev.inspections[0].endTime));
-      if (!needsUpdate) return prev;
-
+      if (prev.date) return prev;
       return {
         ...prev,
-        date: prev.date || getTodayDate(),
-        inspections: prev.inspections.map((inspection, index) =>
-          index === 0 ? {
-            ...inspection,
-            startTime: inspection.startTime || getCurrentTime(),
-            endTime: inspection.endTime || getTimeAfter10Minutes(),
-          } : inspection
-        )
+        date: getTodayDate(),
       };
     });
   }, []);
 
-  // Read job number, superintendent email, project email, and subcontractor info from URL parameters
+  // Read job number, superintendent email, project email from URL parameters
   useEffect(() => {
     const jobNumberParam = searchParams.get('jobNumber');
     const superintendentEmailParam = searchParams.get('superintendentEmail');
     const projectEmailParam = searchParams.get('projectEmail');
-    const nameParam = searchParams.get('name');
-    const emailParam = searchParams.get('email');
-    const companyParam = searchParams.get('company');
 
     if (jobNumberParam) {
       setFormData(prev => ({
         ...prev,
         jobNumber: jobNumberParam,
-      }));
-    }
-
-    // Pre-fill subcontractor info from invitation link
-    if (nameParam) {
-      setFormData(prev => ({
-        ...prev,
-        submittedBy: nameParam,
-      }));
-    }
-
-    if (emailParam) {
-      setFormData(prev => ({
-        ...prev,
-        submittedByEmail: emailParam,
-      }));
-    }
-
-    if (companyParam) {
-      setFormData(prev => ({
-        ...prev,
-        submittedByCompany: companyParam,
       }));
     }
 
@@ -314,104 +286,39 @@ function ImpalementProtectionFormContent() {
     }
   }, [searchParams]);
 
-  // Inspection management functions
-  const addInspection = () => {
-    setFormData(prev => ({
-      ...prev,
-      inspections: [
-        ...prev.inspections,
-        {
-          id: generateInspectionId(),
-          startTime: getCurrentTime(),
-          endTime: getTimeAfter10Minutes(),
-          location: "",
-          hazardDescription: "",
-          correctiveMeasures: "",
-          creatingEmployer: "",
-          supervisor: "",
-          locationPhotos: [],
-          hazardPhotos: [],
-          measuresPhotos: [],
-          noHazardsObserved: false,
-        }
-      ]
-    }));
-  };
-
-  const updateInspection = (inspectionId: string, field: string, value: any) => {
-    console.log('[updateInspection] Called with:', { inspectionId, field, value });
-    setFormData(prev => {
-      const updated = {
-        ...prev,
-        inspections: prev.inspections.map(inspection =>
-          inspection.id === inspectionId
-            ? { ...inspection, [field]: value }
-            : inspection
-        )
-      };
-      console.log('[updateInspection] Updated inspection:', updated.inspections.find(i => i.id === inspectionId));
-      return updated;
-    });
-  };
-
-  const deleteInspection = (inspectionId: string) => {
-    setFormData(prev => {
-      // Don't allow deleting if only one inspection remains
-      if (prev.inspections.length <= 1) {
-        return prev;
-      }
-      return {
-        ...prev,
-        inspections: prev.inspections.filter(inspection => inspection.id !== inspectionId)
-      };
-    });
-  };
-
   const validateStep = (step: number): boolean => {
     setError("");
 
     if (step === 1) {
-      if (!formData.date || !formData.jobNumber || !formData.submittedBy ||
-          !formData.submittedByEmail || !formData.submittedByCompany) {
+      if (!formData.date || !formData.whoCompleting || !formData.location || !formData.inspectedWith) {
         setError("Please fill in all required fields");
         return false;
       }
     } else if (step === 2) {
-      // Validate all inspections
-      if (!formData.inspections || formData.inspections.length === 0) {
-        setError("At least one inspection is required");
+      // Validate all radio buttons have a selection
+      const { generalHazardManagement, inspectionItems } = formData;
+
+      if (!generalHazardManagement.ahasAvailable ||
+          !generalHazardManagement.ahasReviewedWithEmployees ||
+          !generalHazardManagement.discussedInMeetings) {
+        setError("Please answer all General Hazard Management questions");
         return false;
       }
 
-      for (let i = 0; i < formData.inspections.length; i++) {
-        const inspection = formData.inspections[i];
-        const hazardsPresent = !inspection.noHazardsObserved;
-
-        // Time and location are always required
-        if (!inspection.startTime || !inspection.endTime || !inspection.location) {
-          setError(`Please fill in time and location for Inspection #${i + 1}`);
-          return false;
-        }
-
-        // Only validate these fields if hazards were actually observed
-        if (hazardsPresent) {
-          if (!inspection.hazardDescription || inspection.hazardDescription.trim() === '') {
-            setError(`Please describe the hazard for Inspection #${i + 1}`);
-            return false;
-          }
-          if (!inspection.correctiveMeasures || inspection.correctiveMeasures.trim() === '') {
-            setError(`Please describe corrective measures for Inspection #${i + 1}`);
-            return false;
-          }
-          if (!inspection.creatingEmployer || inspection.creatingEmployer.trim() === '') {
-            setError(`Please provide the creating employer for Inspection #${i + 1}`);
-            return false;
-          }
-          if (!inspection.supervisor || inspection.supervisor.trim() === '') {
-            setError(`Please provide the supervisor name for Inspection #${i + 1}`);
-            return false;
-          }
-        }
+      if (!inspectionItems.generalComments ||
+          !inspectionItems.generalSitePhotos ||
+          !inspectionItems.eliminateRebarReviewed ||
+          !inspectionItems.ahaCompleted ||
+          !inspectionItems.engineeringControls ||
+          !inspectionItems.workAreaIsolated ||
+          !inspectionItems.warningSignage ||
+          !inspectionItems.workAreaInspected ||
+          !inspectionItems.devicesReplaced ||
+          !inspectionItems.proceduresReviewed ||
+          !inspectionItems.adequateProtection ||
+          !inspectionItems.rebarStorageInspected) {
+        setError("Please answer all Inspection Items questions");
+        return false;
       }
     } else if (step === 3) {
       if (!emailOptions.recipientEmail) {
@@ -427,10 +334,9 @@ function ImpalementProtectionFormContent() {
     if (validateStep(currentStep)) {
       setJustNavigated(true);
       setCurrentStep(current => Math.min(current + 1, totalSteps));
-      setIsHeaderCollapsed(false); // Reset header to expanded state
+      setIsHeaderCollapsed(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
 
-      // Reset the flag after a short delay to prevent accidental submission
       setTimeout(() => {
         setJustNavigated(false);
       }, 500);
@@ -440,10 +346,9 @@ function ImpalementProtectionFormContent() {
   const handlePrevious = () => {
     setJustNavigated(true);
     setCurrentStep(current => Math.max(current - 1, 1));
-    setIsHeaderCollapsed(false); // Reset header to expanded state
+    setIsHeaderCollapsed(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // Reset the flag after a short delay
     setTimeout(() => {
       setJustNavigated(false);
     }, 500);
@@ -472,38 +377,6 @@ function ImpalementProtectionFormContent() {
       setRememberMe(false);
       localStorage.setItem("rememberMe", "false");
     }
-  };
-
-  const handleTestAutofill = () => {
-    setFormData({
-      date: getTodayDate(),
-      jobNumber: "TEST-2025-001",
-      submittedBy: "Test User",
-      submittedByEmail: "test@deacon.com",
-      submittedByCompany: "Deacon Construction",
-      inspections: [{
-        id: generateInspectionId(),
-        startTime: "08:00",
-        endTime: "08:15",
-        location: "Building A, 3rd Floor, North Wing",
-        hazardDescription: "Exposed rebar on concrete slab near north stairwell. Multiple vertical rebars without protective caps.",
-        correctiveMeasures: "Installed protective rebar caps on all exposed vertical rebars. Posted warning signs around the area.",
-        creatingEmployer: "ABC Concrete Co.",
-        supervisor: "John Smith",
-        locationPhotos: [],
-        hazardPhotos: [],
-        measuresPhotos: [],
-        noHazardsObserved: false,
-      }],
-    });
-    setEmailOptions({
-      recipientEmail: "curt.mills@deacon.com",
-      ccEmails: "",
-      emailSubject: "TEST - Impalement Protection Form - Job #TEST-2025-001",
-      projectEmail: "",
-    });
-    setCurrentStep(3);
-    alert("Form autofilled with test data! Click 'Submit & Email Form' to test.");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -553,16 +426,21 @@ function ImpalementProtectionFormContent() {
         submittedBy: formData.submittedBy,
         submittedByEmail: formData.submittedByEmail,
         submittedByCompany: formData.submittedByCompany,
-        submittedAtLocal, // Local device time
-        signature, // Inspector signature (optional)
+        submittedAtLocal,
+        signature,
         data: {
           date: formData.date,
-          inspections: formData.inspections,
+          whoCompleting: formData.whoCompleting,
+          location: formData.location,
+          inspectedWith: formData.inspectedWith,
+          generalHazardManagement: formData.generalHazardManagement,
+          inspectionItems: formData.inspectionItems,
+          safetyObservations: formData.safetyObservations,
         },
         emailOptions: {
           recipientEmail: emailOptions.recipientEmail,
           ccEmails: emailOptions.ccEmails,
-          emailSubject: emailOptions.emailSubject || `Impalement Inspection - ${formData.jobNumber} - ${formData.submittedBy.split(' ').map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(' ')}`,
+          emailSubject: emailOptions.emailSubject || `Buck Sanders Inspection Survey Report - ${formData.jobNumber || 'New Submission'}`,
           projectEmail: emailOptions.projectEmail,
         },
       };
@@ -705,13 +583,13 @@ function ImpalementProtectionFormContent() {
               ← Back to Home
             </button>
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
-              Impalement Protection
+              Buck Sanders Inspection Survey Report
             </h1>
             <p className="text-gray-600 mt-2 text-base font-normal">
-              Safety Inspection Form
+              Impalement Protection Inspection
             </p>
             <div className="mt-4 flex items-center gap-2 text-gray-500">
-              <span className="text-sm">Estimated time: 5-10 minutes</span>
+              <span className="text-sm">Estimated time: 10-15 minutes</span>
             </div>
           </div>
         </div>
@@ -734,7 +612,7 @@ function ImpalementProtectionFormContent() {
                 </button>
                 <div className="flex-1 min-w-0">
                   <h1 className="text-base sm:text-lg font-bold text-gray-900 truncate">
-                    Impalement Inspection
+                    Buck Sanders Inspection Survey Report
                   </h1>
                 </div>
               </div>
@@ -831,8 +709,8 @@ function ImpalementProtectionFormContent() {
               </p>
               <p className="text-sm text-gray-500 mt-1">
                 {currentStep === 1 && 'Basic Information'}
-                {currentStep === 2 && `Inspection Details · ${formData.inspections.length} ${formData.inspections.length === 1 ? 'inspection' : 'inspections'}`}
-                {currentStep === 3 && 'Email Delivery'}
+                {currentStep === 2 && 'Inspection Checklist'}
+                {currentStep === 3 && 'Safety Observations & Email Delivery'}
               </p>
             </div>
           </div>
@@ -886,317 +764,647 @@ function ImpalementProtectionFormContent() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <DatePicker
-                    value={formData.date}
-                    onChange={(date) => setFormData({ ...formData, date })}
-                    label="Inspection Date"
-                    required
-                  />
-
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Job Number <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.jobNumber}
-                      onChange={(e) => setFormData({ ...formData, jobNumber: e.target.value })}
-                      placeholder="e.g., 2025-001"
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
-                    />
-                  </div>
-                </div>
+              <div className="space-y-6">
+                <DatePicker
+                  value={formData.date}
+                  onChange={(date) => setFormData({ ...formData, date })}
+                  label="Date"
+                  required
+                />
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Your Name <span className="text-red-500">*</span>
+                    Who is completing the IISR? <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
-                    value={formData.submittedBy}
-                    onChange={(e) => setFormData({ ...formData, submittedBy: e.target.value })}
-                    placeholder="John Doe"
-                    autoComplete="name"
+                    value={formData.whoCompleting}
+                    onChange={(e) => setFormData({ ...formData, whoCompleting: e.target.value })}
+                    placeholder="Enter name"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
                   />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Your Email <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.submittedByEmail}
-                    onChange={(e) => setFormData({ ...formData, submittedByEmail: e.target.value })}
-                    placeholder="john@company.com"
-                    autoComplete="email"
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
-                  />
-                </div>
-
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Your Company <span className="text-red-500">*</span>
+                    Location <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
-                    value={formData.submittedByCompany}
-                    onChange={(e) => setFormData({ ...formData, submittedByCompany: e.target.value })}
-                    placeholder="Company Name"
-                    autoComplete="organization"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    placeholder="Enter location"
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Inspected with <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.inspectedWith}
+                    onChange={(e) => setFormData({ ...formData, inspectedWith: e.target.value })}
+                    placeholder="Enter name(s)"
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors text-gray-900"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Step 2: Inspection Details Section */}
+            {/* Step 2: Inspection Checklist Section */}
             <div className={`mb-10 ${currentStep === 2 ? 'block' : 'hidden'}`}>
               <div className="mb-8">
-                <div className="flex items-baseline justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-                      Inspection Details
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Step 2 of 3 · {formData.inspections.length} {formData.inspections.length === 1 ? 'inspection' : 'inspections'}
-                    </p>
-                  </div>
-                </div>
+                <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
+                  Inspection Checklist
+                </h2>
+                <p className="text-sm text-gray-500 mt-2">Step 2 of 3</p>
               </div>
 
-              <div className="space-y-6">
-                {formData.inspections.map((inspection, index) => (
-                  <div key={inspection.id} className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
-                    <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-100">
-                      <h3 className="text-base font-semibold text-gray-900">
-                        Inspection {index + 1}
-                      </h3>
-                      {formData.inspections.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => deleteInspection(inspection.id)}
-                          className="text-gray-400 hover:text-red-600 text-sm font-medium transition-colors"
-                        >
-                          Delete
-                        </button>
+              <div className="space-y-8">
+                {/* SECTION: General Hazard Management */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-6">
+                    General Hazard Management
+                  </h3>
+
+                  <div className="space-y-6">
+                    {/* Question 1 */}
+                    <div>
+                      <RadioButtonGroup
+                        label="Are impalement hazard AHAs/JHAs/JSAs or equivalent available?"
+                        value={formData.generalHazardManagement.ahasAvailable as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          generalHazardManagement: {
+                            ...formData.generalHazardManagement,
+                            ahasAvailable: value,
+                          }
+                        })}
+                        required
+                        name="ahasAvailable"
+                      />
+                      <ConditionalTextArea
+                        show={formData.generalHazardManagement.ahasAvailable === "No"}
+                        value={formData.generalHazardManagement.ahasAvailableComment}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          generalHazardManagement: {
+                            ...formData.generalHazardManagement,
+                            ahasAvailableComment: value,
+                          }
+                        })}
+                        placeholder="Please provide additional details..."
+                        maxLength={500}
+                      />
+                    </div>
+
+                    {/* Question 2 */}
+                    <div>
+                      <RadioButtonGroup
+                        label="Has the impalement hazard AHA/JHA/JSA been reviewed with exposed employees?"
+                        value={formData.generalHazardManagement.ahasReviewedWithEmployees as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          generalHazardManagement: {
+                            ...formData.generalHazardManagement,
+                            ahasReviewedWithEmployees: value,
+                          }
+                        })}
+                        required
+                        name="ahasReviewedWithEmployees"
+                      />
+                      <ConditionalTextArea
+                        show={formData.generalHazardManagement.ahasReviewedWithEmployees === "No"}
+                        value={formData.generalHazardManagement.ahasReviewedComment}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          generalHazardManagement: {
+                            ...formData.generalHazardManagement,
+                            ahasReviewedComment: value,
+                          }
+                        })}
+                        placeholder="Please provide additional details..."
+                        maxLength={500}
+                      />
+                    </div>
+
+                    {/* Question 3 */}
+                    <div>
+                      <RadioButtonGroup
+                        label="Is impalement hazard safety being discussed weekly in tailgate safety meetings and/or other meetings?"
+                        value={formData.generalHazardManagement.discussedInMeetings as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          generalHazardManagement: {
+                            ...formData.generalHazardManagement,
+                            discussedInMeetings: value,
+                          }
+                        })}
+                        required
+                        name="discussedInMeetings"
+                      />
+                      <ConditionalTextArea
+                        show={formData.generalHazardManagement.discussedInMeetings === "No"}
+                        value={formData.generalHazardManagement.discussedInMeetingsComment}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          generalHazardManagement: {
+                            ...formData.generalHazardManagement,
+                            discussedInMeetingsComment: value,
+                          }
+                        })}
+                        placeholder="Please provide additional details..."
+                        maxLength={500}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* SECTION: Inspection Items */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-6">
+                    Inspection Items
+                  </h3>
+
+                  <div className="space-y-6">
+                    {/* Question 4 - General Comments */}
+                    <div>
+                      <RadioButtonGroup
+                        label="General Comments"
+                        value={formData.inspectionItems.generalComments as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            generalComments: value,
+                          }
+                        })}
+                        required
+                        name="generalComments"
+                      />
+                      <ConditionalTextArea
+                        show={formData.inspectionItems.generalComments === "Yes" || formData.inspectionItems.generalComments === "No"}
+                        value={formData.inspectionItems.generalCommentsText}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            generalCommentsText: value,
+                          }
+                        })}
+                        placeholder="Enter general comments..."
+                        maxLength={1000}
+                      />
+                    </div>
+
+                    {/* Question 5 - General Site Conditions - Photos */}
+                    <div>
+                      <RadioButtonGroup
+                        label="General Site Conditions - Photos"
+                        value={formData.inspectionItems.generalSitePhotos as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            generalSitePhotos: value,
+                          }
+                        })}
+                        required
+                        name="generalSitePhotos"
+                      />
+                      {formData.inspectionItems.generalSitePhotos === "Yes" && (
+                        <div className="mt-3 ml-4">
+                          <ImageUpload
+                            label="Upload Site Photos"
+                            images={formData.inspectionItems.sitePhotos}
+                            onChange={(photos) => setFormData({
+                              ...formData,
+                              inspectionItems: {
+                                ...formData.inspectionItems,
+                                sitePhotos: photos,
+                              }
+                            })}
+                            maxImages={5}
+                            maxSizeMB={8}
+                          />
+                        </div>
                       )}
                     </div>
 
-                    <div className="space-y-8">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                        <TimePicker
-                          value={inspection.startTime}
-                          onChange={(time) => updateInspection(inspection.id, 'startTime', time)}
-                          label="Start Time"
-                          required
-                        />
+                    {/* Question 6 */}
+                    <div>
+                      <RadioButtonGroup
+                        label="Have you reviewed the possibility of eliminating vertical rebar ends (potential impalement hazards) based on the approved drawings?"
+                        value={formData.inspectionItems.eliminateRebarReviewed as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            eliminateRebarReviewed: value,
+                          }
+                        })}
+                        required
+                        name="eliminateRebarReviewed"
+                      />
+                      <ConditionalTextArea
+                        show={formData.inspectionItems.eliminateRebarReviewed === "No"}
+                        value={formData.inspectionItems.eliminateRebarComment}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            eliminateRebarComment: value,
+                          }
+                        })}
+                        placeholder="Please provide additional details..."
+                        maxLength={500}
+                      />
+                    </div>
 
-                        <TimePicker
-                          value={inspection.endTime}
-                          onChange={(time) => updateInspection(inspection.id, 'endTime', time)}
-                          label="End Time"
-                          required
-                        />
-                      </div>
+                    {/* Question 7 */}
+                    <div>
+                      <RadioButtonGroup
+                        label="Has an AHA/JHA/JSA or equivalent been completed and reviewed with potentially exposed employees?"
+                        value={formData.inspectionItems.ahaCompleted as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            ahaCompleted: value,
+                          }
+                        })}
+                        required
+                        name="ahaCompleted"
+                      />
+                      <ConditionalTextArea
+                        show={formData.inspectionItems.ahaCompleted === "No"}
+                        value={formData.inspectionItems.ahaCompletedComment}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            ahaCompletedComment: value,
+                          }
+                        })}
+                        placeholder="Please provide additional details..."
+                        maxLength={500}
+                      />
+                    </div>
 
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Location of Inspection <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={inspection.location}
-                          onChange={(e) => updateInspection(inspection.id, 'location', e.target.value)}
-                          placeholder="e.g., Building A, 3rd Floor, North Wing"
-                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900"
-                        />
+                    {/* Question 8 */}
+                    <div>
+                      <RadioButtonGroup
+                        label="Have you reviewed the possibility, within reason, to use engineering controls (such as raising the rebar ends above 6')? Note: Candy caning the rebar is not allowed by Cal OSHA."
+                        value={formData.inspectionItems.engineeringControls as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            engineeringControls: value,
+                          }
+                        })}
+                        required
+                        name="engineeringControls"
+                      />
+                      <ConditionalTextArea
+                        show={formData.inspectionItems.engineeringControls === "No"}
+                        value={formData.inspectionItems.engineeringControlsComment}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            engineeringControlsComment: value,
+                          }
+                        })}
+                        placeholder="Please provide additional details..."
+                        maxLength={500}
+                      />
+                    </div>
 
-                        <div className="mt-3">
-                          <ImageUpload
-                            label="Location Photos (Optional)"
-                            images={inspection.locationPhotos}
-                            onChange={(photos) => updateInspection(inspection.id, 'locationPhotos', photos)}
-                            maxImages={3}
-                            maxSizeMB={5}
-                          />
-                        </div>
-                      </div>
+                    {/* Question 9 */}
+                    <div>
+                      <RadioButtonGroup
+                        label="Has a reasonable attempt to isolate (administrative control) the work area behind caution tape been made?"
+                        value={formData.inspectionItems.workAreaIsolated as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            workAreaIsolated: value,
+                          }
+                        })}
+                        required
+                        name="workAreaIsolated"
+                      />
+                      <ConditionalTextArea
+                        show={formData.inspectionItems.workAreaIsolated === "No"}
+                        value={formData.inspectionItems.workAreaIsolatedComment}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            workAreaIsolatedComment: value,
+                          }
+                        })}
+                        placeholder="Please provide additional details..."
+                        maxLength={500}
+                      />
+                    </div>
 
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Description of Impalement Hazard Observed <span className="text-red-500">*</span>
-                        </label>
+                    {/* Question 10 */}
+                    <div>
+                      <RadioButtonGroup
+                        label="Is WARNING signage posted?"
+                        value={formData.inspectionItems.warningSignage as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            warningSignage: value,
+                          }
+                        })}
+                        required
+                        name="warningSignage"
+                      />
+                      <ConditionalTextArea
+                        show={formData.inspectionItems.warningSignage === "No"}
+                        value={formData.inspectionItems.warningSignageComment}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            warningSignageComment: value,
+                          }
+                        })}
+                        placeholder="Please provide additional details..."
+                        maxLength={500}
+                      />
+                    </div>
 
-                        {/* Quick option for no hazards */}
-                        <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
-                          <label className="flex items-start gap-3 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={inspection.noHazardsObserved}
-                              onChange={(e) => {
-                                const checked = e.target.checked;
-                                updateInspection(inspection.id, 'noHazardsObserved', checked);
-                                if (checked) {
-                                  updateInspection(inspection.id, 'hazardDescription', 'There were no impalement hazards observed during this inspection.');
-                                  updateInspection(inspection.id, 'correctiveMeasures', 'N/A - No hazards present');
-                                } else {
-                                  updateInspection(inspection.id, 'hazardDescription', '');
-                                  updateInspection(inspection.id, 'correctiveMeasures', '');
-                                }
-                              }}
-                              className="mt-0.5 w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                            />
-                            <div>
-                              <span className="text-sm font-medium text-gray-900">No impalement hazards observed</span>
-                              <p className="text-xs text-gray-600 mt-1">
-                                Check this if no hazards were found during inspection
-                              </p>
-                            </div>
-                          </label>
-                        </div>
+                    {/* Question 11 */}
+                    <div>
+                      <RadioButtonGroup
+                        label="Has the work area you control been inspected for impalement hazards prior to allowing access?"
+                        value={formData.inspectionItems.workAreaInspected as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            workAreaInspected: value,
+                          }
+                        })}
+                        required
+                        name="workAreaInspected"
+                      />
+                      <ConditionalTextArea
+                        show={formData.inspectionItems.workAreaInspected === "No"}
+                        value={formData.inspectionItems.workAreaInspectedComment}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            workAreaInspectedComment: value,
+                          }
+                        })}
+                        placeholder="Please provide additional details..."
+                        maxLength={500}
+                      />
+                    </div>
 
-                        <textarea
-                          {...(!inspection.noHazardsObserved && { required: true })}
-                          rows={4}
-                          value={inspection.hazardDescription}
-                          onChange={(e) => {
-                            updateInspection(inspection.id, 'hazardDescription', e.target.value);
-                            if (inspection.noHazardsObserved) {
-                              updateInspection(inspection.id, 'noHazardsObserved', false);
-                            }
-                          }}
-                          placeholder="Describe the hazard in detail..."
-                          disabled={inspection.noHazardsObserved}
-                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
-                        />
+                    {/* Question 12 */}
+                    <div>
+                      <RadioButtonGroup
+                        label="Were impalement protection devices replaced as needed during the proceeding shift or workday?"
+                        value={formData.inspectionItems.devicesReplaced as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            devicesReplaced: value,
+                          }
+                        })}
+                        required
+                        name="devicesReplaced"
+                      />
+                      <ConditionalTextArea
+                        show={formData.inspectionItems.devicesReplaced === "No"}
+                        value={formData.inspectionItems.devicesReplacedComment}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            devicesReplacedComment: value,
+                          }
+                        })}
+                        placeholder="Please provide additional details..."
+                        maxLength={500}
+                      />
+                    </div>
 
-                        <div className="mt-3">
-                          <ImageUpload
-                            label="Hazard Photos (Optional)"
-                            images={inspection.hazardPhotos}
-                            onChange={(photos) => updateInspection(inspection.id, 'hazardPhotos', photos)}
-                            maxImages={5}
-                            maxSizeMB={8}
-                          />
-                        </div>
-                      </div>
+                    {/* Question 13 */}
+                    <div>
+                      <RadioButtonGroup
+                        label="Have procedures been reviewed for the removal and replacement of impalement protection, where necessary, due to work?"
+                        value={formData.inspectionItems.proceduresReviewed as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            proceduresReviewed: value,
+                          }
+                        })}
+                        required
+                        name="proceduresReviewed"
+                      />
+                      <ConditionalTextArea
+                        show={formData.inspectionItems.proceduresReviewed === "No"}
+                        value={formData.inspectionItems.proceduresReviewedComment}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            proceduresReviewedComment: value,
+                          }
+                        })}
+                        placeholder="Please provide additional details..."
+                        maxLength={500}
+                      />
+                    </div>
 
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Corrective Measures Taken {inspection.noHazardsObserved ? (
-                            <span className="text-gray-700 text-xs font-medium">(Optional)</span>
-                          ) : (
-                            <span className="text-red-500">*</span>
-                          )}
-                        </label>
-                        <textarea
-                          {...(!inspection.noHazardsObserved && { required: true })}
-                          rows={4}
-                          value={inspection.correctiveMeasures}
-                          onChange={(e) => {
-                            updateInspection(inspection.id, 'correctiveMeasures', e.target.value);
-                            if (inspection.noHazardsObserved && e.target.value !== "N/A - No hazards present") {
-                              updateInspection(inspection.id, 'noHazardsObserved', false);
-                            }
-                          }}
-                          placeholder="Describe what actions were taken to address the hazard..."
-                          disabled={inspection.noHazardsObserved}
-                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
-                        />
+                    {/* Question 14 */}
+                    <div>
+                      <RadioButtonGroup
+                        label='Is there adequate impalement protection where work may be considered by Cal OSHA as "working above exposed rebar?"'
+                        value={formData.inspectionItems.adequateProtection as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            adequateProtection: value,
+                          }
+                        })}
+                        required
+                        name="adequateProtection"
+                      />
+                      <ConditionalTextArea
+                        show={formData.inspectionItems.adequateProtection === "No"}
+                        value={formData.inspectionItems.adequateProtectionComment}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            adequateProtectionComment: value,
+                          }
+                        })}
+                        placeholder="Please provide additional details..."
+                        maxLength={500}
+                      />
+                    </div>
 
-                        <div className="mt-3">
-                          <ImageUpload
-                            label="After Photos (Optional)"
-                            images={inspection.measuresPhotos}
-                            onChange={(photos) => updateInspection(inspection.id, 'measuresPhotos', photos)}
-                            maxImages={5}
-                            maxSizeMB={8}
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Creating/Exposing Employer(s) {inspection.noHazardsObserved ? (
-                            <span className="text-gray-700 text-xs font-medium">(Optional)</span>
-                          ) : (
-                            <span className="text-red-500">*</span>
-                          )}
-                        </label>
-                        <input
-                          type="text"
-                          {...(!inspection.noHazardsObserved && { required: true })}
-                          value={inspection.creatingEmployer}
-                          onChange={(e) => updateInspection(inspection.id, 'creatingEmployer', e.target.value)}
-                          placeholder="Company name(s)"
-                          disabled={inspection.noHazardsObserved}
-                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Supervisor of Creating/Exposing Employer(s) {inspection.noHazardsObserved ? (
-                            <span className="text-gray-700 text-xs font-medium">(Optional)</span>
-                          ) : (
-                            <span className="text-red-500">*</span>
-                          )}
-                        </label>
-                        <input
-                          type="text"
-                          {...(!inspection.noHazardsObserved && { required: true })}
-                          value={inspection.supervisor}
-                          onChange={(e) => updateInspection(inspection.id, 'supervisor', e.target.value)}
-                          placeholder="Supervisor name"
-                          disabled={inspection.noHazardsObserved}
-                          className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-gray-900 disabled:bg-gray-100 disabled:text-gray-700"
-                        />
-                      </div>
+                    {/* Question 15 */}
+                    <div>
+                      <RadioButtonGroup
+                        label="Have areas where rebar is stored been inspected for potential impalement hazards?"
+                        value={formData.inspectionItems.rebarStorageInspected as "Yes" | "No" | "N/A" | ""}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            rebarStorageInspected: value,
+                          }
+                        })}
+                        required
+                        name="rebarStorageInspected"
+                      />
+                      <ConditionalTextArea
+                        show={formData.inspectionItems.rebarStorageInspected === "No"}
+                        value={formData.inspectionItems.rebarStorageComment}
+                        onChange={(value) => setFormData({
+                          ...formData,
+                          inspectionItems: {
+                            ...formData.inspectionItems,
+                            rebarStorageComment: value,
+                          }
+                        })}
+                        placeholder="Please provide additional details..."
+                        maxLength={500}
+                      />
                     </div>
                   </div>
-                ))}
-
-                {/* Add Inspection Button */}
-                <button
-                  type="button"
-                  onClick={addInspection}
-                  className="w-full py-4 px-6 bg-white border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-700 font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <span className="text-lg">+</span>
-                  Add Another Inspection
-                </button>
+                </div>
               </div>
             </div>
 
-            {/* Step 3: Email Delivery Section */}
+            {/* Step 3: Safety Observations & Email Delivery Section */}
             <div className={`mb-10 ${currentStep === 3 ? 'block' : 'hidden'}`}>
               <div className="mb-8">
                 <h2 className="text-2xl font-bold text-gray-900 tracking-tight">
-                  Email Delivery
+                  Safety Observations & Email Delivery
                 </h2>
                 <p className="text-sm text-gray-500 mt-2">Step 3 of 3</p>
               </div>
 
-              <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
-                <div className="mb-8">
-                  <h3 className="text-base font-semibold text-gray-900 mb-2">
-                    This form will be emailed as a PDF
-                  </h3>
-                  <p className="text-sm text-gray-600">
-                    Enter the recipient&apos;s email address below to receive the completed inspection form
-                  </p>
+              <div className="space-y-8">
+                {/* Safety Observations Section */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
+                  <div className="mb-6">
+                    <h3 className="text-base font-semibold text-gray-900 mb-2">
+                      Safety Observations
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Document any additional safety observations (optional)
+                    </p>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Safety Observation 1 <span className="text-gray-700 text-xs font-medium">(Optional)</span>
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={formData.safetyObservations.observation1}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          safetyObservations: {
+                            ...formData.safetyObservations,
+                            observation1: e.target.value,
+                          }
+                        })}
+                        placeholder="Enter observation..."
+                        maxLength={1000}
+                        className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors resize-none text-gray-900"
+                      />
+                      <div className="text-right text-xs text-gray-500 mt-1">
+                        {formData.safetyObservations.observation1.length}/1000 characters
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Safety Observation 2 <span className="text-gray-700 text-xs font-medium">(Optional)</span>
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={formData.safetyObservations.observation2}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          safetyObservations: {
+                            ...formData.safetyObservations,
+                            observation2: e.target.value,
+                          }
+                        })}
+                        placeholder="Enter observation..."
+                        maxLength={1000}
+                        className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors resize-none text-gray-900"
+                      />
+                      <div className="text-right text-xs text-gray-500 mt-1">
+                        {formData.safetyObservations.observation2.length}/1000 characters
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Safety Observation 3 <span className="text-gray-700 text-xs font-medium">(Optional)</span>
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={formData.safetyObservations.observation3}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          safetyObservations: {
+                            ...formData.safetyObservations,
+                            observation3: e.target.value,
+                          }
+                        })}
+                        placeholder="Enter observation..."
+                        maxLength={1000}
+                        className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors resize-none text-gray-900"
+                      />
+                      <div className="text-right text-xs text-gray-500 mt-1">
+                        {formData.safetyObservations.observation3.length}/1000 characters
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="space-y-6">
+                {/* Email Delivery Section */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6 sm:p-8">
+                  <div className="mb-6">
+                    <h3 className="text-base font-semibold text-gray-900 mb-2">
+                      Email Delivery
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      This form will be emailed as a PDF
+                    </p>
+                  </div>
+
+                  <div className="space-y-6">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Recipient Email <span className="text-red-500">*</span>
@@ -1231,7 +1439,7 @@ function ImpalementProtectionFormContent() {
                         type="text"
                         value={emailOptions.emailSubject}
                         onChange={(e) => setEmailOptions({ ...emailOptions, emailSubject: e.target.value })}
-                        placeholder={`Impalement Inspection - ${formData.jobNumber || '...'} - ${formData.submittedBy || 'Your Name'}`}
+                        placeholder={`Buck Sanders Inspection Survey Report - ${formData.jobNumber || '...'}`}
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-gray-900"
                       />
                     </div>
@@ -1249,6 +1457,7 @@ function ImpalementProtectionFormContent() {
                     </div>
                     <SignaturePad ref={signaturePadRef} required={false} />
                   </div>
+                </div>
               </div>
             </div>
 
@@ -1353,17 +1562,7 @@ function ImpalementProtectionFormContent() {
 
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-gray-600">
-          <p>
-            SubSpace
-            <sup
-              onClick={handleTestAutofill}
-              className="cursor-pointer hover:text-gray-700 transition-colors"
-              title="Test Mode"
-            >
-              ™
-            </sup>
-            {" "}- Construction Form Management
-          </p>
+          <p>SubSpace - Construction Form Management</p>
         </div>
       </div>
 
@@ -1407,7 +1606,7 @@ function ImpalementProtectionFormContent() {
   );
 }
 
-export default function ImpalementProtectionForm() {
+export default function BuckSandersForm() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 py-8 px-4 flex items-center justify-center">
@@ -1416,7 +1615,7 @@ export default function ImpalementProtectionForm() {
         </div>
       </div>
     }>
-      <ImpalementProtectionFormContent />
+      <BuckSandersFormContent />
     </Suspense>
   );
 }
