@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Create safe HTML email with sanitized user input
-        // Build inspection summary for Buck Sanders format
+        // Build inspection summary for impalement protection format
         const escapedData = {
           date: createSafeEmailHtml('{{value}}', { value: data.date }),
           whoCompleting: createSafeEmailHtml('{{value}}', { value: data.whoCompleting }),

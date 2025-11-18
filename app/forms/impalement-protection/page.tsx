@@ -286,6 +286,11 @@ function BuckSandersFormContent() {
     }
   }, [searchParams]);
 
+  // Scroll to top when step changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentStep]);
+
   const validateStep = (step: number): boolean => {
     setError("");
 
@@ -335,7 +340,6 @@ function BuckSandersFormContent() {
       setJustNavigated(true);
       setCurrentStep(current => Math.min(current + 1, totalSteps));
       setIsHeaderCollapsed(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
 
       setTimeout(() => {
         setJustNavigated(false);
@@ -347,7 +351,6 @@ function BuckSandersFormContent() {
     setJustNavigated(true);
     setCurrentStep(current => Math.max(current - 1, 1));
     setIsHeaderCollapsed(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
 
     setTimeout(() => {
       setJustNavigated(false);
@@ -440,7 +443,7 @@ function BuckSandersFormContent() {
         emailOptions: {
           recipientEmail: emailOptions.recipientEmail,
           ccEmails: emailOptions.ccEmails,
-          emailSubject: emailOptions.emailSubject || `Buck Sanders Inspection Survey Report - ${formData.jobNumber || 'New Submission'}`,
+          emailSubject: emailOptions.emailSubject || `Impalement Inspection Survey Report - ${formData.jobNumber || 'New Submission'}`,
           projectEmail: emailOptions.projectEmail,
         },
       };
@@ -583,7 +586,7 @@ function BuckSandersFormContent() {
               ← Back to Home
             </button>
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 tracking-tight">
-              Buck Sanders Inspection Survey Report
+              Impalement Inspection Survey Report
             </h1>
             <p className="text-gray-600 mt-2 text-base font-normal">
               Impalement Protection Inspection
@@ -612,7 +615,7 @@ function BuckSandersFormContent() {
                 </button>
                 <div className="flex-1 min-w-0">
                   <h1 className="text-base sm:text-lg font-bold text-gray-900 truncate">
-                    Buck Sanders Inspection Survey Report
+                    Impalement Inspection Survey Report
                   </h1>
                 </div>
               </div>
@@ -1439,7 +1442,7 @@ function BuckSandersFormContent() {
                         type="text"
                         value={emailOptions.emailSubject}
                         onChange={(e) => setEmailOptions({ ...emailOptions, emailSubject: e.target.value })}
-                        placeholder={`Buck Sanders Inspection Survey Report - ${formData.jobNumber || '...'}`}
+                        placeholder={`Impalement Inspection Survey Report - ${formData.jobNumber || '...'}`}
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors text-gray-900"
                       />
                     </div>

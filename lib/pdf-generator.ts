@@ -269,7 +269,7 @@ export function generateImpalementProtectionPDF(
   doc.setTextColor(...BLACK);
   doc.setFontSize(TITLE_SIZE);
   doc.setFont("helvetica", "bold");
-  doc.text("Buck Sanders Inspection Survey Report", margin, yPosition);
+  doc.text("Impalement Inspection Survey Report", margin, yPosition);
   yPosition += 8;
 
   // Subtitle

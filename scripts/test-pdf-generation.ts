@@ -11,7 +11,7 @@ const submissionInfo = {
   submittedAt: new Date().toISOString()
 };
 
-// Sample form data for testing - Buck Sanders format
+// Sample form data for testing - Impalement protection format
 const sampleFormData = {
   date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
   whoCompleting: "John Smith",
